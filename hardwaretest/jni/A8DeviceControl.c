@@ -31,7 +31,6 @@
 
 static pWB_hardWareOps hardWareServer;
 static pJavaMethodOps  JavaMethodServer;
-static pUdpOps         udpServer;
 static  int icCardRecvFunc(unsigned char * data,int len);
 static  int openDoorKeyUp(pGpioPinState state);
 static  int pirUp(PIR_STATE state);

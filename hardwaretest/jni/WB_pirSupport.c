@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include "WB_pirSupport.h"
 #include "taskManage/timerTaskManage.h"
 #include "gpio/gpioServer.h"
@@ -14,11 +15,11 @@ static int timerCallback( void *arg);
 typedef struct {
 	WBPir_ops ops;
 	pGpioOps gpioServer;
-	pTimerOps timerServer;
 	PIR_STATE pirState;
 	pthread_mutex_t  mutex;
 	WBPirCallBackFunc upStateFunc;
-
+	struct timespec  current_time;
+	static struct timespec	last_time;
 }WBPirServer,*pWBPirServer;
 
 
@@ -72,17 +73,20 @@ static int gpioInterruptFunc (pGpioPinState arg)
 {
 	pGpioPinState gpioState = arg;
 	pWBPirServer wbPirServer  = gpioState->interruptArg;
+
 	LOGE("gpioInterruptFunc");
+	clock_gettime(CLOCK_MONOTONIC, &wbPirServer->last_time);
 	pthread_mutex_lock(&wbPirServer->mutex);
-	//if(wbPirServer->pirState == PIR_LEAVE)
+	//每秒钟只需上传一次
+	if((wbPirServer->last_time.tv_sec-wbPirServer->current_time.tv_sec>= 1)
+			&&arg->state == 0)
 	{
 		wbPirServer->pirState = PIR_NEAR;
+		clock_gettime(CLOCK_MONOTONIC, &wbPirServer->current_time);
 		wbPirServer->upStateFunc(wbPirServer->pirState);
 	}
-	//重设定时器
 	pthread_mutex_unlock(&wbPirServer->mutex);
 
-//   wbPirServer->timerServer->reset(wbPirServer->timerServer);
 	return 0;
 }
 
@@ -93,7 +97,6 @@ void destroyWBPirServer(pWBPir_ops *base)
 	if(wbPirServer == NULL)
 		return ;
 	gpio_releaseServer(&wbPirServer->gpioServer);
-	destroyTimerTaskServer(&wbPirServer->timerServer);
 	free(wbPirServer);
 	*base = NULL;
 
