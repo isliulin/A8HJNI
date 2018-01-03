@@ -19,7 +19,7 @@ typedef struct {
 	pthread_mutex_t  mutex;
 	WBPirCallBackFunc upStateFunc;
 	struct timespec  current_time;
-	static struct timespec	last_time;
+	struct timespec	last_time;
 }WBPirServer,*pWBPirServer;
 
 

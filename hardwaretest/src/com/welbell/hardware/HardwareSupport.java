@@ -39,6 +39,7 @@ public class HardwareSupport {
 			if (eventData[0] == 1) {
 				Log.d(TAG, "" + "人物靠近");
 				for(HardWareUpEvent temp:upEventList){
+					
 					temp.someoneCloseEvent();
 				}
 			}
@@ -74,7 +75,7 @@ public class HardwareSupport {
 			break;
 		}
 	}
-
+	
 	public int doorLockControl(boolean cmd) {
 		byte[] valve_door_lock = new byte[1];
 		if (cmd == true)
