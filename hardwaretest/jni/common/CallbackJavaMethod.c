@@ -21,6 +21,7 @@ typedef struct CallbackJavaMethod {
 	JNIEnv* jniEnv;
 	JavaVM* javaVM;
 	pthread_t jvmThread;
+	pthread_t upMsgThread;
 	jobject callBackObject;
 	jmethodID SystemCallBack_id;
 	int epoolFd;
@@ -97,12 +98,12 @@ pJavaMethodOps CallbackJavaMethodInit( JNIEnv *env,
 	epoll_ctl(javaMethod->epoolFd, EPOLL_CTL_ADD,javaMethod->wakeFds[0], &ev);
 
 	//创建线程监听管道
-	pthread_t  pid;
-	 if (pthread_create(&pid, 0, threadUpFunc,
+
+	 if (pthread_create(&javaMethod->upMsgThread, 0, threadUpFunc,
 				 (void*)javaMethod) != 0) {
 		 		goto fail4;
 	 }
-	 pthread_detach(pid);
+
 
 
 	javaMethod->ops = ops;
@@ -124,6 +125,13 @@ void CallbackJavaMethodExit(pJavaMethodOps *ops) {
 
 	LOGE("Try ~CallbackJavaMethod");
 	JNIEnv* jniEnv = JavaMethodServer->jniEnv;
+
+	pushMsgToThread(*ops,NULL,0);//结束线程
+	pthread_join(JavaMethodServer->upMsgThread,NULL);
+
+	close(JavaMethodServer->epoolFd);
+	close(JavaMethodServer->wakeFds[0]);
+	close(JavaMethodServer->wakeFds[1]);
 	if (JavaMethodServer->callBackObject != NULL) {
 		if (jniEnv != NULL) {
 			(*jniEnv)->DeleteGlobalRef(jniEnv, JavaMethodServer->callBackObject);
@@ -162,7 +170,7 @@ static void * threadUpFunc(void *arg) {
 		if(nRead != msgHead)
 			continue;
 		SystemCallBack((pJavaMethodOps)javaMethod,msgBuf,nRead);
-		goto againRead;
+		goto againRead;//防止管道里面还有数据
 	}
 exit:
 	return NULL;
@@ -176,7 +184,8 @@ static int pushMsgToThread(pJavaMethodOps ops,void *data ,int len)
 		return -1;
 	pCallbackJavaMethod javaMethod = (pCallbackJavaMethod)ops;
 	memcpy(msgBuf,&len,sizeof(len));
-	memcpy(msgBuf+sizeof(len),data,len);
+	if(len != 0 && data != NULL)
+		memcpy(msgBuf+sizeof(len),data,len);
     do {
         nWrite = write(javaMethod->wakeFds[1], msgBuf, len+sizeof(len));
     } while ((nWrite == -1 && errno == EINTR));
@@ -220,7 +229,6 @@ static void * SystemCallBack(pJavaMethodOps pthis,void *data,int len) {
 					JavaMethodServer->javaVM);
 		}
 	}
-
 	pthread_mutex_unlock(&javaMethodMutex);
 exit:
 	return NULL;

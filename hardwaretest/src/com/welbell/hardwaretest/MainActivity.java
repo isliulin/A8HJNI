@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
 		
 		Log.d("TAG","ver:"+hardwareResource.getHardWareVersion());
 		hardwareResource.addEventCallBack(upEvent);
-		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.213");
+		//hardwareResource.executeRootShell("ifconfig eth0 192.168.1.213");
 	}
 	
 	private class  RecvHardwareEvent implements HardWareUpEvent{
@@ -49,6 +49,18 @@ public class MainActivity extends Activity {
 			}else if(key == this.IC_RAWDATA){
 				Log.d("RecvHardwareEvent","不带算法卡号："+data.toString());
 			}
+		}
+		
+		@Override
+		/*键盘事件回调函数
+		 * code:键值
+		 * value：按键状态
+		 * 
+		 * */
+		public void keyBoardEvent(int code, int value) {
+			// TODO Auto-generated method stub
+			
+			Log.d("keyBoardEvent"," code:"+code+" value:"+value);
 		}
 		
 	}

@@ -11,4 +11,5 @@ public interface HardWareUpEvent {
 	public void someoneCloseEvent();
 	public void doorLockKeyEvent(byte keyState);
 	public void swipingCardEvent(byte key,byte[] data);
+	public void keyBoardEvent(int code ,int value);
 }

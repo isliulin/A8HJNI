@@ -26,6 +26,7 @@ typedef  struct WB_hardWareServer {
 	pIcDoorCardOps  doorCardServer;
 	pWBPir_ops	pirServer;
 	pHwInterfaceOps interfaceOps;
+	pWB_KeyBoardOps keyBoardServer;
 
 }WB_hardWareServer,*pWB_hardWareServer;
 
@@ -43,6 +44,7 @@ static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc);
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
+static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -55,8 +57,18 @@ static WB_hardWareOps ops = {
 		.setOpenDoorKeyUpFunc = setOpenDoorKeyUpFunc,
 		.getOptoSensorState = getOptoSensorState,
 		.setIcCardRawUpFunc = setIcCardRawUpFunc,
+		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
 };
-
+static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL || hardWareServer->keyBoardServer == NULL)
+		goto fail0;
+	return hardWareServer->keyBoardServer->setKeyEventUpFunc
+		(hardWareServer->keyBoardServer,func);
+fail0:
+	return -1;
+}
 static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
@@ -122,7 +134,6 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 					hardWareServer->binderClient,cmd);
 	}else
 	{
-
 		char cmdStr[128] = {0};
 		sprintf(cmdStr,"su -c %s",cmd);
 		LOGD("cmd:%s",cmdStr);
@@ -239,6 +250,11 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 	{
 		goto fail6;
 	}
+	hardWareServer->keyBoardServer = createKeyBoardServer();
+	if(hardWareServer->keyBoardServer == NULL)
+	{
+		goto fail7;
+	}
 
 	hardWareServer->binderClient = binder_getServer();
 	if(hardWareServer->binderClient == NULL){
@@ -246,12 +262,11 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 	//	goto fail7;
 	}
 
-
-
 	hardWareServer->ops = ops;
 	return  (pWB_hardWareOps)hardWareServer;
 
-
+fail7:
+	gpio_releaseServer(&hardWareServer->optoSensorServer);
 fail6:
 	gpio_releaseServer(&hardWareServer->LCDLightServer);
 fail5:
@@ -283,13 +298,15 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 		gpio_releaseServer(&hardWareServer->openDoorKeyServer);
 	if(hardWareServer->doorServer)
 		gpio_releaseServer(&hardWareServer->doorServer);
-
 	if(hardWareServer->pirServer)
 		destroyWBPirServer(&hardWareServer->pirServer);
 	if(hardWareServer->doorCardServer)
 		destroyIcDoorCardOpsServer(&hardWareServer->doorCardServer);
+	if(hardWareServer->keyBoardServer)
+		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
 	if(hardWareServer->binderClient)
 		binder_releaseServer(&hardWareServer->binderClient);
+
 
 	free(hardWareServer);
 		*ops = NULL;

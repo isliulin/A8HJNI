@@ -187,7 +187,7 @@ static char *getIcCardUART(void)
 			return "/dev/ttyS2";
 	return -1;
 }
-HwInterfaceOps ops = {
+static HwInterfaceOps ops = {
 		.getDoorLockPin = getDoorLockPin,
 		.getOpenDoorKeyPin = getOpenDoorKeyPin,
 		.getLightSensorPin = getLightSensorPin,

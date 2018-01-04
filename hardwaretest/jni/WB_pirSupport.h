@@ -18,9 +18,6 @@ typedef struct{
 
 }WBPir_ops,*pWBPir_ops;
 
-
-
-
 pWBPir_ops crateWBPirServer(int gpioPin,WBPirCallBackFunc upFunc);
 void destroyWBPirServer(pWBPir_ops *base);
 

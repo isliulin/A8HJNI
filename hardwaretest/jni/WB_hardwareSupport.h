@@ -3,6 +3,7 @@
 
 #include "WB_pirSupport.h"
 #include "WB_icDoorCard.h"
+#include "WB_keyboard.h"
 #include "gpio/gpioServer.h"
 #include "gpio/hwInterfaceManage.h"
 
@@ -39,6 +40,8 @@ typedef struct  WB_hardWareOps{
 	int (*getOptoSensorState)(struct  WB_hardWareOps *ops );
 	//设置IC卡数据回调函数
 	int (*setIcCardRawUpFunc)(struct  WB_hardWareOps *,IcRecvFunc);
+	//设置键盘事件上报函数
+	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

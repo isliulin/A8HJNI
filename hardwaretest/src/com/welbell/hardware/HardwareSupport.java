@@ -73,6 +73,14 @@ public class HardwareSupport {
 				}
 			}
 			break;
+			
+		case CallBackState.UI_KEYBOARD_EVENT:
+			for(HardWareUpEvent temp:upEventList){
+				
+				temp.keyBoardEvent((eventData[0])&0xff, eventData[1]&0xff);
+			}
+			
+			break;
 		}
 	}
 	

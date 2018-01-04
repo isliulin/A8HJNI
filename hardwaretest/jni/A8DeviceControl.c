@@ -25,6 +25,7 @@
 #include "common/CallbackJavaMethod.h"
 #include "common/netUdpServer.h"
 #include "WB_hardwareSupport.h"
+#include "WB_keyboard.h"
 
 
 
@@ -35,14 +36,17 @@ static  int icCardRecvFunc(unsigned char * data,int len);
 static  int openDoorKeyUp(pGpioPinState state);
 static  int pirUp(PIR_STATE state);
 static  int udpRecvFunc(unsigned char*data ,unsigned int len);
+static  void KeyEventUp(int code ,int value);
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
+
+	if(hardWareServer!= NULL||JavaMethodServer!= NULL )
+		goto fail0;
 	CPU_VER cpu_ver = getUtilsOps()->getCpuVer();
-	LOGD("jni_a8HardwareControlInit!");
+
 	hardWareServer =  crateHardWareServer(cpu_ver);
 	if( hardWareServer == NULL)
 		goto fail0;
-
 	JavaMethodServer =  CallbackJavaMethodInit(env,obj,"systemCallBack");
 	if(JavaMethodServer ==NULL )
 		goto fail1;
@@ -50,15 +54,27 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer->setIcCardRawUpFunc(hardWareServer,icCardRecvFunc);
 	hardWareServer->setOpenDoorKeyUpFunc(hardWareServer,openDoorKeyUp);
 	hardWareServer->setPirUpFunc(hardWareServer,pirUp);
-
-
+	hardWareServer->setKeyboardEventUpFunc(hardWareServer,KeyEventUp);
+	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
 fail2:
 	free(JavaMethodServer);
 fail1:
 	free(hardWareServer);
 fail0:
-	return 0;
+	return -1;
+}
+static void KeyEventUp(int code ,int value)
+{
+	if(code > 255){
+		LOGE("code value is too big");
+		return ;
+	}
+	char upData[6] = {0};
+	upData[0] = UI_KEYBOARD_EVENT;
+	upData[1] = code;
+	upData[2] = value;
+	JavaMethodServer->up(JavaMethodServer,upData,3);
 }
 static int udpRecvFunc(unsigned char* data,unsigned int len)
 {
