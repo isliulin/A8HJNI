@@ -202,7 +202,7 @@ static void *gpioInterruptHandle(void *arg) {
 
 	ret = read(getGpioValueFd,buff,10);
 	if( ret == -1 )
-		LOGE("read\n");
+		LOGE("fail to read\n");
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
 		LOGE("epoll_wait");
 		nfds = epoll_wait(epfd, events, EVENT_NUMS, -1);

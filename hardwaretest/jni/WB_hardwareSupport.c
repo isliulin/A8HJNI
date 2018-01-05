@@ -37,7 +37,6 @@ static int controlIFCameraLight(struct  WB_hardWareOps *,ControlCmd);
 static int controlCameraLight(struct  WB_hardWareOps *,ControlCmd);
 static int controlKeyboardLight(struct  WB_hardWareOps *,ControlCmd);
 static int sendShellCmd(struct  WB_hardWareOps *,const char *);
-static int getHardWareVer(struct  WB_hardWareOps *,char*,int len);
 static int reboot (struct  WB_hardWareOps *);
 static int setPirUpFunc(struct  WB_hardWareOps * ops,WBPirCallBackFunc pirUpFunc);
 static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);

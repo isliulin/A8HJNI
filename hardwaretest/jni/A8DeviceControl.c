@@ -28,8 +28,6 @@
 #include "WB_keyboard.h"
 
 
-
-
 static pWB_hardWareOps hardWareServer;
 static pJavaMethodOps  JavaMethodServer;
 static  int icCardRecvFunc(unsigned char * data,int len);
@@ -83,7 +81,6 @@ static int udpRecvFunc(unsigned char* data,unsigned int len)
 static int pirUp(PIR_STATE state)
 {
 	char upData[6] = {0};
-	LOGE("pirUp:%s",state==PIR_NEAR?"靠近":"离开" );
 	upData[0] = UI_INFRARED_DEVICE;
 	upData[1] = 1-state;
 	JavaMethodServer->up(JavaMethodServer,upData,2);
@@ -103,20 +100,16 @@ static  int icCardRecvFunc(unsigned char * data,int len)
  		uint32_t id;
  	}cardNum;
  	bzero(&cardNum,sizeof(cardNum));
-	LOGE("原数据:");
-	getUtilsOps()->printData(data,len);
 
 	valid[0] = UI_DOORCARD_DEVICE;
 	memcpy(&valid[1],data,len);
 	JavaMethodServer->up(JavaMethodServer,valid,len+1);
 
-	//LOGE("经过算法后的数据");
 	bzero(valid,sizeof(valid));
 	valid[0] = UI_DOORCARD_DEVICE_ALG;
 	getUtilsOps()->GetWeiGendCardId(data,len,&cardNum.id);
 	memcpy(&valid[1],cardNum.buf,sizeof(cardNum.buf));
 	JavaMethodServer->up(JavaMethodServer,valid,sizeof(cardNum.buf)+1 );
-	getUtilsOps()->printData(cardNum.buf,sizeof(uint32_t));
 	return len;
 }
 JNIEXPORT jint JNICALL jni_a8HardwareControlExit(JNIEnv * env, jobject obj) {

@@ -10,6 +10,7 @@ public interface HardWareUpEvent {
 	
 	public void someoneCloseEvent();
 	public void doorLockKeyEvent(byte keyState);
-	public void swipingCardEvent(byte key,byte[] data);
+	public void icCardBandAlgEvent(String icCardID);
+	public void icCardBandRawEvent(byte []icCardID);
 	public void keyBoardEvent(int code ,int value);
 }

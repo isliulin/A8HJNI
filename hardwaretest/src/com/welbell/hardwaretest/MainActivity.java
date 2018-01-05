@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
 		
 		Log.d("TAG","ver:"+hardwareResource.getHardWareVersion());
 		hardwareResource.addEventCallBack(upEvent);
-		//hardwareResource.executeRootShell("ifconfig eth0 192.168.1.213");
+		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
 	}
 	
 	private class  RecvHardwareEvent implements HardWareUpEvent{
@@ -42,16 +42,6 @@ public class MainActivity extends Activity {
 			}	
 		}
 		@Override
-		public void swipingCardEvent(byte key, byte[] data) {
-			// TODO Auto-generated method stub
-			if(key == this.IC_ALGDATA){
-				Log.d("RecvHardwareEvent","带算法卡号："+data.toString());
-			}else if(key == this.IC_RAWDATA){
-				Log.d("RecvHardwareEvent","不带算法卡号："+data.toString());
-			}
-		}
-		
-		@Override
 		/*键盘事件回调函数
 		 * code:键值
 		 * value：按键状态
@@ -59,8 +49,25 @@ public class MainActivity extends Activity {
 		 * */
 		public void keyBoardEvent(int code, int value) {
 			// TODO Auto-generated method stub
+			Log.d("keyBoardEvent"," code:"+code+
+					" value:"+(value==1?"down":"up"));
+		}
+
+		@Override
+		public void icCardBandAlgEvent(String icCardID) {
+			// TODO Auto-generated method stub
 			
-			Log.d("keyBoardEvent"," code:"+code+" value:"+value);
+			Log.d("icCardBandAlgEvent"," icCardID:"+icCardID);
+			
+		}
+
+		@Override
+		public void icCardBandRawEvent(byte[] icCardID) {
+			for(int i = 0;i<icCardID.length;i++)
+			{
+				Log.d("icCardBandRawEvent"," icCardID:"+icCardID[i]);
+			}
+			
 		}
 		
 	}

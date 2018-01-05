@@ -7,19 +7,19 @@ import com.welbell.hardware.CallBackState;
 import com.welbell.hardware.HardWareUpEvent;
 import com.welbell.hardware.controlHardwareCmd;
 
-
-
 import android.util.Log;
 
-public class HardwareSupport {
+  public class HardwareSupport {
 
 	static final String TAG = "HardwareSupport";
 	HardWareUpEvent upEvent;
-	private List<HardWareUpEvent> upEventList;
+	static  private List<HardWareUpEvent> upEventList;
+
 	public HardwareSupport() {
 		a8HardwareControlInit();
 		upEventList = new ArrayList<HardWareUpEvent>();
 	}
+
 	protected void finalize() {
 		a8HardwareControlExit();
 	}
@@ -31,59 +31,61 @@ public class HardwareSupport {
 	private void systemCallBack(byte[] Data) {
 		if (Data == null)
 			return;
-		byte[] eventData = new byte[Data.length];
+		byte[] eventData = new byte[Data.length - 1];
 		System.arraycopy(Data, 1, eventData, 0, Data.length - 1);
 		byte event = Data[0];
 		switch (event) {
 		case CallBackState.UI_INFRARED_DEVICE:
 			if (eventData[0] == 1) {
-				Log.d(TAG, "" + "人物靠近");
-				for(HardWareUpEvent temp:upEventList){
-					
+				for (HardWareUpEvent temp : upEventList) {
 					temp.someoneCloseEvent();
 				}
 			}
 			break;
 		case CallBackState.UI_DOORCARD_DEVICE:
 
-			Log.d(TAG, "不带算法的门卡数据" + eventData.toString());
-			for(HardWareUpEvent temp:upEventList){
-				
-				temp.swipingCardEvent(temp.IC_RAWDATA, eventData);
+			for (HardWareUpEvent temp : upEventList) {
+				temp.icCardBandRawEvent(eventData);
 			}
 
 			break;
 		case CallBackState.UI_DOORCARD_DEVICE_ALG:
-
+			int icCardID = 0;
 			if (eventData.length >= 4) {
-				for(HardWareUpEvent temp:upEventList){
-					temp.swipingCardEvent(temp.IC_ALGDATA, eventData);
+				for (int i = 0; i < eventData.length; i++) {
+					icCardID += eventData[i] & 0xff;
+					if (i < eventData.length - 1)
+						icCardID <<= 8;
+				}
+				String strID = Integer.toHexString(icCardID);
+				for (HardWareUpEvent temp : upEventList) {
+					temp.icCardBandAlgEvent(strID);
 				}
 			}
 			break;
 
 		case CallBackState.UI_OPENDOOR_KEY_DOWN:
 			if (eventData[0] == 1) {
-				for(HardWareUpEvent temp:upEventList){
+				for (HardWareUpEvent temp : upEventList) {
 					temp.doorLockKeyEvent(temp.KEY_DOWN);
 				}
 			} else {
-				for(HardWareUpEvent temp:upEventList){
+				for (HardWareUpEvent temp : upEventList) {
 					temp.doorLockKeyEvent(temp.KEY_UP);
 				}
 			}
 			break;
-			
+
 		case CallBackState.UI_KEYBOARD_EVENT:
-			for(HardWareUpEvent temp:upEventList){
-				
-				temp.keyBoardEvent((eventData[0])&0xff, eventData[1]&0xff);
+			for (HardWareUpEvent temp : upEventList) {
+
+				temp.keyBoardEvent((eventData[0]) & 0xff, eventData[1] & 0xff);
 			}
-			
+
 			break;
 		}
 	}
-	
+
 	public int doorLockControl(boolean cmd) {
 		byte[] valve_door_lock = new byte[1];
 		if (cmd == true)
@@ -143,8 +145,8 @@ public class HardwareSupport {
 
 	public String getHardWareVersion() {
 
-		byte[] recvData = {0};
-		
+		byte[] recvData = { 0 };
+
 		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_HARDWARE_VER);
 		if (recvData == null)
 			return null;

@@ -39,10 +39,6 @@ pWBPir_ops crateWBPirServer(int gpioPin,WBPirCallBackFunc upFunc)
 	{
 		goto fail1;
 	}
-	//wbPirServer->timerServer = createTimerTaskServer(2*1000,-1,1,timerCallback,(void *)&wbPirServer,sizeof(void*));
-	//if(wbPirServer->timerServer == NULL )
-	//	goto fail2;
-
 	wbPirServer->gpioServer->setInterruptFunc(wbPirServer->gpioServer ,gpioInterruptFunc,wbPirServer,FALLING);
 	wbPirServer->upStateFunc = upFunc;
 	wbPirServer->pirState = 0;
@@ -74,7 +70,6 @@ static int gpioInterruptFunc (pGpioPinState arg)
 	pGpioPinState gpioState = arg;
 	pWBPirServer wbPirServer  = gpioState->interruptArg;
 
-	LOGE("gpioInterruptFunc");
 	clock_gettime(CLOCK_MONOTONIC, &wbPirServer->last_time);
 	pthread_mutex_lock(&wbPirServer->mutex);
 	//每秒钟只需上传一次

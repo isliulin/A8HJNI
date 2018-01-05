@@ -43,7 +43,7 @@ struct ethtool_value {
 	unsigned int cmd;
 	unsigned int data;
 };
-static ssize_t  myGetline(char **lineptr, size_t *n, FILE *stream);
+static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream);
 //控制通讯须带效验
 static unsigned char CRC8_TABLE[] = { 0, 94, 188, 226, 97, 63, 221, 131, 194, 156, 126, 32, 163, 253, 31, 65, 157, 195, 33, 127, 252, 162, 64, 30, 95, 1, 227, 189, 62, 96, 130,
 		220, 35, 130, 159, 193, 66, 28, 254, 160, 225, 191, 93, 3, 128, 222, 60, 98, 190, 224, 2, 92, 223, 129, 99, 61, 124, 34, 192, 158, 29, 67, 161, 255, 70, 24, 250, 164, 39,
@@ -117,6 +117,16 @@ static int GetWeiGendCardId(const char *hexIn,int len, int *id)
  	intChar_union.buf[2] |= (s[2] & 0x0f);
  	intChar_union.buf[3]  = (s[3] & 0x0f) << 4;
  	intChar_union.buf[3] |= (s[4] & 0x0f);
+
+ 	//将上述16进制转成10进制如0x12345678 -->12345678
+/*
+ 	intChar_union.buf[0] = ((intChar_union.buf[0]&0xf0)>>4)*10 + (intChar_union.buf[0]&0x0f);
+ 	intChar_union.buf[1] = ((intChar_union.buf[1]&0xf0)>>4)*10 + (intChar_union.buf[1]&0x0f);
+ 	intChar_union.buf[2] = ((intChar_union.buf[2]&0xf0)>>4)*10 + (intChar_union.buf[2]&0x0f);
+ 	intChar_union.buf[3] = ((intChar_union.buf[3]&0xf0)>>4)*10 + (intChar_union.buf[3]&0x0f);
+*/
+
+
  	*id = intChar_union.id;
  	return len;
  }
@@ -182,7 +192,7 @@ static int getKey(FILE *fp, char *p, char* getBuff,int bufflen,char  mark) {
 	int bufLen = strlen(p);
 	int lineLen = 0;
 	int i = 0;
-	size_t len = 0;
+	int len = 0;
 	while ((lineLen = myGetline(&line, &len, fp) )> 0) {
 		if(bufLen >= lineLen)
 			continue;
@@ -209,7 +219,7 @@ static int getKey(FILE *fp, char *p, char* getBuff,int bufflen,char  mark) {
 		free(line);
 	return -1;
 }
-static ssize_t  myGetline(char **lineptr, size_t *n, FILE *stream)
+static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream)
 {
     ssize_t count=0;
     int buf;

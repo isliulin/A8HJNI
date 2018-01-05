@@ -128,7 +128,6 @@ static  void * serialParseThreadFunc(void *arg)
 		ret = serialServer->bufferOps->wait(serialServer->bufferOps);
 		switch(ret){
 			case TRI_DATA:
-				LOGE("TRI_DATA");
 					do{
 						bzero(recvBuf,sizeof(recvBuf));
 						bzero(validBuf,sizeof(validBuf));
