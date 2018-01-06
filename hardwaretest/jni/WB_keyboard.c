@@ -21,26 +21,29 @@
 #include "WB_keyboard.h"
 
 #define MAX_EVENT_NUMBER 33
+
 typedef struct WB_KeyBoardServer {
 	WB_KeyBoardOps ops;
 	KeyEventUpFunc eventUpFunc;
+	char devPath[32];
 	int epoolfd;
 	int epoolMonitorFds[MAX_EVENT_NUMBER];
 	pthread_t readKeyThread;
 	int wakeFds[2]; //[0]:read [1]:write
 } WB_KeyBoardServer, *pWB_KeyBoardServer;
 
-static int setKeyEventUpFunc(pWB_KeyBoardOps ops, KeyEventUpFunc eventUpFunc);
-static void addEventFdToEpool(int epoolfd, int *monitorFds);
+static int setKeyEventUpFunc(pWB_KeyBoardOps ops,const char * devPath,KeyEventUpFunc eventUpFunc);
+static void addEventFdToEpool(pWB_KeyBoardServer server);
 static int addFdToEpoolMonitorFds(int fd, int *fds);
 static void closeEpoolMonitorFds(int *fds);
 static void * readEventThreadFunc(void *arg);
 static WB_KeyBoardOps ops = { .setKeyEventUpFunc = setKeyEventUpFunc, };
-static int setKeyEventUpFunc(pWB_KeyBoardOps ops, KeyEventUpFunc eventUpFunc) {
+static int setKeyEventUpFunc(pWB_KeyBoardOps ops,const char * devPath,KeyEventUpFunc eventUpFunc) {
 	pWB_KeyBoardServer pthis = (pWB_KeyBoardServer) ops;
 	if (pthis == NULL)
 		return -1;
 	pthis->eventUpFunc = eventUpFunc;
+	strcpy(pthis->devPath,devPath);
 	return 0;
 }
 static int addFdToEpoolMonitorFds(int fd, int *fds) {
@@ -62,23 +65,23 @@ static void closeEpoolMonitorFds(int *fds) {
 		}
 	}
 }
-static void addEventFdToEpool(int epoolfd, int *monitorFds) {
+static void addEventFdToEpool(pWB_KeyBoardServer server) {
 	struct epoll_event ev;
 	int ret;
 	int i, j = 0, fd;
 	int fds[MAX_EVENT_NUMBER - 1] = { 0 };
 	char evnetDev[32] = { 0 };
 	for (i = 0; i < sizeof(fds) / sizeof(fds[0]); i++) {
-		sprintf(evnetDev, "/dev/input/event%d", i);
+		sprintf(evnetDev, "%s%d",server->devPath, i);
 		if ((fd = open(evnetDev, O_RDONLY, 0)) >= 0) {
 			LOGD("open %s succeed fd:%d", evnetDev, fd);
 			fcntl(fd, F_SETFL, O_NONBLOCK);
 			bzero(&ev, sizeof(ev));
 			ev.data.fd = fd;
 			ev.events = EPOLLIN;
-			ret = epoll_ctl(epoolfd, EPOLL_CTL_ADD, fd, &ev);
+			ret = epoll_ctl(server->epoolfd, EPOLL_CTL_ADD, fd, &ev);
 			if (ret == 0) {
-				ret = addFdToEpoolMonitorFds(fd, monitorFds);
+				ret = addFdToEpoolMonitorFds(fd, server->epoolMonitorFds);
 				if (ret < 0) {
 					LOGE("fail to addEventFdToEpool fail fd:%d ", fd);
 				}
@@ -106,7 +109,7 @@ static void * readEventThreadFunc(void *arg) {
 				do {
 					n = read(server->wakeFds[0], &wakeCmd, sizeof(wakeCmd));
 				} while (n == -1 && errno == EINTR);
-				if (wakeCmd == 0)
+				if (wakeCmd == 0) //表示收到了exit指令,将退出此线程
 					goto fail0;
 			}
 			readn = read(epoolEvents[i].data.fd, keyEvent, sizeof(keyEvent));
@@ -159,7 +162,7 @@ pWB_KeyBoardOps createKeyBoardServer(void) {
 			LOGE("fail to addFdToEpoolMonitorFds fd:%d", server->wakeFds[0]);
 		}
 	}
-	addEventFdToEpool(server->epoolfd, server->epoolMonitorFds);
+	addEventFdToEpool(server);
 	if (pthread_create(&server->readKeyThread, 0, readEventThreadFunc,
 			(void*) server) != 0) {
 		goto fail2;

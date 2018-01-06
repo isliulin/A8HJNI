@@ -5,6 +5,7 @@
 #define _BINDER_H_
 
 #include <sys/ioctl.h>
+#include <linux/types.h>
 #include "sys_binder.h"
 
 #ifdef BINDER_IPC_32BIT

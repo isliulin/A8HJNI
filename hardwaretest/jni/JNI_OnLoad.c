@@ -11,12 +11,13 @@ static const char * libVersion = "Ver1.0.1.1 For A8HNativeControl";
 static int registerNativeMethods(JNIEnv* env, const char* className, JNINativeMethod* gMethods, int numMethods) {
 	jclass clazz;
 	LOGI( "RegisterNatives start for '%s'", className);
-
+	//获取类
 	clazz = (*env)->FindClass( env,className);
 	if (clazz == NULL) {
 		LOGE( "Native registration unable to find class '%s'", className);
 		return JNI_FALSE;
 	}
+	//将本地方法注册到类中
 	if ((*env)->RegisterNatives(env,clazz, gMethods, numMethods) < 0) {
 		LOGE("RegisterNatives failed for '%s'", className);
 		return JNI_FALSE;
@@ -30,6 +31,7 @@ static int registerNativeMethods(JNIEnv* env, const char* className, JNINativeMe
  * returns JNI_TRUE on success.
  */
 static int registerNatives(JNIEnv* env) {
+	//注册本地方法
 	if (!registerNativeMethods(env,classPathName , methods, sizeof(methods) / sizeof(methods[0]))) {
 		return JNI_FALSE;
 	}
@@ -51,12 +53,13 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	JNIEnv* env = NULL;
 	LOGI("------Load A8System  Lib , %s------", libVersion);
 	LOGI("------Build at %s %s -------", __DATE__, __TIME__);
+	//获取环境变量内容
 	if ((*vm)->GetEnv(vm,&uenv.venv, JNI_VERSION_1_4) != JNI_OK) {
 		LOGE("GetEnv failed");
 		goto bail;
 	}
 	env = uenv.env;
-
+	//注册
 	if (registerNatives(env) != JNI_TRUE) {
 		LOGE("registerNatives failed");
 		goto bail;

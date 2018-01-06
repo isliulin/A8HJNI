@@ -1,4 +1,4 @@
-#include <stddef.h>
+#include <linux/stddef.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -198,8 +198,6 @@ static void * do_peopheClose(pThreadArg arg)
 {
 
 	 vHWServer->pirCallBackFunc(PIR_NEAR);
-	 sleep(10);
-	 vHWServer->pirCallBackFunc(PIR_LEAVE);
 	 if(arg->data != NULL)
 		 free(arg->data);
 	 free(arg);

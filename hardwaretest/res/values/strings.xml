@@ -3,6 +3,57 @@
 
     <string name="app_name">hardwaretest</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="操作说明"> 
+        	操作说明\n
+        	HardwareSupport hardwareResource = new HardwareSupport();\n
+        	RecvHardwareEvent upEvent = new RecvHardwareEvent();\n
+        	//获取版本号\n
+			version = hardwareResource.getHardWareVersion();\n
+			//添加接口\n
+			hardwareResource.addEventCallBack(upEvent);\n
+			//以root权限执行shell脚本:设置IP地址\n
+			hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");\n
+			//开启摄像头灯\n
+			hardwareResource.cameraLightControl(true);\n
+			//开门\n
+			hardwareResource.doorLockControl(true);\n
+			//开启键盘灯\n
+			hardwareResource.keyboardLightControl(true);\n
+			//开启红外摄像头灯\n
+			hardwareResource.ifcameraLightControl(true);\n
+			//重启机器\n
+			hardwareResource.reboot();\n
+        	private class  RecvHardwareEvent implements HardWareUpEvent{
+			@Override  \n
+			//人体红外回调，表示有人靠近 \n
+			public void someoneCloseEvent() { \n
+			
+			} \n
+			//内部开门按键回调 \n
+			public void doorLockKeyEvent(byte keyState) {\n 
+			}\n
+			@Override\n
+			键盘事件回调函数\n
+			public void keyBoardEvent(int code, int value) {\n
+			}\n
+	
+			@Override\n
+			//带算法的IC卡号\n
+			public void icCardBandAlgEvent(String icCardID) {\n
+			
+			}\n
+			@Override\n
+			//不带算法的IC卡号\n
+			public void icCardBandRawEvent(byte[] icCardID) {\n
+			}\n
+			\n
+	}\n
+        	
+        	
+        	
+        	
+        	
+        	
+        	</string>
 
 </resources>
