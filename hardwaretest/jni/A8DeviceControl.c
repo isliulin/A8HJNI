@@ -50,7 +50,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer->setIcCardRawUpFunc(hardWareServer, icCardRecvFunc);
 	hardWareServer->setOpenDoorKeyUpFunc(hardWareServer, openDoorKeyUp);
 	hardWareServer->setPirUpFunc(hardWareServer, pirUp);
-	hardWareServer->setKeyboardEventUpFunc(hardWareServer,"/dev/input/event", KeyEventUp);
+	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
 	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
 	fail2: free(JavaMethodServer);

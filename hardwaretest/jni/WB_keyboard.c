@@ -32,18 +32,17 @@ typedef struct WB_KeyBoardServer {
 	int wakeFds[2]; //[0]:read [1]:write
 } WB_KeyBoardServer, *pWB_KeyBoardServer;
 
-static int setKeyEventUpFunc(pWB_KeyBoardOps ops,const char * devPath,KeyEventUpFunc eventUpFunc);
+static int setKeyEventUpFunc(pWB_KeyBoardOps ops,KeyEventUpFunc eventUpFunc);
 static void addEventFdToEpool(pWB_KeyBoardServer server);
 static int addFdToEpoolMonitorFds(int fd, int *fds);
 static void closeEpoolMonitorFds(int *fds);
 static void * readEventThreadFunc(void *arg);
 static WB_KeyBoardOps ops = { .setKeyEventUpFunc = setKeyEventUpFunc, };
-static int setKeyEventUpFunc(pWB_KeyBoardOps ops,const char * devPath,KeyEventUpFunc eventUpFunc) {
+static int setKeyEventUpFunc(pWB_KeyBoardOps ops,KeyEventUpFunc eventUpFunc) {
 	pWB_KeyBoardServer pthis = (pWB_KeyBoardServer) ops;
 	if (pthis == NULL)
 		return -1;
 	pthis->eventUpFunc = eventUpFunc;
-	strcpy(pthis->devPath,devPath);
 	return 0;
 }
 static int addFdToEpoolMonitorFds(int fd, int *fds) {
@@ -71,8 +70,10 @@ static void addEventFdToEpool(pWB_KeyBoardServer server) {
 	int i, j = 0, fd;
 	int fds[MAX_EVENT_NUMBER - 1] = { 0 };
 	char evnetDev[32] = { 0 };
+
 	for (i = 0; i < sizeof(fds) / sizeof(fds[0]); i++) {
 		sprintf(evnetDev, "%s%d",server->devPath, i);
+		LOGD("open %s",evnetDev);
 		if ((fd = open(evnetDev, O_RDONLY, 0)) >= 0) {
 			LOGD("open %s succeed fd:%d", evnetDev, fd);
 			fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -125,7 +126,7 @@ static void * readEventThreadFunc(void *arg) {
 	}
 	fail0: return NULL;
 }
-pWB_KeyBoardOps createKeyBoardServer(void) {
+pWB_KeyBoardOps createKeyBoardServer(const char *devPath) {
 	int result;
 	pWB_KeyBoardServer server = malloc(sizeof(WB_KeyBoardServer));
 	if (server == NULL)
@@ -162,6 +163,7 @@ pWB_KeyBoardOps createKeyBoardServer(void) {
 			LOGE("fail to addFdToEpoolMonitorFds fd:%d", server->wakeFds[0]);
 		}
 	}
+	strcpy(server->devPath,devPath);
 	addEventFdToEpool(server);
 	if (pthread_create(&server->readKeyThread, 0, readEventThreadFunc,
 			(void*) server) != 0) {

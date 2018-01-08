@@ -43,7 +43,7 @@ static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc);
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
-static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,const char *devPath,KeyEventUpFunc func);
+static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -58,13 +58,13 @@ static WB_hardWareOps ops = {
 		.setIcCardRawUpFunc = setIcCardRawUpFunc,
 		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
 };
-static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,const char *devPath,KeyEventUpFunc func)
+static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
-	if(devPath == NULL||hardWareServer == NULL || hardWareServer->keyBoardServer == NULL)
+	if(hardWareServer == NULL || hardWareServer->keyBoardServer == NULL)
 		goto fail0;
 	return hardWareServer->keyBoardServer->setKeyEventUpFunc
-		(hardWareServer->keyBoardServer,devPath,func);
+		(hardWareServer->keyBoardServer,func);
 fail0:
 	return -1;
 }
@@ -249,7 +249,7 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 	{
 		goto fail6;
 	}
-	hardWareServer->keyBoardServer = createKeyBoardServer();
+	hardWareServer->keyBoardServer = createKeyBoardServer("dev/input/event");
 	if(hardWareServer->keyBoardServer == NULL)
 	{
 		goto fail7;

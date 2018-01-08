@@ -41,7 +41,7 @@ typedef struct  WB_hardWareOps{
 	//设置IC卡数据回调函数
 	int (*setIcCardRawUpFunc)(struct  WB_hardWareOps *,IcRecvFunc);
 	//设置键盘事件上报函数
-	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,const char *,KeyEventUpFunc);
+	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象
