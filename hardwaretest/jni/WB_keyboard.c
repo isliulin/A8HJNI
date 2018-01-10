@@ -132,7 +132,7 @@ pWB_KeyBoardOps createKeyBoardServer(const char *devPath) {
 	if (server == NULL)
 		goto fail0;
 	bzero(server, sizeof(WB_KeyBoardServer));
-	server->epoolfd = epoll_create(33);
+	server->epoolfd = epoll_create(MAX_EVENT_NUMBER);
 	if (server->epoolfd < 0)
 		goto fail0;
 

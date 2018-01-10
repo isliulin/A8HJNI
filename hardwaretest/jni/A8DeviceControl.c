@@ -57,14 +57,25 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	fail1: free(hardWareServer);
 	fail0: return -1;
 }
+static int getMapKeyCode(int code) {
+	const int mapKeyCode[12] = { 5, 30, 48, 11, 10, 7, 2, 9, 6, 3, 8, 4 };
+	int retCode;
+	for (retCode = 0; retCode < sizeof(mapKeyCode) / sizeof(mapKeyCode[0]);
+			retCode++) {
+		if (mapKeyCode[retCode] == code)
+			return retCode;
+	}
+	return code;
+}
 static void KeyEventUp(int code, int value) {
+	char upData[6] = { 0 };
+
 	if (code > 255) {
 		LOGE("code value is too big");
 		return;
 	}
-	char upData[6] = { 0 };
 	upData[0] = UI_KEYBOARD_EVENT;
-	upData[1] = code;
+	upData[1] = getMapKeyCode(code);
 	upData[2] = value;
 	JavaMethodServer->up(JavaMethodServer, upData, 3);
 }

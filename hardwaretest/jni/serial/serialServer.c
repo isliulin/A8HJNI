@@ -349,11 +349,14 @@ pSerialOps createSerialServer(const char *devPath,int nBaudRate, int nDataBits, 
 	}
 	fd = open(devPath, O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd < 0) {
+		LOGE("fail to open the %s",devPath);
 		goto fail0;
 	}
 	serialServer = (pSerialServer)malloc(sizeof(SerialServer));
-	if(serialServer == NULL)
+	if(serialServer == NULL){
+		LOGE("fail to malloc serialServer");
 		goto fail0;
+	}
 	bzero(serialServer,sizeof(SerialServer));
 	serialServer->serialDevFd = fd;
 	serialServer->ops = serialOps;

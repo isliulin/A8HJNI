@@ -25,6 +25,26 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		hardwareResource.addEventCallBack(this);
 		//以root权限执行shell脚本:设置IP地址
 		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
+		try {
+			Thread.sleep(1);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/*hardwareResource.executeRootShell("am force-stop com.wlbell.hardwaretest&&" +
+				"pm install -r /mnt/sdcard/app.apk&&" +
+				"am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
+		*/
+		//hardwareResource.executeRootShell("pm install -r /mnt/sdcard/app.apk");
+		//hardwareResource.executeRootShell("am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
+		/*com.welbell.hardwaretestdemo
+		//&& pm install -r /mnt/sdcard/huarui/2016-08-08/huarui.apk 
+		//&& am start -a android.intent.action.MAIN -n com.jack.huarui.capture/.mvp.ui.activity.MainAty
+		
+		*/
+		
+		
+		
 		//开启摄像头灯
 		hardwareResource.cameraLightControl(true);
 		//开门
