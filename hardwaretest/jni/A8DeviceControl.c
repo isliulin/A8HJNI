@@ -26,8 +26,10 @@
 #include "common/netUdpServer.h"
 #include "WB_hardwareSupport.h"
 #include "WB_keyboard.h"
+#include "WB_virtualHardwareSupport.h"
 
 static pWB_hardWareOps hardWareServer;
+static pVirtualHWops   virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
 static int icCardRecvFunc(unsigned char * data, int len);
 static int openDoorKeyUp(pGpioPinState state);
@@ -43,13 +45,25 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer = crateHardWareServer(cpu_ver);
 	if (hardWareServer == NULL)
 		goto fail0;
+	virtualHardWareServer =  crateVirtualHWServer();
+	if(virtualHardWareServer == NULL)
+	{
+		LOGE("fail to crateVirtualHWServer!\n");
+	}else {
+
+		virtualHardWareServer->setPirUpFunc(virtualHardWareServer,pirUp);
+		virtualHardWareServer->setIcCardRawUpFunc(virtualHardWareServer,icCardRecvFunc);
+		virtualHardWareServer->setKeyBoardUpFunc(virtualHardWareServer,KeyEventUp);
+	}
 	JavaMethodServer = CallbackJavaMethodInit(env, obj, "systemCallBack");
 	if (JavaMethodServer == NULL)
 		goto fail1;
 
 	hardWareServer->setIcCardRawUpFunc(hardWareServer, icCardRecvFunc);
+
 	hardWareServer->setOpenDoorKeyUpFunc(hardWareServer, openDoorKeyUp);
 	hardWareServer->setPirUpFunc(hardWareServer, pirUp);
+
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
 	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
@@ -74,6 +88,7 @@ static void KeyEventUp(int code, int value) {
 		LOGE("code value is too big");
 		return;
 	}
+	LOGD("code:%d value:%d",code,value);
 	upData[0] = UI_KEYBOARD_EVENT;
 	upData[1] = getMapKeyCode(code);
 	upData[2] = value;
@@ -90,11 +105,12 @@ static int pirUp(PIR_STATE state) {
 	return 0;
 }
 
-static int openDoorKeyUp(pGpioPinState state) {
-	LOGE("OptoSensorUp:%s", state->state==0?"抬起":"按下");
+static int openDoorKeyUp(pGpioPinState pinState) {
+	LOGE("OptoSensorUp");
 	return 0;
 }
 static int icCardRecvFunc(unsigned char * data, int len) {
+	getUtilsOps()->printData(data,len);
 	char valid[128] = { 0 };
 	union {
 		char buf[sizeof(uint32_t)];

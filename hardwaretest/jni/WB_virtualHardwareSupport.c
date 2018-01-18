@@ -55,6 +55,8 @@ typedef struct {
     T_InterruptFunc	 openDoorKeyUpFunc;
     T_InterruptFunc  optoSensorUpFunc;
     IcRecvFunc	     icCardRawUpFunc;
+    KeyEventUpFunc   keyboardFunc;
+
 }VirtualHWServer, *pVirtualHWServer;
 
 static int setPirUpFunc
@@ -65,6 +67,7 @@ static int setOptoSensorUpFunc
 				(struct  VirtualHWops * ops ,T_InterruptFunc optoSensorCallBack );
 static int setIcCardRawUpFunc
 			(struct  VirtualHWops *ops ,IcRecvFunc ICCardALGCallBack);
+static int setKeyBoardUpFunc(struct  VirtualHWops *ops,KeyEventUpFunc keyboardFunc);
 
 static  int udpRecvFunc(unsigned char* data ,unsigned int size);
 static int _dialing(char num);
@@ -81,6 +84,7 @@ static VirtualHWops ops = {
 		.setPirUpFunc = setPirUpFunc,
 		.setOpenDoorKeyUpFunc = setOpenDoorKeyUpFunc,
 		.setOptoSensorUpFunc = setOptoSensorUpFunc,
+		.setKeyBoardUpFunc = setKeyBoardUpFunc,
 };
 static pVirtualHWServer vHWServer;
 
@@ -168,10 +172,25 @@ static void * do_callout(pThreadArg arg)
 {
 		if(arg == NULL)
 			return NULL;
-		_dialing('0');sleep(1);_dialing('1');sleep(1);
-		_dialing('0');sleep(1);_dialing('1');sleep(1);
+
+		if(vHWServer != NULL)
+		{
+			vHWServer->keyboardFunc(5,1);
+			vHWServer->keyboardFunc(5,0);
+			sleep(1);
+			vHWServer->keyboardFunc(30,1);
+			vHWServer->keyboardFunc(30,0);
+			sleep(1);
+			vHWServer->keyboardFunc(5,1);
+			vHWServer->keyboardFunc(5,0);
+			sleep(1);
+			vHWServer->keyboardFunc(30,1);
+			vHWServer->keyboardFunc(30,0);
+			sleep(1);
+		}
 		sleep(*(int*)(arg->data));
-		_dialing('#');
+		vHWServer->keyboardFunc(4,1);
+		vHWServer->keyboardFunc(4,0);
 		if(arg->data != NULL)
 			free(arg->data);
 		free(arg);
@@ -247,7 +266,14 @@ static int setOptoSensorUpFunc
 	pthis->optoSensorUpFunc = optoSensorCallBack;
 	return 0;
 }
-
+static int setKeyBoardUpFunc(struct  VirtualHWops *ops,KeyEventUpFunc keyboardFunc)
+{
+	pVirtualHWServer pthis = (pVirtualHWServer)ops;
+		if(pthis == NULL )
+			return -1;
+	pthis->keyboardFunc = keyboardFunc;
+	return 0;
+}
 static int setIcCardRawUpFunc
 			(struct  VirtualHWops *ops ,IcRecvFunc ICCardALGCallBack)
 {
@@ -263,18 +289,22 @@ static  int udpRecvFunc(unsigned char* data ,unsigned int size)
 	if(data == NULL || size< sizeof(T_Comm_Head))
 		return size;
 	T_Comm_Head * pHead = (T_Comm_Head *)data;
-
+	getUtilsOps()->printData(data,size);
+	pHead->dataStart.dtatLen = ntohl(pHead->dataStart.dtatLen);
 	if(pHead->ackType == NOT_ACK)
 	{
 		switch(pHead->cmd)
 		{
 			case SIM_CALL_OUT:
+				 LOGD("SIM_CALL_OUT time:%d",pHead->dataStart.dataStart);
 				     callout(pHead->dataStart.dataStart);
 				break;
 			case SIM_SWIPNG_CARD:
+				 LOGD("SIM_SWIPNG_CARD len:%d",pHead->dataStart.dtatLen);
 					 swipngCard(&pHead->dataStart.dataStart,pHead->dataStart.dtatLen);
 				break;
 			case SIM_PEOPHE_CLOSE:
+					 LOGD("SIM_PEOPHE_CLOSE time:%d",pHead->dataStart.dataStart);
 				     peopheClose(pHead->dataStart.dataStart);
 				break;
 			default:

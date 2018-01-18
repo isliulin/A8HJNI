@@ -5,9 +5,11 @@ import com.welbell.hardware.HardWareUpEvent;
 import com.welbell.hardware.HardwareSupport;
 import com.wlbell.hardwaretest.R;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.util.Log;
+import android.view.View;
 
 public class MainActivity extends Activity implements HardWareUpEvent{
 
@@ -58,6 +60,9 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		//重启机器
 		//hardwareResource.reboot();
 	}
+	
+
+
 	@Override
 	public void someoneCloseEvent() {
 		// TODO Auto-generated method stub
@@ -71,7 +76,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	@Override
 	public void icCardBandAlgEvent(String icCardID) {
 		// TODO Auto-generated method stub
-		
+		Log.e("有人刷卡了，卡号:",icCardID);
 	}
 	@Override
 	public void icCardBandRawEvent(byte[] icCardID) {
@@ -81,6 +86,8 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	@Override
 	public void keyBoardEvent(int code, int value) {
 		// TODO Auto-generated method stub
+		
+			//this.systemNavBar(false);
 		Log.e("keyBoardEvent"," code:"+code+
 			" value:"+(value==1?"down":"up"));
 		

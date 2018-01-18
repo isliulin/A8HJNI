@@ -1,27 +1,12 @@
 #ifndef  __WB_VIRTUAL_HARDWARESUPPORT_H
 #define  __WB_VIRTUAL_HARDWARESUPPORT_H
+#include "WB_pirSupport.h"
+#include "WB_icDoorCard.h"
+#include "WB_keyboard.h"
+#include "gpio/gpioServer.h"
+#include "gpio/hwInterfaceManage.h"
 
 
-
-
-
-typedef  enum {
-	PIR_NEAR  = 0,
-	PIR_LEAVE = 1,
-}PIR_STATE;
-typedef struct {
-	unsigned int pin;
-	unsigned int state;
-	void *interruptArg;
-}GpioPinState,*pGpioPinState;
-typedef union {
- 		char buf[sizeof(unsigned int)];
- 		unsigned int id;
-}intChar_union;
-
-typedef int (*IcRecvFunc)(unsigned char *,int);
-typedef void(*WBPirCallBackFunc)(PIR_STATE );
-typedef int (*T_InterruptFunc)(pGpioPinState );
 
 typedef struct VirtualHWops{
 
@@ -33,6 +18,7 @@ typedef struct VirtualHWops{
 		int (*setOptoSensorUpFunc)(struct  VirtualHWops *,T_InterruptFunc);
 		//设置IC卡数据回调函数
 		int (*setIcCardRawUpFunc)(struct  VirtualHWops *,IcRecvFunc);
+		int (*setKeyBoardUpFunc)(struct  VirtualHWops *,KeyEventUpFunc);
 }VirtualHWops,*pVirtualHWops;
 
 
