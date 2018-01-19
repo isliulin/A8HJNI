@@ -14,7 +14,7 @@ LOCAL_SRC_FILES +=  taskManage/threadManage.c taskManage/timerTaskManage.c
 
 LOCAL_SRC_FILES += A8DeviceControl.c JNI_OnLoad.c \
 				   WB_icDoorCard.c WB_pirSupport.c WB_hardwareSupport.c WB_keyboard.c
-LOCAL_SRC_FILES += WB_virtualHardwareSupport.c
+LOCAL_SRC_FILES += WB_virtualHardwareSupport.c WB_guardThread.c
 
 
 				   

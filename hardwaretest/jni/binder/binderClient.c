@@ -10,11 +10,29 @@
 
 #define SERVER_NAME "welbell_nativeserver"
 #define WELBELL_SVR_CMD_RUNSCRIPT  0X00
+#define WELBELL_SVR_CMD_HEARTBEAT  0X01
 typedef struct BinderServerPack{
 	BinderClientOps ops;
 	uint32_t handle;
 	struct binder_state *bs;
 }BinderServerPack,*pBinderServerPack;
+static int sendHeartbeat(struct BinderClientOps * ops,const char * str)
+{
+	pBinderServerPack  pack = (pBinderServerPack)ops;
+		if(pack == NULL)
+			return -1;
+		unsigned iodata[512/4];
+		struct binder_io msg, reply;
+		int ret;
+		bio_init(&msg, iodata, sizeof(iodata), 4);
+		bio_put_uint32(&msg, 0);  // strict mode header
+	    bio_put_string16_x(&msg, str);
+		if (binder_call(pack->bs, &msg, &reply, pack->handle, WELBELL_SVR_CMD_HEARTBEAT))
+			return -1;
+		ret = bio_get_uint32(&reply);
+		binder_done(pack->bs, &msg, &reply);
+		return ret;
+}
 static int runScript(pBinderClientOps ops,char *scriptName)
 {
 	pBinderServerPack  pack = (pBinderServerPack)ops;
@@ -27,7 +45,7 @@ static int runScript(pBinderClientOps ops,char *scriptName)
 	bio_put_uint32(&msg, 0);  // strict mode header
     bio_put_string16_x(&msg, scriptName);
 	if (binder_call(pack->bs, &msg, &reply, pack->handle, WELBELL_SVR_CMD_RUNSCRIPT))
-		return 0;
+		return -1;
 	ret = bio_get_uint32(&reply);
 	binder_done(pack->bs, &msg, &reply);
 	return ret;
@@ -72,6 +90,7 @@ pBinderClientOps binder_getServer(void)
 	    goto fail0;
 	}
 	pack->ops.runScript = runScript;
+	pack->ops.sendHeartbeat = sendHeartbeat;
 	return  &pack->ops;
 	fail0:
 		free(pack->bs);

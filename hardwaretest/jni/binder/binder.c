@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <linux/types.h>
-#include<stdbool.h>
+#include <stdbool.h>
 #include <string.h>
 #include "binder/binder.h"
 #include "common/debugLog.h"
@@ -367,7 +367,6 @@ int binder_call(struct binder_state *bs,
             fprintf(stderr,"binder: ioctl failed (%s)\n", strerror(errno));
             goto fail;
         }
-
         res = binder_parse(bs, reply, (uintptr_t) readbuf, bwr.read_consumed, 0);
         if (res == 0) return 0;
         if (res < 0) goto fail;
