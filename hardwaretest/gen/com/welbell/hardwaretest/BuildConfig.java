@@ -1,5 +1,5 @@
 /** Automatically generated file. DO NOT MODIFY */
-package com.wlbell.hardwaretest;
+package com.welbell.hardwaretest;
 
 public final class BuildConfig {
     public final static boolean DEBUG = true;

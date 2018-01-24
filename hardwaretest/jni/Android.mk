@@ -5,8 +5,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := NativeHardwareSupport
 
 
-LOCAL_SRC_FILES +=  binder/binder.c 		binder/binderClient.c
+//LOCAL_SRC_FILES +=  binder/binder.c 		binder/binderClient.c
 LOCAL_SRC_FILES += 	common/bufferManage.c	common/CallbackJavaMethod.c common/Utils.c common/netUdpServer.c
+LOCAL_SRC_FILES += 	common/communicationServer.c common/nativeNetServer.c
 
 LOCAL_SRC_FILES +=  gpio/hwInterfaceManage.c    gpio/gpioServer.c
 LOCAL_SRC_FILES +=  serial/serialServer.c
@@ -22,7 +23,7 @@ LOCAL_CFLAGS += -O3 -DNDEBUG -fstrict-aliasing
 #LOCAL_MULTILIB := both					
 LOCAL_LDLIBS   := -llog 
 
-#LOCAL_LDFLAGS := -llog
+
 # -lGLESv2		
 #				-L/android/SDK/SmartHome/A8_Pad/android/out/target/product/welbell-A8_Pad/system/lib -lcutils -lutils -lbinder \
 #				-lui -lgui -landroid_runtime -lstagefright_foundation 

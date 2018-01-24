@@ -9,11 +9,11 @@ import com.welbell.hardware.controlHardwareCmd;
 
 import android.util.Log;
 
-  public class HardwareSupport {
+public class HardwareSupport {
 
 	static final String TAG = "HardwareSupport";
 	HardWareUpEvent upEvent;
-	static  private List<HardWareUpEvent> upEventList;
+	static private List<HardWareUpEvent> upEventList;
 
 	public HardwareSupport() {
 		a8HardwareControlInit();
@@ -29,7 +29,7 @@ import android.util.Log;
 	}
 
 	private void systemCallBack(byte[] Data) {
-		if (Data == null)
+		if (Data == null || upEventList == null)
 			return;
 		byte[] eventData = new byte[Data.length - 1];
 		System.arraycopy(Data, 1, eventData, 0, Data.length - 1);
@@ -37,8 +37,10 @@ import android.util.Log;
 		switch (event) {
 		case CallBackState.UI_INFRARED_DEVICE:
 			if (eventData[0] == 1) {
+
 				for (HardWareUpEvent temp : upEventList) {
-					temp.someoneCloseEvent();
+					if (temp != null)
+						temp.someoneCloseEvent();
 				}
 			}
 			break;

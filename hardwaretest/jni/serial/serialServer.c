@@ -264,7 +264,7 @@ static	int _readAndWait(struct SerialOps* base,unsigned char * lpBuff,int nBuffS
 }
 static	int _read(int fd,unsigned char * lpBuff,int nBuffSize)
 {
-	int totol,len = 0;
+	int total,len = 0;
 	int ret;
 	if (fd < 0) {
 		return -1;
@@ -272,13 +272,13 @@ static	int _read(int fd,unsigned char * lpBuff,int nBuffSize)
 	if (lpBuff == 0 || nBuffSize <= 0) {
 		return -1;
 	}
-	ioctl(fd, FIONREAD, &totol);
-	if(totol <=0)
+	ioctl(fd, FIONREAD, &total);
+	if(total <=0)
 		return 0;
-	totol = totol > nBuffSize ? nBuffSize : totol;
-	while (len < totol) {
+	total = total > nBuffSize ? nBuffSize : total;
+	while (len < total) {
 
-		ret = read(fd, lpBuff + len, totol - len);
+		ret = read(fd, lpBuff + len, total - len);
 		if (ret <= 0) {
 			LOGE("fail to read ");
 			break;

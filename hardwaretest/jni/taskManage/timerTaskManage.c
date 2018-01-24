@@ -37,8 +37,9 @@ static int start(struct TimerOps* base)
 	}
 	struct itimerspec it;
 	pthread_mutex_lock(&timerServer->mutex);
-	if(timerServer->timerid  == NULL)
+	if(timerServer->timerid  == 0)
 	{
+
 		memset(&hard_evp, 0, sizeof(struct sigevent));
 	    hard_evp.sigev_value.sival_ptr = timerServer;
 	    hard_evp.sigev_notify = SIGEV_THREAD;
@@ -53,14 +54,16 @@ static int start(struct TimerOps* base)
 	}
 	if(timerServer->loopTime <= 0 ){
 		it.it_interval.tv_sec =  0;
-		it.it_interval.tv_nsec = 1;
+		it.it_interval.tv_nsec = 1000;
 	}else{
+
 		it.it_interval.tv_sec =  (timerServer->loopTime/1000);
 	    it.it_interval.tv_nsec = (timerServer->loopTime%1000)*1000*1000LL;
+
 	}
 	it.it_value.tv_sec =  (timerServer->startTime/1000);
 	if(timerServer->startTime <= 0) {
-		it.it_value.tv_nsec = 1;
+		it.it_value.tv_nsec = 1000;
 	}else
 	    it.it_value.tv_nsec = (timerServer->startTime%1000)*1000*1000LL;
 
@@ -89,10 +92,6 @@ static int changeParameter (struct TimerOps* base,int startTime, int loopTime,in
 	timerServer->loopTime = loopTime;
 	pthread_mutex_unlock(&timerServer->mutex);
 
-
-
-
-
 	return 0;
 }
 static int stop(struct TimerOps* base)
@@ -103,10 +102,10 @@ static int stop(struct TimerOps* base)
 		return -1;
 	}
 	pthread_mutex_lock(&timerServer->mutex);
-	if( timerServer->timerid !=  NULL){
+	if( timerServer->timerid !=  0){
 		timer_delete(timerServer->timerid);
 	}
-	timerServer->timerid = NULL;
+	timerServer->timerid = 0;
 	pthread_mutex_unlock(&timerServer->mutex);
 
 	return 0;
@@ -133,10 +132,19 @@ pTimerOps createTimerTaskServer( int startTime, int loopTime,int loopCount,pThre
 
 	timerServer->loopCount = loopCount;
 	memset(&hard_evp, 0, sizeof(struct sigevent));
+
     hard_evp.sigev_value.sival_ptr = timerServer;
+#if 1
     hard_evp.sigev_notify = SIGEV_THREAD;
     hard_evp.sigev_notify_function = notify_function;
     hard_evp.sigev_notify_attributes = NULL;//&attr;
+#else
+    hard_evp.sigev_notify = SIGEV_SIGNAL;
+    hard_evp.sigev_signo = SIGUSR1;
+    signal(SIGUSR1, notify_function);
+#endif
+
+
     if (timer_create(CLOCK_MONOTONIC, &hard_evp, &(timerServer->timerid)) == -1)
     {  
         printf("fail to timer_create");  
@@ -172,8 +180,11 @@ static void notify_function(union sigval signo)
 	pthread_mutex_lock(&timerServer->mutex);
 	if( (timerServer->remainCount == 0) || (timerServer->remainCount < -1))
 	{
-		timer_delete(timerServer->timerid);
-		timerServer->timerid = NULL;
+		LOGE("timer_delete timerServer->remainCount:%d!",timerServer->remainCount);
+		if(timerServer->timerid != 0 ){
+			timer_delete(timerServer->timerid);
+			timerServer->timerid = 0;
+		}
 		pthread_mutex_unlock(&timerServer->mutex);
 		return;	
 	}
@@ -187,9 +198,9 @@ void destroyTimerTaskServer(pTimerOps *timerServer )
 {	
 	pTimerServer  tempP = (pTimerServer)(*timerServer);
 	if((tempP!=NULL)){
-		if(tempP->timerid != NULL ){
+		if(tempP->timerid != 0 ){
 			timer_delete(tempP->timerid);
-			tempP->timerid = NULL;
+			tempP->timerid = 0;
 		}
 		if(tempP->handleArg != NULL )
 				free(tempP->handleArg);

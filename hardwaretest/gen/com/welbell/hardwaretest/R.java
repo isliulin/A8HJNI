@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package com.wlbell.hardwaretest;
+package com.welbell.hardwaretest;
 
 public final class R {
     public static final class attr {

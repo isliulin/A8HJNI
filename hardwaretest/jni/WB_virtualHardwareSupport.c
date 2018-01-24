@@ -5,7 +5,8 @@
 #include "WB_virtualHardwareSupport.h"
 #include "common/netUdpServer.h"
 #include "common/Utils.h"
-#include "binder/binderClient.h"
+#include "common/nativeNetServer.h"
+#include "common/debugLog.h"
 
 typedef struct ThreadArg{
 	void *data;
@@ -50,7 +51,8 @@ typedef struct {
 typedef struct {
 	VirtualHWops ops;
 	pUdpOps udpServer;
-	pBinderClientOps binderClient;
+
+	pNativeNetServerOps netServer;
     WBPirCallBackFunc pirCallBackFunc;
     T_InterruptFunc	 openDoorKeyUpFunc;
     T_InterruptFunc  optoSensorUpFunc;
@@ -115,9 +117,9 @@ static int _dialing(char num)
 		return -1;
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 1 %u 1",keyNum );
-	if(vHWServer->binderClient)
+	if(vHWServer->netServer)
 	{
-		vHWServer->binderClient->runScript(vHWServer->binderClient,cmdStr);
+		vHWServer->netServer->runScript(vHWServer->netServer,cmdStr);
 	}else{
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
@@ -126,9 +128,9 @@ static int _dialing(char num)
 	}
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 0 0 0" );
-	if(vHWServer->binderClient)
+	if(vHWServer->netServer)
 	{
-		vHWServer->binderClient->runScript(vHWServer->binderClient,cmdStr);
+		vHWServer->netServer->runScript(vHWServer->netServer,cmdStr);
 	}else{
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
@@ -137,9 +139,9 @@ static int _dialing(char num)
 	}
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 1 %u 0",keyNum );
-	if(vHWServer->binderClient)
+	if(vHWServer->netServer)
 	{
-		vHWServer->binderClient->runScript(vHWServer->binderClient,cmdStr);
+		vHWServer->netServer->runScript(vHWServer->netServer,cmdStr);
 	}else{
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
@@ -147,9 +149,9 @@ static int _dialing(char num)
 	}
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 0 0 0" );
-	if(vHWServer->binderClient)
+	if(vHWServer->netServer)
 	{
-		vHWServer->binderClient->runScript(vHWServer->binderClient,cmdStr);
+		vHWServer->netServer->runScript(vHWServer->netServer,cmdStr);
 	}else{
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
@@ -346,7 +348,7 @@ pVirtualHWops crateVirtualHWServer(void)
 		goto fail1;
 	vHWServer->udpServer->setHandle(vHWServer->udpServer,udpRecvFunc,NULL,NULL);
 
-	vHWServer->binderClient = binder_getServer();
+	vHWServer->netServer = createNativeNetServer();
 	vHWServer->ops = ops;
 	return (pVirtualHWops)vHWServer;
 fail1:
@@ -358,8 +360,8 @@ fail0:
 void destroyVirtualHWServer(pVirtualHWops *server)
 {
 
-	if(vHWServer->binderClient)
-		binder_releaseServer(&vHWServer->binderClient);
+	if(vHWServer->netServer)
+		destroyNativeNetServer(&vHWServer->netServer);
 	if(vHWServer->udpServer)
 		destroyUdpServer(&vHWServer->udpServer);
 	free(vHWServer);

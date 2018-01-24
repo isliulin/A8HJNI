@@ -1,28 +1,32 @@
 #include <linux/stddef.h>
 #include "WB_guardThread.h"
 #include "taskManage/timerTaskManage.h"
-#include "binder/binderClient.h"
+#include "common/nativeNetServer.h"
+#include "common/communicationServer.h"
+#include "common/netUdpServer.h"
+#include "common/debugLog.h"
 
+#define SERVER_PORT 	10800
+#define CLIENT_HB_PORT 	10900
+#define SERVER_IP_ADDR   (inet_addr("127.0.0.1"))
 
 
 typedef struct TimerArg{
 	char heartbeatString[128];
-	pBinderClientOps binderClient;
+	pNativeNetServerOps netServer;
+
 }TimerArg,*pTimerArg;
 typedef struct PackageInfo{
 	char packageName[32];
 	char mainClassName[32];
 	int  heartbeatTime;
 	pTimerOps timeTaskId;
-
 }PackageInfo,*pPackageInfo;
 
 typedef struct GuardThreadServer{
 	GuardThreadOps ops;
 	PackageInfo packAgeList[6];
-	pBinderClientOps binderClient;
-
-
+	pNativeNetServerOps netServer;
 }GuardThreadServer,*pGuardThreadServer;
 static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 		const char *packageName,const char * mainClassName,int heartbeatTime );
@@ -30,14 +34,18 @@ static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 static GuardThreadOps ops = {
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
 
+
 };
+
 static void  sendHeartbeatToserver(void *arg)
 {
 	pTimerArg timerArg  = (pTimerArg)arg;
-	if(timerArg == NULL&&timerArg->binderClient == NULL)
+	if(timerArg == NULL||timerArg->netServer == NULL)
 		return ;
-	timerArg->binderClient->sendHeartbeat(timerArg->binderClient,
-				timerArg->heartbeatString);
+
+
+	timerArg->netServer->sendHeartbeat(timerArg->netServer,timerArg->heartbeatString);
+
 	return ;
 
 }
@@ -63,8 +71,11 @@ static int stopHeartbeat(struct GuardThreadOps* ops,
 		goto fail0;
 	}
 	sprintf(heartbeatString,"state:1;pack:%s;class:%s;",packageName,mainClassName);
-
-	return pthis->binderClient->sendHeartbeat(pthis->binderClient,heartbeatString);
+	if(pthis->netServer == NULL)
+	{
+		goto fail0;
+	}
+	return pthis->netServer->sendHeartbeat(pthis->netServer,heartbeatString);
 
 fail0:
 	return -1;
@@ -85,27 +96,29 @@ static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 			sizeof(pthis->packAgeList)/sizeof(pthis->packAgeList[0]));
 	if(index < 0)
 	{
+		LOGE("fail to findEmptyMember");
 		goto fail0;
 	}
 	strcpy(pthis->packAgeList[index].packageName,
 			packageName);
 	strcpy(pthis->packAgeList[index].mainClassName,
 			mainClassName);
-	pthis->packAgeList[index].heartbeatTime = heartbeatTime;
+	pthis->packAgeList[index].heartbeatTime = heartbeatTime*1000;
 
 	sprintf(heartbeatString,"state:0;pack:%s;class:%s;time:%d;",packageName,mainClassName,heartbeatTime);
 
-	LOGD("heartbeatString:%s",heartbeatString);
 
-	timerArg.binderClient = pthis->binderClient;
+
+	timerArg.netServer = pthis->netServer;
 	strcpy(timerArg.heartbeatString,heartbeatString);
-	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(0, heartbeatTime,-1,sendHeartbeatToserver,
+	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(10, heartbeatTime*1000,-1,sendHeartbeatToserver,
 						&timerArg,sizeof(TimerArg));
-
 	if(pthis->packAgeList[index].timeTaskId == NULL)
 	{
+		LOGE("fail to createTimerTaskServer");
 		goto fail0;
 	}
+	pthis->packAgeList[index].timeTaskId->start(pthis->packAgeList[index].timeTaskId);
 
 fail0:
 	return -1;
@@ -120,15 +133,19 @@ pGuardThreadOps  createGuardThreadServer(void)
 		goto fail0;
 	}
 	bzero(server,sizeof(GuardThreadServer));
-	server->binderClient = binder_getServer();
-	if(server->binderClient  == NULL)
+
+	server->netServer = createNativeNetServer();
+	if(server->netServer == NULL)
 	{
-		LOGE("fial to binder_getServer !");
+		LOGE("fial to createUdpServer !!!!");
 		goto fail1;
 	}
+
+
 	server->ops = ops;
 
 	return (pGuardThreadOps)server;
+
 fail1:
 	free(server);
 fail0:
@@ -151,9 +168,7 @@ void destroyGuardThreadServer(pGuardThreadOps * server)
 			bzero(&pthis->packAgeList[i],sizeof(PackageInfo));
 		}
 	}
-	if(pthis->binderClient){
-		binder_releaseServer(&pthis->binderClient);
-	}
+
 	*server = NULL;
 	fail0:
 		return;

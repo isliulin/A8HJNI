@@ -27,7 +27,8 @@
 #include "WB_hardwareSupport.h"
 #include "WB_keyboard.h"
 #include "WB_virtualHardwareSupport.h"
-
+#include "WB_guardThread.h"
+static pGuardThreadOps guardThreadOps;
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops   virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
@@ -65,6 +66,15 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer->setPirUpFunc(hardWareServer, pirUp);
 
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
+
+	guardThreadOps = createGuardThreadServer();
+	if(guardThreadOps == NULL)
+	{
+		LOGE("fail to createGuardThreadServer");
+	}else {
+		guardThreadOps->setGuardPackagenameAndMainclassname
+			(guardThreadOps,"com.welbell.hardwaretest","com.welbell.hardwaretest.MainActivity",3);
+	}
 	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
 	fail2: free(JavaMethodServer);

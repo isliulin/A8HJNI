@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <linux/types.h>
-#include <stdbool.h>
 #include <string.h>
 #include "binder/binder.h"
 #include "common/debugLog.h"
@@ -106,7 +105,7 @@ struct binder_state *binder_open(size_t mapsize)
 {
     struct binder_state *bs;
     struct binder_version vers;
-
+    LOGD("size_t = %d\n",sizeof(size_t));
     bs = malloc(sizeof(*bs));
     if (!bs) {
         errno = ENOMEM;
@@ -126,8 +125,8 @@ struct binder_state *binder_open(size_t mapsize)
     	LOGE("binder: driver version differs from user space %d\n",vers.protocol_version);
         goto fail_open;
     }
-
-
+    //设置成非阻塞模式
+    fcntl(bs->fd,F_SETFL,fcntl(bs->fd,F_GETFL)|O_NONBLOCK);
     bs->mapsize = mapsize;
     bs->mapped = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, bs->fd, 0);
     if (bs->mapped == MAP_FAILED) {
@@ -170,7 +169,7 @@ int binder_write(struct binder_state *bs, void *data, size_t len)
     bwr.read_buffer = 0;
     res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
     if (res < 0) {
-        fprintf(stderr,"binder_write: ioctl failed (%s)\n",
+        LOGE(stderr,"binder_write: ioctl failed (%s)\n",
                 strerror(errno));
     }
     return res;
@@ -360,11 +359,9 @@ int binder_call(struct binder_state *bs,
         bwr.read_size = sizeof(readbuf);
         bwr.read_consumed = 0;
         bwr.read_buffer = (uintptr_t) readbuf;
-
         res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
-
         if (res < 0) {
-            fprintf(stderr,"binder: ioctl failed (%s)\n", strerror(errno));
+            LOGE(stderr,"binder: ioctl failed (%s)\n", strerror(errno));
             goto fail;
         }
         res = binder_parse(bs, reply, (uintptr_t) readbuf, bwr.read_consumed, 0);

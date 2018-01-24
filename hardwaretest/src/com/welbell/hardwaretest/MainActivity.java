@@ -3,7 +3,7 @@ package com.welbell.hardwaretest;
 
 import com.welbell.hardware.HardWareUpEvent;
 import com.welbell.hardware.HardwareSupport;
-import com.wlbell.hardwaretest.R;
+import com.welbell.hardwaretest.R;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -19,20 +19,16 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		//获取版本号
+
 		setContentView(R.layout.activity_main);
 		String version;
-		//获取版本号
+	
 		version = hardwareResource.getHardWareVersion();
 		//添加接口
 		hardwareResource.addEventCallBack(this);
 		//以root权限执行shell脚本:设置IP地址
 		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
-		try {
-			Thread.sleep(1);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		/*hardwareResource.executeRootShell("am force-stop com.wlbell.hardwaretest&&" +
 				"pm install -r /mnt/sdcard/app.apk&&" +
 				"am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
@@ -45,20 +41,19 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		
 		*/
 		
-		
-		
-		//开启摄像头灯
-		hardwareResource.cameraLightControl(true);
-		//开门
-		hardwareResource.doorLockControl(true);
-		//开启键盘灯
-		hardwareResource.keyboardLightControl(true);
-		//开启红外摄像头灯
-		hardwareResource.ifcameraLightControl(true);
+//		//开启摄像头灯
+//		hardwareResource.cameraLightControl(true);
+//		//开门
+//		hardwareResource.doorLockControl(true);
+//		//开启键盘灯
+//		hardwareResource.keyboardLightControl(true);
+//		//开启红外摄像头灯
+//		hardwareResource.ifcameraLightControl(true);
 		//关闭屏幕
 		//hardwareResource.screenBlacklightControl(false);
 		//重启机器
 		//hardwareResource.reboot();
+
 	}
 	
 
@@ -77,6 +72,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	public void icCardBandAlgEvent(String icCardID) {
 		// TODO Auto-generated method stub
 		Log.e("有人刷卡了，卡号:",icCardID);
+		
 	}
 	@Override
 	public void icCardBandRawEvent(byte[] icCardID) {

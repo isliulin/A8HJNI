@@ -1,6 +1,6 @@
 
-#ifndef __GPIO_OPS__H
-#define __GPIO_OPS__H
+#ifndef __GPIO_SERVER__H
+#define __GPIO_SERVER__H
 
 
 #define GPIO_DIR_OUT 1

@@ -8,10 +8,10 @@
 #include "WB_hardwareSupport.h"
 #include "WB_icDoorCard.h"
 #include "WB_pirSupport.h"
-#include "binder/binderClient.h"
+#include "common/nativeNetServer.h"
 #include "gpio/gpioServer.h"
 #include "gpio/hwInterfaceManage.h"
-
+#include "common/debugLog.h"
 
 typedef  struct WB_hardWareServer {
 	WB_hardWareOps  ops;
@@ -22,7 +22,8 @@ typedef  struct WB_hardWareServer {
 	pGpioOps LCDLightServer;
 	pGpioOps camerLightServer;
 	pGpioOps keyboardLightServer;
-	pBinderClientOps binderClient;
+	//pBinderClientOps binderClient;
+	pNativeNetServerOps netServer;
 	pIcDoorCardOps  doorCardServer;
 	pWBPir_ops	pirServer;
 	pHwInterfaceOps interfaceOps;
@@ -128,9 +129,9 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 				return -1;
-	if(hardWareServer->binderClient){
-		return hardWareServer->binderClient->runScript(
-					hardWareServer->binderClient,cmd);
+	if(hardWareServer->netServer){
+		return hardWareServer->netServer->runScript(
+					hardWareServer->netServer,cmd);
 	}else
 	{
 		char cmdStr[128] = {0};
@@ -147,9 +148,9 @@ static int reboot (struct  WB_hardWareOps * ops)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 			return -1;
-	if(hardWareServer->binderClient){
-		return hardWareServer->binderClient->runScript(
-				hardWareServer->binderClient,"reboot");
+	if(hardWareServer->netServer){
+		return hardWareServer->netServer->runScript(
+				hardWareServer->netServer,"reboot");
 	}else {
 		return system("su -c reboot");
 	}
@@ -255,9 +256,10 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 		goto fail7;
 	}
 
-	hardWareServer->binderClient = binder_getServer();
-	if(hardWareServer->binderClient == NULL){
-		LOGE("fail to malloc binderClient!");
+
+	hardWareServer->netServer = createNativeNetServer();
+	if(hardWareServer->netServer == NULL){
+		LOGE("fail to malloc netServer!");
 	//	goto fail7;
 	}
 
@@ -303,9 +305,8 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 		destroyIcDoorCardOpsServer(&hardWareServer->doorCardServer);
 	if(hardWareServer->keyBoardServer)
 		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
-	if(hardWareServer->binderClient)
-		binder_releaseServer(&hardWareServer->binderClient);
-
+	if(hardWareServer->netServer)
+		destroyNativeNetServer(&hardWareServer->netServer);
 
 	free(hardWareServer);
 		*ops = NULL;
