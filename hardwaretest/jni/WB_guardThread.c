@@ -5,6 +5,7 @@
 #include "common/communicationServer.h"
 #include "common/netUdpServer.h"
 #include "common/debugLog.h"
+#include "binder/binderClient.h"
 
 #define SERVER_PORT 	10800
 #define CLIENT_HB_PORT 	10900
@@ -13,8 +14,8 @@
 
 typedef struct TimerArg{
 	char heartbeatString[128];
-	pNativeNetServerOps netServer;
-
+	//pNativeNetServerOps netServer;
+	pBinderClientOps binderClient;
 }TimerArg,*pTimerArg;
 typedef struct PackageInfo{
 	char packageName[32];
@@ -26,7 +27,8 @@ typedef struct PackageInfo{
 typedef struct GuardThreadServer{
 	GuardThreadOps ops;
 	PackageInfo packAgeList[6];
-	pNativeNetServerOps netServer;
+	//pNativeNetServerOps netServer;
+	pBinderClientOps	binderClient;
 }GuardThreadServer,*pGuardThreadServer;
 static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 		const char *packageName,const char * mainClassName,int heartbeatTime );
@@ -40,11 +42,11 @@ static GuardThreadOps ops = {
 static void  sendHeartbeatToserver(void *arg)
 {
 	pTimerArg timerArg  = (pTimerArg)arg;
-	if(timerArg == NULL||timerArg->netServer == NULL)
+	if(timerArg == NULL||timerArg->binderClient == NULL)
 		return ;
 
 
-	timerArg->netServer->sendHeartbeat(timerArg->netServer,timerArg->heartbeatString);
+	timerArg->binderClient->sendHeartbeat(timerArg->binderClient,timerArg->heartbeatString);
 
 	return ;
 
@@ -71,11 +73,11 @@ static int stopHeartbeat(struct GuardThreadOps* ops,
 		goto fail0;
 	}
 	sprintf(heartbeatString,"state:1;pack:%s;class:%s;",packageName,mainClassName);
-	if(pthis->netServer == NULL)
+	if(pthis->binderClient == NULL)
 	{
 		goto fail0;
 	}
-	return pthis->netServer->sendHeartbeat(pthis->netServer,heartbeatString);
+	return pthis->binderClient->sendHeartbeat(pthis->binderClient,heartbeatString);
 
 fail0:
 	return -1;
@@ -106,12 +108,11 @@ static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 	pthis->packAgeList[index].heartbeatTime = heartbeatTime*1000;
 
 	sprintf(heartbeatString,"state:0;pack:%s;class:%s;time:%d;",packageName,mainClassName,heartbeatTime);
+	LOGD("heartbeatString:%s",heartbeatString);
 
-
-
-	timerArg.netServer = pthis->netServer;
+	timerArg.binderClient = pthis->binderClient;
 	strcpy(timerArg.heartbeatString,heartbeatString);
-	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(10, heartbeatTime*1000,-1,sendHeartbeatToserver,
+	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(5, heartbeatTime*1000,-1,1,sendHeartbeatToserver,
 						&timerArg,sizeof(TimerArg));
 	if(pthis->packAgeList[index].timeTaskId == NULL)
 	{
@@ -134,14 +135,13 @@ pGuardThreadOps  createGuardThreadServer(void)
 	}
 	bzero(server,sizeof(GuardThreadServer));
 
-	server->netServer = createNativeNetServer();
-	if(server->netServer == NULL)
+
+	server->binderClient = binder_getServer();
+	if(server->binderClient == NULL)
 	{
-		LOGE("fial to createUdpServer !!!!");
+		LOGE("fial to binder_getServer !!!!");
 		goto fail1;
 	}
-
-
 	server->ops = ops;
 
 	return (pGuardThreadOps)server;
@@ -167,6 +167,13 @@ void destroyGuardThreadServer(pGuardThreadOps * server)
 			destroyTimerTaskServer(&pthis->packAgeList[i].timeTaskId);
 			bzero(&pthis->packAgeList[i],sizeof(PackageInfo));
 		}
+	}
+
+	if(pthis->binderClient)
+	{
+
+
+		binder_releaseServer(&pthis->binderClient);
 	}
 
 	*server = NULL;

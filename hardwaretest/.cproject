@@ -31,6 +31,7 @@
 									<listOptionValue builtIn="false" value="&quot;G:\work\code\JNI项目\A8H_硬件库\A8HJNI\hardwaretest\jni&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;G:\work\tools\android-ndk-r10e\platforms\android-17\arch-arm\usr\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;G:\work\tools\android-ndk-r10e\platforms\android-21\arch-arm64\usr\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;G:\work\tools\android-ndk-r10e\toolchains\arm-linux-androideabi-4.8\prebuilt\windows-x86_64\lib\gcc\arm-linux-androideabi\4.8\include&quot;"/>
 								</option>
 								<inputType id="com.android.gcc.inputType.1046193267" superClass="com.android.gcc.inputType"/>
 							</tool>

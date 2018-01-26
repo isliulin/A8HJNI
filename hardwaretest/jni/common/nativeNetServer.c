@@ -81,6 +81,7 @@ static int sendHeartbeat(struct NativeNetServerOps *ops, const char *str) {
 		return -1;
 	}
 	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_HEARTBEAT, str, strlen(str) + 1);
+	LOGD("msg.len = %d\n",msg.len);
 	return pthis->udpServer->write(pthis->udpServer, msg.buf, msg.len,
 			SERVER_IP_ADDR, SERVER_PORT);
 }

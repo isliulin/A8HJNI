@@ -28,7 +28,19 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		//添加接口
 		hardwareResource.addEventCallBack(this);
 		//以root权限执行shell脚本:设置IP地址
-		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
+		try {
+			Thread.sleep(1);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Log.e("end","11");
+		hardwareResource.executeRootShell("ls");
+		Log.e("end","22");
+		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest  ", "  com.welbell.hardwaretest.MainActivity");
+		Log.e("end","33");
+			hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
 		/*hardwareResource.executeRootShell("am force-stop com.wlbell.hardwaretest&&" +
 				"pm install -r /mnt/sdcard/app.apk&&" +
 				"am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
@@ -62,6 +74,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	public void someoneCloseEvent() {
 		// TODO Auto-generated method stub
 		Log.e("someoneCloseEvent","有人靠近");
+	//	hardwareResource.executeRootShell("ifconfig eth0 192.168.1.128");
 	}
 	@Override
 	public void doorLockKeyEvent(byte keyState) {
@@ -72,7 +85,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	public void icCardBandAlgEvent(String icCardID) {
 		// TODO Auto-generated method stub
 		Log.e("有人刷卡了，卡号:",icCardID);
-		
+		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.25");
 	}
 	@Override
 	public void icCardBandRawEvent(byte[] icCardID) {

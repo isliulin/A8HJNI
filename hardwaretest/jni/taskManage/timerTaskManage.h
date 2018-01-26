@@ -14,14 +14,12 @@ typedef void (*pThreadFunc)(void *arg );
 typedef struct TimerOps{
 	int (*start)(struct TimerOps*);
 	int (*changeParameter)(struct TimerOps*,int,int,int);
+	int (*changeArg)(struct TimerOps*,void *,int);
 	int (*reset)(struct TimerOps*);
 	int (*stop)(struct TimerOps*);
 }TimerOps,*pTimerOps;
-pTimerOps createTimerTaskServer( int startTime, int loopTime,int loopCount,pThreadFunc taskFunc,void *arg,int dataLen);
+pTimerOps createTimerTaskServer( int startTime, int loopTime,int loopCount,int startThread,pThreadFunc taskFunc,void *arg,int dataLen);
 void destroyTimerTaskServer(pTimerOps *timerServer );
-
-
-
 
 
 #endif

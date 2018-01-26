@@ -145,7 +145,7 @@ static  void * UdpParseThreadFunc(void *arg)
 	int ret = 0;
 	char recvBuf[2046] = {0};
 	char validBuf[2046] = {0};
-	int  recvLen = 0;
+	int  handleLen = 0;
 	int  pullLen = 0;
 	int  validLen;
 	LOGD("UdpParseThreadFunc");
@@ -165,11 +165,11 @@ static  void * UdpParseThreadFunc(void *arg)
 							if(udpServer->recvFunc)
 							{
 								if(udpServer->parseFunc ){
-									recvLen = udpServer->parseFunc(recvBuf,pullLen,validBuf,&validLen);
-									if((recvLen >0) )
+									handleLen = udpServer->parseFunc(recvBuf,pullLen,validBuf,&validLen);
+									if((handleLen >0) )
 									{
 										if( validLen>0 ){
-											ret = udpServer->bufferOps->deleteLeft(udpServer->bufferOps,recvLen);
+											ret = udpServer->bufferOps->deleteLeft(udpServer->bufferOps,handleLen);
 											if(ret < 0)
 											{
 												LOGW("fail to deleteLeft!");
@@ -179,22 +179,28 @@ static  void * UdpParseThreadFunc(void *arg)
 											LOGW("No valid data was found");
 											break;
 										}
+									}else {
+										break;
 									}
 								}else {
-									
-									recvLen = udpServer->recvFunc(recvBuf,pullLen);
-									if(recvLen >0)
+									handleLen = udpServer->recvFunc(recvBuf,pullLen);
+									if(handleLen >0)
 									{
-										ret = udpServer->bufferOps->deleteLeft(udpServer->bufferOps,recvLen);
+										ret = udpServer->bufferOps->deleteLeft(udpServer->bufferOps,handleLen);
 										if(ret < 0)
 										{
 											LOGW("fail to deleteLeft!");
 										}
+									}else{
+										break;
 									}
 								}
+								pullLen -= handleLen;
 							}
-						}
-					}while(pullLen >= sizeof(recvBuf));
+							}else{
+								break;
+							}
+					}while(pullLen >= handleLen);
 				break;
 			case TRI_EXIT:
 					goto exit;

@@ -15,7 +15,7 @@
 typedef struct BinderClientOps{
 	int (*runScript)(struct BinderClientOps *,const char *);
 	int (*getSocketWriteFd)(struct BinderClientOps *);
-
+	int (*sendHeartbeat)(struct BinderClientOps * , const char * );
 }BinderClientOps,*pBinderClientOps;
 
 pBinderClientOps

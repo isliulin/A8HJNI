@@ -5,9 +5,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := NativeHardwareSupport
 
 
-//LOCAL_SRC_FILES +=  binder/binder.c 		binder/binderClient.c
+LOCAL_SRC_FILES +=  binder/binder.c 		binder/binderClient.c
 LOCAL_SRC_FILES += 	common/bufferManage.c	common/CallbackJavaMethod.c common/Utils.c common/netUdpServer.c
-LOCAL_SRC_FILES += 	common/communicationServer.c common/nativeNetServer.c
+LOCAL_SRC_FILES += 	 common/nativeNetServer.c
 
 LOCAL_SRC_FILES +=  gpio/hwInterfaceManage.c    gpio/gpioServer.c
 LOCAL_SRC_FILES +=  serial/serialServer.c

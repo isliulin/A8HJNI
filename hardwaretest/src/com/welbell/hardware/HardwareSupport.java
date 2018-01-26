@@ -140,7 +140,18 @@ public class HardwareSupport {
 		return a8SetKeyValue(controlHardwareCmd.E_EXECURT_SHELL, cmdData,
 				cmdData.length);
 	}
-
+	public int addAPPtoDaemon(String packageName,String mainActivityName){
+		
+		byte [] packName = packageName.getBytes();
+		byte [] space = {' '};
+		byte [] className = mainActivityName.getBytes();
+		byte [] total  = new byte[packName.length+className.length+space.length];
+		System.arraycopy(packName,0,total,0, packName.length);
+		System.arraycopy(space,0,total,packName.length, space.length);
+		System.arraycopy(className,0,total,packName.length+space.length, className.length);
+		return a8SetKeyValue(controlHardwareCmd.E_ADD_GUARD,total,
+				packName.length+className.length+space.length);
+	}
 	public int reboot() {
 		return a8SetKeyValue(controlHardwareCmd.E_RESTART, null, 0);
 	}

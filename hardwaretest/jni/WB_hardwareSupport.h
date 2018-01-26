@@ -42,6 +42,9 @@ typedef struct  WB_hardWareOps{
 	int (*setIcCardRawUpFunc)(struct  WB_hardWareOps *,IcRecvFunc);
 	//设置键盘事件上报函数
 	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
+	//设置需要守护app的包名和主类名
+	int (*setGuardPackagenameAndMainclassname)(struct  WB_hardWareOps *,const char *,const char * );
+
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

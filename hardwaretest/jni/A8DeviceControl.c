@@ -28,15 +28,15 @@
 #include "WB_keyboard.h"
 #include "WB_virtualHardwareSupport.h"
 #include "WB_guardThread.h"
-static pGuardThreadOps guardThreadOps;
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops   virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
 static int icCardRecvFunc(unsigned char * data, int len);
 static int openDoorKeyUp(pGpioPinState state);
-static int pirUp(PIR_STATE state);
+static void pirUp(PIR_STATE state);
 static int udpRecvFunc(unsigned char*data, unsigned int len);
 static void KeyEventUp(int code, int value);
+static int getpackAgeNameAndclassName(char *packAgeName,char *className,const char *local_Value);
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
@@ -67,15 +67,9 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
 
-	guardThreadOps = createGuardThreadServer();
-	if(guardThreadOps == NULL)
-	{
-		LOGE("fail to createGuardThreadServer");
-	}else {
-		guardThreadOps->setGuardPackagenameAndMainclassname
-			(guardThreadOps,"com.welbell.hardwaretest","com.welbell.hardwaretest.MainActivity",3);
-	}
+
 	LOGD("jni_a8HardwareControlInit init succeed!");
+
 	return 0;
 	fail2: free(JavaMethodServer);
 	fail1: free(hardWareServer);
@@ -107,12 +101,12 @@ static void KeyEventUp(int code, int value) {
 static int udpRecvFunc(unsigned char* data, unsigned int len) {
 	LOGE("data = %s", data);
 }
-static int pirUp(PIR_STATE state) {
+static void pirUp(PIR_STATE state) {
 	char upData[6] = { 0 };
 	upData[0] = UI_INFRARED_DEVICE;
 	upData[1] = 1 - state;
 	JavaMethodServer->up(JavaMethodServer, upData, 2);
-	return 0;
+
 }
 
 static int openDoorKeyUp(pGpioPinState pinState) {
@@ -138,6 +132,26 @@ static int icCardRecvFunc(unsigned char * data, int len) {
 	memcpy(&valid[1], cardNum.buf, sizeof(cardNum.buf));
 	JavaMethodServer->up(JavaMethodServer, valid, sizeof(cardNum.buf) + 1);
 	return len;
+}
+static int getpackAgeNameAndclassName(char *packAgeName,char *className,const char *local_Value)
+{
+	char* spaceStart = NULL;
+	char* spaceEnd = NULL;
+	if(strlen(local_Value) >= 256)
+	{
+		LOGE("fail to getpackAgeNameAndclassName");
+		return -1;
+	}
+
+	spaceStart = strchr(local_Value,' ');
+	if(spaceStart == NULL)
+		return -1;
+	memcpy(packAgeName,local_Value,spaceStart - local_Value);
+	packAgeName[spaceStart - local_Value] = 0;
+
+	spaceEnd = strrchr(local_Value,' ');
+	strcpy(className,spaceEnd+1);
+	return 0;
 }
 JNIEXPORT jint JNICALL jni_a8HardwareControlExit(JNIEnv * env, jobject obj) {
 
@@ -185,22 +199,22 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 		break; //智能家居(西安郑楠项目)
 	case E_DOOR_LOCK:
 		if (local_Value != NULL)
-			hardWareServer->controlDoor(hardWareServer, local_Value[0]);
+			ret =hardWareServer->controlDoor(hardWareServer, local_Value[0]);
 		break; //锁
 	case E_INFRARED:
 		break; //红外
 	case E_CAMERA_LIGHT:
 		if (local_Value != NULL)
-			hardWareServer->controlCameraLight(hardWareServer, local_Value[0]);
+			ret = hardWareServer->controlCameraLight(hardWareServer, local_Value[0]);
 		break; //摄像头灯
 	case E_KEY_LIGHT:
 		if (local_Value != NULL)
-			hardWareServer->controlKeyboardLight(hardWareServer,
+			ret = hardWareServer->controlKeyboardLight(hardWareServer,
 					local_Value[0]);
 		break; //键盘灯
 	case E_LCD_BACKLIGHT:
 		if (local_Value != NULL)
-			hardWareServer->controlLCDLight(hardWareServer, local_Value[0]);
+			ret = hardWareServer->controlLCDLight(hardWareServer, local_Value[0]);
 		break; //屏幕背光
 	case E_FINGERPRINT:
 		break;
@@ -208,12 +222,25 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 		break;
 	case E_RESTART:
 		LOGD("E_RESTART!!");
-		hardWareServer->reboot(hardWareServer);
+		ret = hardWareServer->reboot(hardWareServer);
 		break; //重启机器
 	case E_SEND_SHELL_CMD:
 		LOGD("E_SEND_SHELL_CMD:%s", local_Value);
-		hardWareServer->sendShellCmd(hardWareServer, local_Value);
+		ret = hardWareServer->sendShellCmd(hardWareServer, local_Value);
 		break;
+	case E_ADD_GUARD:{
+		LOGD("E_ADD_GUARD:%s", local_Value);
+		char packAgeName[128] = {0};
+		char className[128] = {0};
+
+		ret = getpackAgeNameAndclassName(packAgeName,className,local_Value);
+		if(ret == 0)
+		{
+			LOGD("%s:%s",packAgeName,className);
+			hardWareServer->setGuardPackagenameAndMainclassname(hardWareServer,packAgeName,className);
+		}
+		break;
+	}
 	default:
 		LOGW("cannot find Control Interface!");
 		break;

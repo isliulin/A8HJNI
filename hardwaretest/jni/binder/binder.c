@@ -105,7 +105,7 @@ struct binder_state *binder_open(size_t mapsize)
 {
     struct binder_state *bs;
     struct binder_version vers;
-    LOGD("size_t = %d\n",sizeof(size_t));
+
     bs = malloc(sizeof(*bs));
     if (!bs) {
         errno = ENOMEM;
@@ -125,8 +125,8 @@ struct binder_state *binder_open(size_t mapsize)
     	LOGE("binder: driver version differs from user space %d\n",vers.protocol_version);
         goto fail_open;
     }
-    //设置成非阻塞模式
-    fcntl(bs->fd,F_SETFL,fcntl(bs->fd,F_GETFL)|O_NONBLOCK);
+
+
     bs->mapsize = mapsize;
     bs->mapped = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, bs->fd, 0);
     if (bs->mapped == MAP_FAILED) {
@@ -280,9 +280,11 @@ int binder_parse(struct binder_state *bs, struct binder_io *bio,
             break;
         }
         case BR_FAILED_REPLY:
+        	LOGE("BR_DEAD_REPLY");
             r = -1;
             break;
         case BR_DEAD_REPLY:
+        	LOGE("BR_DEAD_REPLY");
             r = -1;
             break;
         default:
@@ -366,7 +368,12 @@ int binder_call(struct binder_state *bs,
         }
         res = binder_parse(bs, reply, (uintptr_t) readbuf, bwr.read_consumed, 0);
         if (res == 0) return 0;
-        if (res < 0) goto fail;
+        if (res < 0) {
+
+        	LOGE("fail to binder_parse");
+        	goto fail;
+
+        }
     }
 
 fail:

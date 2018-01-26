@@ -8,10 +8,12 @@
 #include "WB_hardwareSupport.h"
 #include "WB_icDoorCard.h"
 #include "WB_pirSupport.h"
-#include "common/nativeNetServer.h"
+//#include "common/nativeNetServer.h"
 #include "gpio/gpioServer.h"
 #include "gpio/hwInterfaceManage.h"
 #include "common/debugLog.h"
+#include "binder/binderClient.h"
+#include "WB_guardThread.h"
 
 typedef  struct WB_hardWareServer {
 	WB_hardWareOps  ops;
@@ -22,12 +24,13 @@ typedef  struct WB_hardWareServer {
 	pGpioOps LCDLightServer;
 	pGpioOps camerLightServer;
 	pGpioOps keyboardLightServer;
-	//pBinderClientOps binderClient;
-	pNativeNetServerOps netServer;
+	pBinderClientOps binderClient;
+	//pNativeNetServerOps netServer;
 	pIcDoorCardOps  doorCardServer;
 	pWBPir_ops	pirServer;
 	pHwInterfaceOps interfaceOps;
 	pWB_KeyBoardOps keyBoardServer;
+	pGuardThreadOps guardThreadServer;
 
 }WB_hardWareServer,*pWB_hardWareServer;
 
@@ -45,6 +48,7 @@ static int setOptoSensorUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc);
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
+static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -58,7 +62,20 @@ static WB_hardWareOps ops = {
 		.getOptoSensorState = getOptoSensorState,
 		.setIcCardRawUpFunc = setIcCardRawUpFunc,
 		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
+		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
 };
+static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL ||hardWareServer->guardThreadServer == NULL )
+	{
+		goto fail0;
+	}
+	return hardWareServer->guardThreadServer->setGuardPackagenameAndMainclassname(hardWareServer->guardThreadServer,
+			packName,className,3);
+	fail0:
+		return -1;
+}
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
@@ -129,9 +146,9 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 				return -1;
-	if(hardWareServer->netServer){
-		return hardWareServer->netServer->runScript(
-					hardWareServer->netServer,cmd);
+	if(hardWareServer->binderClient){
+		return hardWareServer->binderClient->runScript(
+					hardWareServer->binderClient,cmd);
 	}else
 	{
 		char cmdStr[128] = {0};
@@ -148,9 +165,9 @@ static int reboot (struct  WB_hardWareOps * ops)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 			return -1;
-	if(hardWareServer->netServer){
-		return hardWareServer->netServer->runScript(
-				hardWareServer->netServer,"reboot");
+	if(hardWareServer->binderClient){
+		return hardWareServer->binderClient->runScript(
+				hardWareServer->binderClient,"reboot");
 	}else {
 		return system("su -c reboot");
 	}
@@ -257,11 +274,23 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 	}
 
 
-	hardWareServer->netServer = createNativeNetServer();
-	if(hardWareServer->netServer == NULL){
-		LOGE("fail to malloc netServer!");
-	//	goto fail7;
+
+
+	hardWareServer->binderClient = binder_getServer();
+	if(hardWareServer->binderClient == NULL){
+		LOGE("fail to malloc binderClient!");
+
+	}else{
+		hardWareServer->guardThreadServer = createGuardThreadServer();
+		if(hardWareServer->guardThreadServer == NULL)
+		{
+			LOGE("fail to malloc binderClient!");
+		}
 	}
+
+
+
+
 
 	hardWareServer->ops = ops;
 	return  (pWB_hardWareOps)hardWareServer;
@@ -305,8 +334,8 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 		destroyIcDoorCardOpsServer(&hardWareServer->doorCardServer);
 	if(hardWareServer->keyBoardServer)
 		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
-	if(hardWareServer->netServer)
-		destroyNativeNetServer(&hardWareServer->netServer);
+	if(hardWareServer->binderClient)
+		binder_releaseServer(&hardWareServer->binderClient);
 
 	free(hardWareServer);
 		*ops = NULL;
