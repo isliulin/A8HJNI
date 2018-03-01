@@ -59,7 +59,7 @@ static int sendHeartbeat(struct BinderClientOps * ops, const char * str) {
 		return -1;
 	ret = bio_get_uint32(&reply);
 	binder_done(pack->bs, &msg, &reply);
-	LOGE("ret = %d\n", ret);
+
 	return ret;
 }
 static int runScript(pBinderClientOps ops, const char *scriptName) {
@@ -72,7 +72,7 @@ static int runScript(pBinderClientOps ops, const char *scriptName) {
 	bio_init(&msg, iodata, sizeof(iodata), 4);
 	bio_put_uint32(&msg, 0); // strict mode header
 	bio_put_string16_x(&msg, scriptName);
-	LOGE("send:%s",scriptName);
+
 	if (binder_call(pack->bs, &msg, &reply, pack->handle,
 			WELBELL_SVR_CMD_RUNSCRIPT)){
 
@@ -81,7 +81,7 @@ static int runScript(pBinderClientOps ops, const char *scriptName) {
 	}
 	ret = bio_get_uint32(&reply);
 	binder_done(pack->bs, &msg, &reply);
-	LOGE("end send ret = %d\n", ret);
+
 	return ret;
 }
 static uint32_t svcmgr_lookup(struct binder_state *bs, uint32_t target,

@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "WB_hardwareSupport.h"
-#include "WB_icDoorCard.h"
+#include "WB_doorCard.h"
 #include "WB_pirSupport.h"
 //#include "common/nativeNetServer.h"
-#include "gpio/gpioServer.h"
-#include "gpio/hwInterfaceManage.h"
+#include "hwInterface/gpioServer.h"
+#include "hwInterface/hwInterfaceManage.h"
 #include "common/debugLog.h"
 #include "binder/binderClient.h"
 #include "WB_guardThread.h"
@@ -26,7 +26,8 @@ typedef  struct WB_hardWareServer {
 	pGpioOps keyboardLightServer;
 	pBinderClientOps binderClient;
 	//pNativeNetServerOps netServer;
-	pIcDoorCardOps  doorCardServer;
+	//pIcDoorCardOps  doorCardServer;
+	pDoorCardops doorCardServer;
 	pWBPir_ops	pirServer;
 	pHwInterfaceOps interfaceOps;
 	pWB_KeyBoardOps keyBoardServer;
@@ -45,7 +46,7 @@ static int reboot (struct  WB_hardWareOps *);
 static int setPirUpFunc(struct  WB_hardWareOps * ops,WBPirCallBackFunc pirUpFunc);
 static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
-static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc);
+static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc rawUpFunc);
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className);
@@ -60,7 +61,7 @@ static WB_hardWareOps ops = {
 		.setPirUpFunc = setPirUpFunc,
 		.setOpenDoorKeyUpFunc = setOpenDoorKeyUpFunc,
 		.getOptoSensorState = getOptoSensorState,
-		.setIcCardRawUpFunc = setIcCardRawUpFunc,
+		.setDoorCardRawUpFunc = setDoorCardRawUpFunc,
 		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
 };
@@ -86,14 +87,15 @@ static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc fu
 fail0:
 	return -1;
 }
-static int setIcCardRawUpFunc(struct  WB_hardWareOps * ops ,IcRecvFunc rawUpFunc)
+static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc rawUpFunc)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 		return -1;
 
-	hardWareServer->doorCardServer = crateIcDoorCardOpsServer(
-			hardWareServer->interfaceOps->getIcCardUART(),rawUpFunc);
+	hardWareServer->doorCardServer = createDoorCardServer(
+			hardWareServer->interfaceOps->getDoorType(),rawUpFunc
+	);
 	if(hardWareServer->doorCardServer == NULL )
 		return -1;
 	return 0;
@@ -219,7 +221,7 @@ static int setOptoSensorUpFunc(struct  WB_hardWareOps *ops,T_InterruptFunc optoS
 
 	return 0;
 }
-pWB_hardWareOps crateHardWareServer(CPU_VER ver)
+pWB_hardWareOps crateHardWareServer(void)
 {
 	pWB_hardWareServer hardWareServer = malloc(sizeof(WB_hardWareServer ));
 	if(hardWareServer == NULL ){
@@ -227,7 +229,7 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 		goto fail0;
 	}
 	bzero(hardWareServer,sizeof(WB_hardWareServer));
-	hardWareServer->interfaceOps = crateHwInterfaceServer(ver);
+	hardWareServer->interfaceOps = crateHwInterfaceServer();
 	hardWareServer->doorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getDoorLockPin());
 	if(hardWareServer->doorServer == NULL ){
@@ -272,9 +274,6 @@ pWB_hardWareOps crateHardWareServer(CPU_VER ver)
 	{
 		goto fail7;
 	}
-
-
-
 
 	hardWareServer->binderClient = binder_getServer();
 	if(hardWareServer->binderClient == NULL){
@@ -331,7 +330,7 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 	if(hardWareServer->pirServer)
 		destroyWBPirServer(&hardWareServer->pirServer);
 	if(hardWareServer->doorCardServer)
-		destroyIcDoorCardOpsServer(&hardWareServer->doorCardServer);
+		destroyDoorCardServer(&hardWareServer->doorCardServer);
 	if(hardWareServer->keyBoardServer)
 		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
 	if(hardWareServer->binderClient)
@@ -339,7 +338,6 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 
 	free(hardWareServer);
 		*ops = NULL;
-
 }
 
 

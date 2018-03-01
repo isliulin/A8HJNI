@@ -98,35 +98,17 @@ static int GetWeiGendCardId(const char *hexIn,int len, int *id)
  		char buf[sizeof(uint16_t)];
  		uint16_t id;
  	}shortChar_union;
-
- //	printf("buf point=%p, int point=%p\n", &intChar_union.buf[0], &intChar_union.id);
- //	printf("hex[0]=%#x, hex[1]=%#x, hex[2]=%#x, hex[3]=%#x, \n",
- //									hexIn[0], hexIn[1], hexIn[2], hexIn[3]);
-
  	sprintf(s, "%03u", hexIn[2]);
- //	printf("3bit=%s\n", s);
  	intChar_union.buf[0]  = (s[0] & 0x0f) << 4;
  	intChar_union.buf[0] |= (s[1] & 0x0f);
  	intChar_union.buf[1]  = (s[2] & 0x0f) << 4;
-
  	memcpy(shortChar_union.buf, hexIn, sizeof(uint16_t));
  	sprintf(s, "%05u", shortChar_union.id);
- //	printf("5bit=%s\n", s);
  	intChar_union.buf[1] |= (s[0] & 0x0f);
  	intChar_union.buf[2]  = (s[1] & 0x0f) << 4;
  	intChar_union.buf[2] |= (s[2] & 0x0f);
  	intChar_union.buf[3]  = (s[3] & 0x0f) << 4;
  	intChar_union.buf[3] |= (s[4] & 0x0f);
-
- 	//将上述16进制转成10进制如0x12345678 -->12345678
-/*
- 	intChar_union.buf[0] = ((intChar_union.buf[0]&0xf0)>>4)*10 + (intChar_union.buf[0]&0x0f);
- 	intChar_union.buf[1] = ((intChar_union.buf[1]&0xf0)>>4)*10 + (intChar_union.buf[1]&0x0f);
- 	intChar_union.buf[2] = ((intChar_union.buf[2]&0xf0)>>4)*10 + (intChar_union.buf[2]&0x0f);
- 	intChar_union.buf[3] = ((intChar_union.buf[3]&0xf0)>>4)*10 + (intChar_union.buf[3]&0x0f);
-*/
-
-
  	*id = intChar_union.id;
  	return len;
  }
@@ -172,6 +154,25 @@ static int charToInt(char s) {
 	}
 
 	return -1;
+}
+static void printHex(char *buf,int len)
+{
+	int i,j = 0,c;
+	char *buffer = malloc(len*7*8+1);
+	char temp;
+	bzero(buffer,len*7*8+1);
+	for(i = 0; i<len;i++)
+	{
+		temp = buf[i];
+		for(c=0;c<8;c++ )
+		{
+			j += sprintf(&buffer[j],"%d ",(temp&0x80)>>7 );
+			temp <<= 1;
+		}
+		j += sprintf(&buffer[j],"%s","\n");
+	}
+	LOGD("%s\n",buffer);
+	free(buffer);
 }
 static void printData(char *buf, int len) {
 	int i,j = 0;
@@ -289,6 +290,7 @@ static UtilsOps ops = {
 		.YUYVToNV12 = YUYVToNV12,
 		.charToInt  = charToInt,
 		.printData = printData,
+		.printHex = printHex,
 		.GetWeiGendCardId = GetWeiGendCardId,
 		.getCpuVer = getCpuVer,
 		.getHardWareVer = getHardWareVer,

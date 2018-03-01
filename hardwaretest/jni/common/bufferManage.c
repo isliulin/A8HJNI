@@ -11,8 +11,6 @@
 #include <pthread.h>
 #include "common/bufferManage.h"
 #include "common/debugLog.h"
-
-
 #define RESERVED (512)
 #define AUGMENT_SIZE 512
 

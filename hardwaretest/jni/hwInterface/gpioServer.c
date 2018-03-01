@@ -4,7 +4,7 @@
 #include <sys/eventfd.h>
 #include <stdio.h>
 #include <strings.h>
-#include "gpio/gpioServer.h"
+#include "hwInterface/gpioServer.h"
 #include "taskManage/threadManage.h"
 #include "common/debugLog.h"
 

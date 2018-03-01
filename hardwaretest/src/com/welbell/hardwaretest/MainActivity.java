@@ -35,36 +35,31 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 			e.printStackTrace();
 		}
 		
-		Log.e("end","11");
+		
 		hardwareResource.executeRootShell("ls");
-		Log.e("end","22");
+		//把本进程添加到守护进程中 
+		/*
+		 * 参数1：app 包名
+		 * 参数2：主Activity全类名
+		 * */
+		
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest  ", "  com.welbell.hardwaretest.MainActivity");
-		Log.e("end","33");
-			hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
-		/*hardwareResource.executeRootShell("am force-stop com.wlbell.hardwaretest&&" +
-				"pm install -r /mnt/sdcard/app.apk&&" +
-				"am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
-		*/
-		//hardwareResource.executeRootShell("pm install -r /mnt/sdcard/app.apk");
-		//hardwareResource.executeRootShell("am start -a  android.intent.action.MAIN -n com.welbell.hardwaretestdemo/.MainActivity");
-		/*com.welbell.hardwaretestdemo
-		//&& pm install -r /mnt/sdcard/huarui/2016-08-08/huarui.apk 
-		//&& am start -a android.intent.action.MAIN -n com.jack.huarui.capture/.mvp.ui.activity.MainAty
+	
+		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
+
 		
-		*/
-		
-//		//开启摄像头灯
-//		hardwareResource.cameraLightControl(true);
-//		//开门
-//		hardwareResource.doorLockControl(true);
-//		//开启键盘灯
-//		hardwareResource.keyboardLightControl(true);
-//		//开启红外摄像头灯
-//		hardwareResource.ifcameraLightControl(true);
+		//开启摄像头灯
+		hardwareResource.cameraLightControl(true);
+		//开门
+		hardwareResource.doorLockControl(true);
+		//开启键盘灯
+		hardwareResource.keyboardLightControl(true);
+		//开启红外摄像头灯
+		hardwareResource.ifcameraLightControl(true);
 		//关闭屏幕
-		//hardwareResource.screenBlacklightControl(false);
+		hardwareResource.screenBlacklightControl(true);
 		//重启机器
-		//hardwareResource.reboot();
+	//	hardwareResource.reboot();
 
 	}
 	
@@ -74,7 +69,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	public void someoneCloseEvent() {
 		// TODO Auto-generated method stub
 		Log.e("someoneCloseEvent","有人靠近");
-	//	hardwareResource.executeRootShell("ifconfig eth0 192.168.1.128");
+
 	}
 	@Override
 	public void doorLockKeyEvent(byte keyState) {
@@ -82,14 +77,21 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		
 	}
 	@Override
-	public void icCardBandAlgEvent(String icCardID) {
+	public void doorCardBandAlgEvent( byte type,String icCardID) {
 		// TODO Auto-generated method stub
-		Log.e("有人刷卡了，卡号:",icCardID);
-		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.25");
+		String cardType[] = {"IC卡","CPU卡","身份证"};
+		Log.e("","有人刷"+cardType[type]+"CardID:"+icCardID);
+		
 	}
 	@Override
-	public void icCardBandRawEvent(byte[] icCardID) {
+	public void doorCardBandRawEvent(byte type,byte[] icCardID) {
 		// TODO Auto-generated method stub
+		String cardType[] = {"IC卡","CPU卡","身份证"};
+		Log.e("","有人刷"+cardType[type]);
+		for(int i = 0;i < icCardID.length;i++)
+		{
+			Log.e("",""+icCardID[i]);
+		}
 		
 	}
 	@Override
@@ -102,58 +104,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		
 	}
 	
-//	private class  RecvHardwareEvent implements HardWareUpEvent{
-//		@Override
-//		//人体红外回调，表示有人靠近
-//		public void someoneCloseEvent() {
-//			// TODO Auto-generated method stub
-//			Log.d("RecvHardwareEvent","有人靠近了!");
-//			
-//		}
-//
-//		@Override
-//		//内部开门按键回调
-//		public void doorLockKeyEvent(byte keyState) {
-//			// TODO Auto-generated method stub
-//			if(keyState == this.KEY_DOWN){
-//				Log.d("RecvHardwareEvent","按键按下");
-//			}else if(keyState == this.KEY_UP){
-//					Log.d("RecvHardwareEvent","按键抬起");	
-//			}	
-//		}
-//		@Override
-//		/*键盘事件回调函数
-//		 * code:键值
-//		 * value：按键状态
-//		 * 
-//		 * */
-//		public void keyBoardEvent(int code, int value) {
-//			// TODO Auto-generated method stub
-//			Log.d("keyBoardEvent"," code:"+code+
-//					" value:"+(value==1?"down":"up"));
-//		}
-//
-//		@Override
-//		//带算法的IC卡号
-//		public void icCardBandAlgEvent(String icCardID) {
-//			// TODO Auto-generated method stub
-//			
-//			Log.d("icCardBandAlgEvent"," icCardID:"+icCardID);
-//			
-//		}
-//
-//		@Override
-//		//不带算法的IC卡号
-//		public void icCardBandRawEvent(byte[] icCardID) {
-//			for(int i = 0;i<icCardID.length;i++)
-//			{
-//				Log.d("icCardBandRawEvent"," icCardID:"+icCardID[i]);
-//			}
-//			
-//		}
-//		
-//		
-//	}
+
 
 	
 	

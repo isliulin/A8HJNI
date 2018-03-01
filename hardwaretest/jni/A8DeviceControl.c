@@ -18,7 +18,8 @@
 #include <sys/wait.h>
 #include <linux/stddef.h>
 #include <jni.h>
-#include "gpio/gpioServer.h"
+#include "hwInterface/gpioServer.h"
+#include "hwInterface/hwInterfaceManage.h"
 #include "A8DeviceControl.h"
 #include "common/debugLog.h"
 #include "common/Utils.h"
@@ -30,8 +31,8 @@
 #include "WB_guardThread.h"
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops   virtualHardWareServer;
-static pJavaMethodOps JavaMethodServer;
-static int icCardRecvFunc(unsigned char * data, int len);
+static pJavaMethodOps  JavaMethodServer;
+static int icCardRecvFunc(CARD_TYPE type,unsigned char * data, unsigned int len);
 static int openDoorKeyUp(pGpioPinState state);
 static void pirUp(PIR_STATE state);
 static int udpRecvFunc(unsigned char*data, unsigned int len);
@@ -41,9 +42,8 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
 		goto fail0;
-	CPU_VER cpu_ver = getUtilsOps()->getCpuVer();
 
-	hardWareServer = crateHardWareServer(cpu_ver);
+	hardWareServer = crateHardWareServer();
 	if (hardWareServer == NULL)
 		goto fail0;
 	virtualHardWareServer =  crateVirtualHWServer();
@@ -51,25 +51,20 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	{
 		LOGE("fail to crateVirtualHWServer!\n");
 	}else {
-
 		virtualHardWareServer->setPirUpFunc(virtualHardWareServer,pirUp);
-		virtualHardWareServer->setIcCardRawUpFunc(virtualHardWareServer,icCardRecvFunc);
+		virtualHardWareServer->setDoorCardRawUpFunc(virtualHardWareServer,icCardRecvFunc);
 		virtualHardWareServer->setKeyBoardUpFunc(virtualHardWareServer,KeyEventUp);
 	}
 	JavaMethodServer = CallbackJavaMethodInit(env, obj, "systemCallBack");
 	if (JavaMethodServer == NULL)
 		goto fail1;
 
-	hardWareServer->setIcCardRawUpFunc(hardWareServer, icCardRecvFunc);
-
+	hardWareServer->setDoorCardRawUpFunc(hardWareServer, icCardRecvFunc);
 	hardWareServer->setOpenDoorKeyUpFunc(hardWareServer, openDoorKeyUp);
 	hardWareServer->setPirUpFunc(hardWareServer, pirUp);
-
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
 
-
 	LOGD("jni_a8HardwareControlInit init succeed!");
-
 	return 0;
 	fail2: free(JavaMethodServer);
 	fail1: free(hardWareServer);
@@ -100,37 +95,42 @@ static void KeyEventUp(int code, int value) {
 }
 static int udpRecvFunc(unsigned char* data, unsigned int len) {
 	LOGE("data = %s", data);
+	return 0;
 }
 static void pirUp(PIR_STATE state) {
 	char upData[6] = { 0 };
 	upData[0] = UI_INFRARED_DEVICE;
 	upData[1] = 1 - state;
 	JavaMethodServer->up(JavaMethodServer, upData, 2);
-
 }
 
 static int openDoorKeyUp(pGpioPinState pinState) {
 	LOGE("OptoSensorUp");
 	return 0;
 }
-static int icCardRecvFunc(unsigned char * data, int len) {
+static int icCardRecvFunc(CARD_TYPE type,unsigned char * data, unsigned int len) {
 	getUtilsOps()->printData(data,len);
 	char valid[128] = { 0 };
+
 	union {
 		char buf[sizeof(uint32_t)];
 		uint32_t id;
 	} cardNum;
 	bzero(&cardNum, sizeof(cardNum));
-
+	LOGD("type = %d\n",type);
 	valid[0] = UI_DOORCARD_DEVICE;
-	memcpy(&valid[1], data, len);
-	JavaMethodServer->up(JavaMethodServer, valid, len + 1);
-
+	valid[1] = type;
+	memcpy(&valid[2], data, len);
+	JavaMethodServer->up(JavaMethodServer, valid, len + 2);
+	getUtilsOps()->printData(data,len);
+	getUtilsOps()->printHex(data,len);
 	bzero(valid, sizeof(valid));
 	valid[0] = UI_DOORCARD_DEVICE_ALG;
+	valid[1] = type;
 	getUtilsOps()->GetWeiGendCardId(data, len, &cardNum.id);
-	memcpy(&valid[1], cardNum.buf, sizeof(cardNum.buf));
-	JavaMethodServer->up(JavaMethodServer, valid, sizeof(cardNum.buf) + 1);
+	memcpy(&valid[2], cardNum.buf, sizeof(cardNum.buf));
+
+	JavaMethodServer->up(JavaMethodServer, valid, sizeof(cardNum.buf) + 2);
 	return len;
 }
 static int getpackAgeNameAndclassName(char *packAgeName,char *className,const char *local_Value)

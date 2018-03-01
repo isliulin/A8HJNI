@@ -34,6 +34,7 @@ public class HardwareSupport {
 		byte[] eventData = new byte[Data.length - 1];
 		System.arraycopy(Data, 1, eventData, 0, Data.length - 1);
 		byte event = Data[0];
+		
 		switch (event) {
 		case CallBackState.UI_INFRARED_DEVICE:
 			if (eventData[0] == 1) {
@@ -44,24 +45,28 @@ public class HardwareSupport {
 				}
 			}
 			break;
-		case CallBackState.UI_DOORCARD_DEVICE:
-
-			for (HardWareUpEvent temp : upEventList) {
-				temp.icCardBandRawEvent(eventData);
-			}
-
-			break;
-		case CallBackState.UI_DOORCARD_DEVICE_ALG:
-			int icCardID = 0;
-			if (eventData.length >= 4) {
-				for (int i = 0; i < eventData.length; i++) {
-					icCardID += eventData[i] & 0xff;
-					if (i < eventData.length - 1)
-						icCardID <<= 8;
-				}
-				String strID = Integer.toHexString(icCardID);
+		case CallBackState.UI_DOORCARD_DEVICE:{
+				byte[] cardData = new byte[Data.length - 2];
+				System.arraycopy(eventData, 1, cardData, 0, eventData.length - 1);
 				for (HardWareUpEvent temp : upEventList) {
-					temp.icCardBandAlgEvent(strID);
+					temp.doorCardBandRawEvent(eventData[0],cardData);
+				}
+			}
+			break;
+		case CallBackState.UI_DOORCARD_DEVICE_ALG:{
+				int icCardID = 0;
+				byte[] cardData = new byte[Data.length - 2];
+				System.arraycopy(eventData, 1, cardData, 0, eventData.length - 1);
+				if (eventData.length >= 4) {
+					for (int i = 0; i < eventData.length; i++) {
+						icCardID += eventData[i] & 0xff;
+						if (i < eventData.length - 1)
+							icCardID <<= 8;
+					}
+					String strID = Integer.toHexString(icCardID);
+					for (HardWareUpEvent temp : upEventList) {
+						temp.doorCardBandAlgEvent(eventData[0],strID);
+					}
 				}
 			}
 			break;

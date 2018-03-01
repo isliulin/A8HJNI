@@ -4,10 +4,13 @@ public interface HardWareUpEvent {
 	
 	static final byte KEY_DOWN = 1;
 	static final byte KEY_UP = 0;
+	static final byte UI_DOORCARD_TYPE_IC = 0;
+	static final byte UI_DOORCARD_TYPE_CPU = 1;
+	static final byte UI_DOORCARD_TYPE_ID  = 2;           
 	
 	public void someoneCloseEvent();
 	public void doorLockKeyEvent(byte keyState);
-	public void icCardBandAlgEvent(String icCardID);
-	public void icCardBandRawEvent(byte []icCardID);
+	public void doorCardBandAlgEvent(byte type,String icCardID);
+	public void doorCardBandRawEvent(byte type ,byte []icCardID);
 	public void keyBoardEvent(int code ,int value);
 }

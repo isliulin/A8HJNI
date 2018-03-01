@@ -58,7 +58,7 @@ typedef struct {
     WBPirCallBackFunc pirCallBackFunc;
     T_InterruptFunc	 openDoorKeyUpFunc;
     T_InterruptFunc  optoSensorUpFunc;
-    IcRecvFunc	     icCardRawUpFunc;
+    DoorCardRecvFunc doorCardRawUpFunc;
     KeyEventUpFunc   keyboardFunc;
 
 }VirtualHWServer, *pVirtualHWServer;
@@ -69,8 +69,8 @@ static int setOpenDoorKeyUpFunc
 				(struct  VirtualHWops * ops ,T_InterruptFunc openKeyCallBack);
 static int setOptoSensorUpFunc
 				(struct  VirtualHWops * ops ,T_InterruptFunc optoSensorCallBack );
-static int setIcCardRawUpFunc
-			(struct  VirtualHWops *ops ,IcRecvFunc ICCardALGCallBack);
+static int setDoorCardRawUpFunc
+			(struct  VirtualHWops *ops ,DoorCardRecvFunc ICCardALGCallBack);
 static int setKeyBoardUpFunc(struct  VirtualHWops *ops,KeyEventUpFunc keyboardFunc);
 
 static  int udpRecvFunc(unsigned char* data ,unsigned int size);
@@ -84,7 +84,7 @@ static int swipngCard(char *data,int len );
 static void * do_peopheClose(pThreadArg arg);
 
 static VirtualHWops ops = {
-		.setIcCardRawUpFunc = setIcCardRawUpFunc,
+		.setDoorCardRawUpFunc = setDoorCardRawUpFunc,
 		.setPirUpFunc = setPirUpFunc,
 		.setOpenDoorKeyUpFunc = setOpenDoorKeyUpFunc,
 		.setOptoSensorUpFunc = setOptoSensorUpFunc,
@@ -214,7 +214,7 @@ static int swipngCard(char *data,int len )
 {
 
 	if(vHWServer&&data!=NULL&&len>0)
-		return vHWServer->icCardRawUpFunc(data,len);
+		return vHWServer->doorCardRawUpFunc(IC_CARD,data,len);
 	return -1;
 }
 static void * do_peopheClose(pThreadArg arg)
@@ -278,13 +278,13 @@ static int setKeyBoardUpFunc(struct  VirtualHWops *ops,KeyEventUpFunc keyboardFu
 	pthis->keyboardFunc = keyboardFunc;
 	return 0;
 }
-static int setIcCardRawUpFunc
-			(struct  VirtualHWops *ops ,IcRecvFunc ICCardALGCallBack)
+static int setDoorCardRawUpFunc
+			(struct  VirtualHWops *ops ,DoorCardRecvFunc ICCardALGCallBack)
 {
 	pVirtualHWServer pthis = (pVirtualHWServer)ops;
 	if(pthis == NULL )
 		return -1;
-	pthis->icCardRawUpFunc = ICCardALGCallBack;
+	pthis->doorCardRawUpFunc = ICCardALGCallBack;
 	return 0;
 }
 

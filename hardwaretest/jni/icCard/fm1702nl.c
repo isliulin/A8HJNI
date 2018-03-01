@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "WB_icDoorCard.h"
+#include "icCard/fm1702nl.h"
 #include "serial/serialServer.h"
 #include "common/Utils.h"
 #include "common/debugLog.h"
@@ -24,7 +24,7 @@ typedef struct {
 
 } IcDoorCardServer, *pIcDoorCardServer;
 static unsigned char changeEsc(unsigned char escChar);
-
+static DoorCardRecvFunc icRawDataUpFunc = NULL;
 
 static IcDoorCardOps icCardOps = {
 };
@@ -104,9 +104,14 @@ static unsigned char changeEsc(unsigned char escChar) {
 		return (escChar & 0xdf);
 	}
 }
-
-pIcDoorCardOps crateIcDoorCardOpsServer(const unsigned char *devPath,
-		IcRecvFunc  rawUpFunc) {
+static  int uartRecvFunc(unsigned char*data ,unsigned int len)
+{
+	if(icRawDataUpFunc)
+		return icRawDataUpFunc(IC_CARD,data,len);
+	return len;
+}
+pIcDoorCardOps crateFM1702NLOpsServer(const unsigned char *devPath,
+		DoorCardRecvFunc  rawUpFunc) {
 	if (devPath == NULL)
 		goto fail0;
 	pIcDoorCardServer IcDoorCardServer = malloc(sizeof(IcDoorCardServer));
@@ -116,14 +121,15 @@ pIcDoorCardOps crateIcDoorCardOpsServer(const unsigned char *devPath,
 	IcDoorCardServer->serialOps = createSerialServer(devPath, 57600, 8, 1, 'n');
 	if (IcDoorCardServer->serialOps == NULL)
 		goto fail1;
-	IcDoorCardServer->serialOps->setHandle(IcDoorCardServer->serialOps,rawUpFunc,parseReader,NULL );
+	IcDoorCardServer->serialOps->setHandle(IcDoorCardServer->serialOps,uartRecvFunc,parseReader,NULL );
 	IcDoorCardServer->ops = icCardOps;
+	icRawDataUpFunc = rawUpFunc;
 	return (pIcDoorCardOps)IcDoorCardServer;
 
 	fail1: free(IcDoorCardServer);
 	fail0: return NULL;
 }
-void destroyIcDoorCardOpsServer(pIcDoorCardOps* server) {
+void destroyFM1702NLOpsServer(pIcDoorCardOps* server) {
 	pIcDoorCardServer IcDoorCardServer = (pIcDoorCardOps )*server;
 	if(IcDoorCardServer == NULL)
 		return ;

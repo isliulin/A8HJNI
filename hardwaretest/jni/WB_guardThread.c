@@ -143,7 +143,6 @@ pGuardThreadOps  createGuardThreadServer(void)
 		goto fail1;
 	}
 	server->ops = ops;
-
 	return (pGuardThreadOps)server;
 
 fail1:
@@ -168,11 +167,8 @@ void destroyGuardThreadServer(pGuardThreadOps * server)
 			bzero(&pthis->packAgeList[i],sizeof(PackageInfo));
 		}
 	}
-
 	if(pthis->binderClient)
 	{
-
-
 		binder_releaseServer(&pthis->binderClient);
 	}
 

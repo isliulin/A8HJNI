@@ -7,7 +7,7 @@
 #include <time.h>
 #include "WB_pirSupport.h"
 #include "taskManage/timerTaskManage.h"
-#include "gpio/gpioServer.h"
+#include "hwInterface/gpioServer.h"
 #include "common/debugLog.h"
 
 static int gpioInterruptFunc (pGpioPinState arg);

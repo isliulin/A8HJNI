@@ -48,6 +48,10 @@ typedef enum Interface{
 #define UI_FINGERPRINT_RECOGNITION 	             0X33   //指纹识别
 #define UI_LIGHT_SENSOR 	 			 		 0X34   //光敏传感器
 #define UI_DOORCARD_DEVICE_ALG      	         0X35   //门卡带算法
+#define UI_DOORCARD_TYPE_IC                      0
+#define UI_DOORCARD_TYPE_CPU                     1
+#define UI_DOORCARD_TYPE_ID                      2
+
 #define UI_OPENDOOR_KEY_DOWN					 0X36
 #define UI_HARDWARE_INFO	  	                 0X40   //获取FIRMWARE_VERSION
 #define UI_KEYBOARD_EVENT					 0X41   //上报键盘事件

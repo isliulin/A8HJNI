@@ -2,10 +2,10 @@
 #define  __WB_HARDWARESUPPORT_H
 
 #include "WB_pirSupport.h"
-#include "WB_icDoorCard.h"
+#include "WB_doorCard.h"
 #include "WB_keyboard.h"
-#include "gpio/gpioServer.h"
-#include "gpio/hwInterfaceManage.h"
+#include "hwInterface/gpioServer.h"
+#include "hwInterface/hwInterfaceManage.h"
 
 typedef enum{
 	CLOSE = 0,
@@ -39,7 +39,7 @@ typedef struct  WB_hardWareOps{
 	//设置光感状态
 	int (*getOptoSensorState)(struct  WB_hardWareOps *ops );
 	//设置IC卡数据回调函数
-	int (*setIcCardRawUpFunc)(struct  WB_hardWareOps *,IcRecvFunc);
+	int (*setDoorCardRawUpFunc)(struct  WB_hardWareOps *,DoorCardRecvFunc);
 	//设置键盘事件上报函数
 	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 	//设置需要守护app的包名和主类名
@@ -48,7 +48,7 @@ typedef struct  WB_hardWareOps{
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象
-pWB_hardWareOps crateHardWareServer(CPU_VER ver);
+pWB_hardWareOps crateHardWareServer(void);
 //销毁硬件服务对象
 void destroyHardWareServer(pWB_hardWareOps *ops);
 
