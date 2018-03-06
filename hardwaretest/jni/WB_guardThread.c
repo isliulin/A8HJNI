@@ -35,8 +35,6 @@ static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 
 static GuardThreadOps ops = {
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
-
-
 };
 
 static void  sendHeartbeatToserver(void *arg)

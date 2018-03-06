@@ -23,7 +23,6 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 
 		setContentView(R.layout.activity_main);
 		String version;
-	
 		version = hardwareResource.getHardWareVersion();
 		//添加接口
 		hardwareResource.addEventCallBack(this);
@@ -43,7 +42,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		 * 参数2：主Activity全类名
 		 * */
 		
-		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest  ", "  com.welbell.hardwaretest.MainActivity");
+		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest", "com.welbell.hardwaretest.MainActivity");
 	
 		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
 
@@ -81,7 +80,8 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		// TODO Auto-generated method stub
 		String cardType[] = {"IC卡","CPU卡","身份证"};
 		Log.e("","有人刷"+cardType[type]+"CardID:"+icCardID);
-		
+		hardwareResource.delDaemonServer();
+		hardwareResource.removeEventCallBack(this);
 	}
 	@Override
 	public void doorCardBandRawEvent(byte type,byte[] icCardID) {

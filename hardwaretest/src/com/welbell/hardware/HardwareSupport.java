@@ -26,6 +26,10 @@ public class HardwareSupport {
 
 	public void addEventCallBack(HardWareUpEvent upEvent) {
 		upEventList.add(upEvent);
+		
+	}
+	public boolean removeEventCallBack(HardWareUpEvent upEvent){
+		return upEventList.remove(upEvent);
 	}
 
 	private void systemCallBack(byte[] Data) {
@@ -150,13 +154,19 @@ public class HardwareSupport {
 		byte [] packName = packageName.getBytes();
 		byte [] space = {' '};
 		byte [] className = mainActivityName.getBytes();
-		byte [] total  = new byte[packName.length+className.length+space.length];
+		byte [] total  = new byte[packName.length+className.length+space.length+2];
 		System.arraycopy(packName,0,total,0, packName.length);
 		System.arraycopy(space,0,total,packName.length, space.length);
 		System.arraycopy(className,0,total,packName.length+space.length, className.length);
+	
 		return a8SetKeyValue(controlHardwareCmd.E_ADD_GUARD,total,
 				packName.length+className.length+space.length);
 	}
+	public int delDaemonServer()
+	{
+		return a8SetKeyValue(controlHardwareCmd.E_DEL_GUARD,null,0);
+	}
+	
 	public int reboot() {
 		return a8SetKeyValue(controlHardwareCmd.E_RESTART, null, 0);
 	}

@@ -50,6 +50,7 @@ static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc r
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className);
+static int delGuardServer(struct  WB_hardWareOps *ops);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -64,6 +65,7 @@ static WB_hardWareOps ops = {
 		.setDoorCardRawUpFunc = setDoorCardRawUpFunc,
 		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
+		.delGuardServer = delGuardServer,
 };
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className)
 {
@@ -76,6 +78,18 @@ static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,cons
 			packName,className,3);
 	fail0:
 		return -1;
+}
+static int delGuardServer(struct  WB_hardWareOps *ops)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL ||hardWareServer->guardThreadServer == NULL )
+	{
+			goto fail0;
+	}
+	destroyGuardThreadServer(&hardWareServer->guardThreadServer);
+	return 0;
+	fail0:
+			return -1;
 }
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func)
 {
@@ -199,6 +213,7 @@ fail0:
 }
 static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps * ops,T_InterruptFunc OpenDoorKeyUpFunc)
 {
+
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	hardWareServer->openDoorKeyServer = gpio_getServer(
 			hardWareServer->interfaceOps->getOpenDoorKeyPin());
@@ -208,7 +223,6 @@ static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps * ops,T_InterruptFunc Ope
 			hardWareServer->openDoorKeyServer,OpenDoorKeyUpFunc,NULL,BOTH );
 
 	return 0;
-
 }
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *ops,T_InterruptFunc optoSensorUpFunc)
 {
@@ -233,7 +247,7 @@ pWB_hardWareOps crateHardWareServer(void)
 	hardWareServer->doorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getDoorLockPin());
 	if(hardWareServer->doorServer == NULL ){
-		LOGE("fail to malloc doorServer!");
+		LOGE("fail to malloc doorLockServer!");
 		goto fail1;
 	}
 	hardWareServer->openDoorKeyServer = gpio_getServer(
@@ -288,9 +302,6 @@ pWB_hardWareOps crateHardWareServer(void)
 	}
 
 
-
-
-
 	hardWareServer->ops = ops;
 	return  (pWB_hardWareOps)hardWareServer;
 
@@ -335,6 +346,8 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
 	if(hardWareServer->binderClient)
 		binder_releaseServer(&hardWareServer->binderClient);
+	if(hardWareServer->guardThreadServer)
+		destroyGuardThreadServer(&hardWareServer->guardThreadServer);
 
 	free(hardWareServer);
 		*ops = NULL;

@@ -44,7 +44,8 @@ typedef struct  WB_hardWareOps{
 	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 	//设置需要守护app的包名和主类名
 	int (*setGuardPackagenameAndMainclassname)(struct  WB_hardWareOps *,const char *,const char * );
-
+	//删除守护服务
+	int (*delGuardServer)(struct  WB_hardWareOps *);
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

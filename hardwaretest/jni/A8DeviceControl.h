@@ -15,6 +15,7 @@ typedef enum Interface{
 	E_GET_HARDWARE_VER,			//获取硬件版本
 	E_SEND_SHELL_CMD,           //发送SHELL指令
 	E_ADD_GUARD,				//把APP加入到守护进程中
+	E_DEL_GUARD,				//删除守护服务
 	E_MAX
 }E_INTER_TYPE;
 

@@ -3,7 +3,7 @@
 #include "NativeMethods.h"
 
 
-static const char* classPathName = "com/welbell/hardware/HardwareSupport";
+static const char*  classPathName = "com/welbell/hardware/HardwareSupport";
 static const char * libVersion = "Ver1.0.1.4 For A8HNativeControl";
 /*
  * Register several native methods for one class.

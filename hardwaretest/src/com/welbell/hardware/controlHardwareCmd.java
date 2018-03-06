@@ -15,4 +15,5 @@ public class controlHardwareCmd {
     public static final byte E_GET_HARDWARE_VER = 0X1A; //获取硬件版本号
     public static final byte E_EXECURT_SHELL = 0x1B; // 以root权限执行shell脚本
     public static final byte E_ADD_GUARD = 0x1C; //添加app到守护进程中
+    public static final byte E_DEL_GUARD = 0x1D; //添加app到守护进程中
 }

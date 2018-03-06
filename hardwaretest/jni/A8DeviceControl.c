@@ -98,6 +98,7 @@ static int udpRecvFunc(unsigned char* data, unsigned int len) {
 	return 0;
 }
 static void pirUp(PIR_STATE state) {
+	LOGE("pirUp :%d",state);
 	char upData[6] = { 0 };
 	upData[0] = UI_INFRARED_DEVICE;
 	upData[1] = 1 - state;
@@ -105,7 +106,7 @@ static void pirUp(PIR_STATE state) {
 }
 
 static int openDoorKeyUp(pGpioPinState pinState) {
-	LOGE("OptoSensorUp");
+	LOGE("openDoorKeyUp");
 	return 0;
 }
 static int icCardRecvFunc(CARD_TYPE type,unsigned char * data, unsigned int len) {
@@ -162,14 +163,15 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		jint key) {
 
 	unsigned char recvbuf[128] = { 0 };
-
 	if (key <= 0) {
 		return NULL;
 	}
 	switch (key) {
 	case E_GET_HARDWARE_VER: {
+
 		int recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
 		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
+
 		if (recvLen > 0) {
 			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
 					(jbyte*) recvbuf);
@@ -241,6 +243,10 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 		}
 		break;
 	}
+	case E_DEL_GUARD:{
+		hardWareServer->delGuardServer(hardWareServer);
+	}
+	break;
 	default:
 		LOGW("cannot find Control Interface!");
 		break;

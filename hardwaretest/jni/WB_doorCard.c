@@ -33,7 +33,7 @@ pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type, DoorCardRecvFunc callBa
 		return NULL;
 		break;
 	}
-	return server;
+	return (pDoorCardops)server;
 }
 void destroyDoorCardServer(pDoorCardops *server) {
 	if(server !=NULL && *server!=NULL)
@@ -43,10 +43,10 @@ void destroyDoorCardServer(pDoorCardops *server) {
 
 	switch (pthis->type) {
 	case FM1702NL:
-		destroyFM1702NLOpsServer(&pthis->cardClass);
+		destroyFM1702NLOpsServer((pIcDoorCardOps*)&pthis->cardClass);
 		break;
 	case ZLG600A:
-		destroyZLG600AServer(&pthis->cardClass);
+		destroyZLG600AServer((pIcDoorCardOps*)&pthis->cardClass);
 		break;
 	default:
 		break;

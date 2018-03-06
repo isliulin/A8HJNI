@@ -193,10 +193,13 @@ static int getKey(FILE *fp, char *p, char* getBuff,int bufflen,char  mark) {
 	int bufLen = strlen(p);
 	int lineLen = 0;
 	int i = 0;
-	int len = 0;
+	ssize_t len = 0;
+
 	while ((lineLen = myGetline(&line, &len, fp) )> 0) {
+
 		if(bufLen >= lineLen)
 			continue;
+
 		if (strncmp(line, p, bufLen) == 0) {
 			equalFlag = strchr(line, mark);
 			if (equalFlag) {
@@ -216,6 +219,7 @@ static int getKey(FILE *fp, char *p, char* getBuff,int bufflen,char  mark) {
 		line = NULL;
 		len = 0;
 	}
+
 	if(line  != NULL)
 		free(line);
 	return -1;
@@ -232,6 +236,7 @@ static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream)
     }
     while((buf = fgetc(stream))!=EOF)
     {
+
         if(buf == '\n')
         {
              count += 1;
@@ -248,6 +253,7 @@ static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream)
 
 static int getHardWareVer(char* buf,int len)
 {
+
 	int ret;
 	FILE * fp = fopen("/system/build.prop", "r");
 	if (fp == NULL){
@@ -271,7 +277,6 @@ static int getCpuVer(void)
 	}
 	ret  = getKey(fp,"Hardware",buf,sizeof(buf),':');
 
-	LOGE("getKey=%s ret = :%d",buf,ret);
 
 	fclose(fp);
 	if(strcmp(buf,A20_CPU)==0)
