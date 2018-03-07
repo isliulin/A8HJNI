@@ -16,6 +16,7 @@ typedef enum Interface{
 	E_SEND_SHELL_CMD,           //发送SHELL指令
 	E_ADD_GUARD,				//把APP加入到守护进程中
 	E_DEL_GUARD,				//删除守护服务
+	E_GET_OPTO_SENSOR_STATE,    //获取光感状态
 	E_MAX
 }E_INTER_TYPE;
 

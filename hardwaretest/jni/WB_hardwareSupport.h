@@ -36,7 +36,7 @@ typedef struct  WB_hardWareOps{
 	int (*setPirUpFunc)(struct  WB_hardWareOps *,WBPirCallBackFunc);
 	//设置开门按键触发回调函数
 	int (*setOpenDoorKeyUpFunc)(struct  WB_hardWareOps *,T_InterruptFunc);
-	//设置光感状态
+	//获取光感状态
 	int (*getOptoSensorState)(struct  WB_hardWareOps *ops );
 	//设置IC卡数据回调函数
 	int (*setDoorCardRawUpFunc)(struct  WB_hardWareOps *,DoorCardRecvFunc);

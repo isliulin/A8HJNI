@@ -126,7 +126,6 @@ static int _dialing(char num)
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
 		system(cmdStrSu);
-
 	}
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 0 0 0" );
@@ -137,7 +136,6 @@ static int _dialing(char num)
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
 		system(cmdStrSu);
-
 	}
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr, "sendevent /dev/input/event3 1 %u 0",keyNum );
@@ -349,8 +347,6 @@ pVirtualHWops crateVirtualHWServer(void)
 	if(vHWServer->udpServer == NULL )
 		goto fail1;
 	vHWServer->udpServer->setHandle(vHWServer->udpServer,udpRecvFunc,NULL,NULL);
-
-
 
 	vHWServer->binderClient = binder_getServer();
 	vHWServer->ops = ops;

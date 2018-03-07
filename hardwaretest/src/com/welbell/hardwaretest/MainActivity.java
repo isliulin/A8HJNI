@@ -59,6 +59,15 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		hardwareResource.screenBlacklightControl(true);
 		//重启机器
 	//	hardwareResource.reboot();
+		//获取光感状态
+		//返回值  1：表示亮    0：表示暗   -1：表示获取失败
+		//hardwareResource.getOptoSensorState();
+		
+		//删除守护服务
+		//hardwareResource.delDaemonServer();
+		//删除回调接口
+		//hardwareResource.removeEventCallBack(this);
+		
 
 	}
 	
@@ -67,8 +76,8 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	@Override
 	public void someoneCloseEvent() {
 		// TODO Auto-generated method stub
-		Log.e("someoneCloseEvent","有人靠近");
-
+		Log.e("someoneCloseEvent","有人靠近 光敏状态是:"+hardwareResource.getOptoSensorState());
+		
 	}
 	@Override
 	public void doorLockKeyEvent(byte keyState) {

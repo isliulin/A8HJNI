@@ -181,6 +181,14 @@ public class HardwareSupport {
 		String recvStr = new String(recvData);
 		return recvStr;
 	}
+	public int getOptoSensorState()
+	{
+		byte[] state = {0};
+		state = a8GetKeyValue(controlHardwareCmd.E_GET_OPTO_SENSOR_STATE);
+		if (state == null)
+			return -1;
+		return state[0];
+	}
 
 	native int a8HardwareControlInit();
 
