@@ -10,7 +10,7 @@
 #include "binder.h"
 #include "common/debugLog.h"
 
-
+#define USER_BINDER  0
 
 typedef struct BinderClientOps{
 	int (*runScript)(struct BinderClientOps *,const char *);

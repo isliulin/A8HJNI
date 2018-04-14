@@ -10,6 +10,8 @@ public interface HardWareUpEvent {
 	
 	public void someoneCloseEvent();
 	public void doorLockKeyEvent(byte keyState);
+	public void doorMagneticEvent(byte keyState);
+	public void preventSeparateEvent(byte keyState);
 	public void doorCardBandAlgEvent(byte type,String icCardID);
 	public void doorCardBandRawEvent(byte type ,byte []icCardID);
 	public void keyBoardEvent(int code ,int value);

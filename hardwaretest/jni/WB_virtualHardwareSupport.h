@@ -9,7 +9,6 @@
 
 
 typedef struct VirtualHWops{
-
 		//设置人体感应回调函数
 		int (*setPirUpFunc)(struct  VirtualHWops *,WBPirCallBackFunc);
 		//设置开门按键触发回调函数
@@ -20,7 +19,6 @@ typedef struct VirtualHWops{
 		int (*setDoorCardRawUpFunc)(struct  VirtualHWops *,DoorCardRecvFunc);
 		int (*setKeyBoardUpFunc)(struct  VirtualHWops *,KeyEventUpFunc);
 }VirtualHWops,*pVirtualHWops;
-
 
 pVirtualHWops crateVirtualHWServer(void);
 void destroyVirtualHWServer(pVirtualHWops *server);

@@ -67,7 +67,6 @@ typedef struct UdpOps{
 * 	  参数1：设备本机端口号
 *    返回值：成功返回串口服务函数操作集指针,失败返回NULL
 */
-
 pUdpOps createUdpServer(int netPort);
 /*
 * destroyUdpServer：销毁UDP服务

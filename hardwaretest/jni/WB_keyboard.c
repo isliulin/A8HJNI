@@ -87,6 +87,8 @@ static void addEventFdToEpool(pWB_KeyBoardServer server) {
 					LOGE("fail to addEventFdToEpool fail fd:%d ", fd);
 				}
 			}
+		}else{
+			LOGD(" fail to open%s%d ", server->devPath,i);
 		}
 	}
 }

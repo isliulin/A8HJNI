@@ -8,7 +8,8 @@
 #include "WB_hardwareSupport.h"
 #include "WB_doorCard.h"
 #include "WB_pirSupport.h"
-//#include "common/nativeNetServer.h"
+#include "common/nativeNetServer.h"
+#include "common/Utils.h"
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceManage.h"
 #include "common/debugLog.h"
@@ -19,14 +20,18 @@ typedef  struct WB_hardWareServer {
 	WB_hardWareOps  ops;
 	pGpioOps doorServer;
 	pGpioOps openDoorKeyServer;
+	pGpioOps doorMagneticServer;//门磁
+	pGpioOps preventSeparateServer  ; //防拆
 	pGpioOps optoSensorServer;
 	pGpioOps IFCamerLightServer;
 	pGpioOps LCDLightServer;
 	pGpioOps camerLightServer;
 	pGpioOps keyboardLightServer;
+#if USER_BINDER == 1
 	pBinderClientOps binderClient;
-	//pNativeNetServerOps netServer;
-	//pIcDoorCardOps  doorCardServer;
+#else
+	pNativeNetServerOps netClient;
+#endif
 	pDoorCardops doorCardServer;
 	pWBPir_ops	pirServer;
 	pHwInterfaceOps interfaceOps;
@@ -45,6 +50,8 @@ static int sendShellCmd(struct  WB_hardWareOps *,const char *);
 static int reboot (struct  WB_hardWareOps *);
 static int setPirUpFunc(struct  WB_hardWareOps * ops,WBPirCallBackFunc pirUpFunc);
 static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
+static int setMagneticUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
+static int setPreventSeparateServerUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *,T_InterruptFunc);
 static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc rawUpFunc);
 static int getOptoSensorState(struct  WB_hardWareOps *ops );
@@ -64,8 +71,11 @@ static WB_hardWareOps ops = {
 		.getOptoSensorState = getOptoSensorState,
 		.setDoorCardRawUpFunc = setDoorCardRawUpFunc,
 		.setKeyboardEventUpFunc = setKeyboardEventUpFunc,
+		.setMagneticUpFunc = setMagneticUpFunc,
+		.setPreventSeparateServerUpFunc = setPreventSeparateServerUpFunc,
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
 		.delGuardServer = delGuardServer,
+
 };
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className)
 {
@@ -75,7 +85,7 @@ static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,cons
 		goto fail0;
 	}
 	return hardWareServer->guardThreadServer->setGuardPackagenameAndMainclassname(hardWareServer->guardThreadServer,
-			packName,className,3);
+			packName,className,4);
 	fail0:
 		return -1;
 }
@@ -96,6 +106,7 @@ static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc fu
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL || hardWareServer->keyBoardServer == NULL)
 		goto fail0;
+
 	return hardWareServer->keyBoardServer->setKeyEventUpFunc
 		(hardWareServer->keyBoardServer,func);
 fail0:
@@ -106,7 +117,6 @@ static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc r
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 		return -1;
-
 	hardWareServer->doorCardServer = createDoorCardServer(
 			hardWareServer->interfaceOps->getDoorType(),rawUpFunc
 	);
@@ -120,24 +130,33 @@ static int controlDoor(struct  WB_hardWareOps * ops,ControlCmd cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 		return -1;
-	return hardWareServer->doorServer->setOutputValue(
+	if(hardWareServer->doorServer != NULL){
+		return hardWareServer->doorServer->setOutputValue(
 				hardWareServer->doorServer,cmd);
+	}
+	return -1;
 }
 static int controlLCDLight(struct  WB_hardWareOps *ops ,ControlCmd cmd)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 				return -1;
-	return hardWareServer->LCDLightServer->setOutputValue(
+	if(hardWareServer->LCDLightServer != NULL ){
+		return hardWareServer->LCDLightServer->setOutputValue(
 					 hardWareServer->LCDLightServer,cmd);
+	}
+	return -1;
 }
 static int controlIFCameraLight(struct  WB_hardWareOps * ops,ControlCmd cmd)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 		if(hardWareServer == NULL)
 							return -1;
-		return hardWareServer->IFCamerLightServer->setOutputValue(
-				 hardWareServer->IFCamerLightServer,cmd);
+		if(hardWareServer->IFCamerLightServer != NULL ){
+			return hardWareServer->IFCamerLightServer->setOutputValue(
+					hardWareServer->IFCamerLightServer,cmd);
+		}
+		return -1;
 
 }
 static int controlCameraLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
@@ -145,8 +164,11 @@ static int controlCameraLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 						return -1;
-	return hardWareServer->camerLightServer->setOutputValue(
+	if(hardWareServer->camerLightServer != NULL){
+		return hardWareServer->camerLightServer->setOutputValue(
 			 hardWareServer->camerLightServer,cmd);
+	}
+	return -1;
 
 }
 static int controlKeyboardLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
@@ -154,14 +176,18 @@ static int controlKeyboardLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 		if(hardWareServer == NULL)
 					return -1;
-		return hardWareServer->keyboardLightServer->setOutputValue(
+		if(hardWareServer->keyboardLightServer != NULL ){
+			return hardWareServer->keyboardLightServer->setOutputValue(
 				hardWareServer->keyboardLightServer,cmd);
+		}
+		return -1;
 }
 static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 {
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 				return -1;
+#if USER_BINDER == 1
 	if(hardWareServer->binderClient){
 		return hardWareServer->binderClient->runScript(
 					hardWareServer->binderClient,cmd);
@@ -172,21 +198,44 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 		LOGD("cmd:%s",cmdStr);
 		return  system(cmdStr);
 	}
+#else
+	if(hardWareServer->netClient){
+		return hardWareServer->netClient->runScript(
+					hardWareServer->netClient,cmd);
+	}else
+	{
+		char cmdStr[128] = {0};
+		sprintf(cmdStr,"su -c %s",cmd);
+		LOGD("cmd:%s",cmdStr);
+		return  system(cmdStr);
+	}
+#endif
+
+
+
 }
 
 
 static int reboot (struct  WB_hardWareOps * ops)
 {
-
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 			return -1;
+#if USER_BINDER == 1
 	if(hardWareServer->binderClient){
 		return hardWareServer->binderClient->runScript(
 				hardWareServer->binderClient,"reboot");
 	}else {
 		return system("su -c reboot");
 	}
+#else
+	if(hardWareServer->netClient){
+		return hardWareServer->netClient->runScript(
+				hardWareServer->netClient,"reboot");
+	}else {
+		return system("su -c reboot");
+	}
+#endif
 }
 static int setPirUpFunc(struct  WB_hardWareOps * ops,WBPirCallBackFunc pirUpFunc)
 {
@@ -211,17 +260,47 @@ static int getOptoSensorState(struct  WB_hardWareOps *ops )
 fail0:
 	return -1;
 }
+
+
+static int setMagneticUpFunc(struct  WB_hardWareOps *ops,T_InterruptFunc magneticUpFunc)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+		hardWareServer->doorMagneticServer = gpio_getServer(
+				hardWareServer->interfaceOps->getDoorMagneticPin());
+		if(hardWareServer->doorMagneticServer == NULL){
+			LOGE("fail to setMagneticUpFunc");
+			return -1;
+		}
+		hardWareServer->doorMagneticServer->setInterruptFunc(
+				hardWareServer->doorMagneticServer,magneticUpFunc,NULL,BOTH );
+		return 0;
+}
+static int setPreventSeparateServerUpFunc(struct  WB_hardWareOps *ops,T_InterruptFunc preventSeparateUpFunc)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	hardWareServer->preventSeparateServer = gpio_getServer(
+			hardWareServer->interfaceOps->getSecurityPin());
+	if(hardWareServer->preventSeparateServer == NULL){
+		LOGE("fail to setPreventSeparateServerUpFunc");
+		return -1;
+	}
+	hardWareServer->preventSeparateServer->setInterruptFunc(
+			hardWareServer->preventSeparateServer,preventSeparateUpFunc,NULL,BOTH );
+	return 0;
+}
+
 static int setOpenDoorKeyUpFunc(struct  WB_hardWareOps * ops,T_InterruptFunc OpenDoorKeyUpFunc)
 {
 
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
-	hardWareServer->openDoorKeyServer = gpio_getServer(
-			hardWareServer->interfaceOps->getOpenDoorKeyPin());
-	if(hardWareServer->openDoorKeyServer == NULL)
-		return -1;
+	if(hardWareServer->openDoorKeyServer == NULL ){
+		hardWareServer->openDoorKeyServer = gpio_getServer(
+				hardWareServer->interfaceOps->getOpenDoorKeyPin());
+		if(hardWareServer->openDoorKeyServer == NULL)
+			return -1;
+	}
 	hardWareServer->openDoorKeyServer->setInterruptFunc(
 			hardWareServer->openDoorKeyServer,OpenDoorKeyUpFunc,NULL,BOTH );
-
 	return 0;
 }
 static int setOptoSensorUpFunc(struct  WB_hardWareOps *ops,T_InterruptFunc optoSensorUpFunc)
@@ -244,6 +323,7 @@ pWB_hardWareOps crateHardWareServer(void)
 	}
 	bzero(hardWareServer,sizeof(WB_hardWareServer));
 	hardWareServer->interfaceOps = crateHwInterfaceServer();
+
 	hardWareServer->doorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getDoorLockPin());
 	if(hardWareServer->doorServer == NULL ){
@@ -251,17 +331,19 @@ pWB_hardWareOps crateHardWareServer(void)
 		goto fail1;
 	}
 	hardWareServer->openDoorKeyServer = gpio_getServer(
-			hardWareServer->interfaceOps->getOpenDoorKeyPin());;
+			hardWareServer->interfaceOps->getOpenDoorKeyPin());
 	if(hardWareServer->openDoorKeyServer == NULL){
 		LOGE("fail to malloc openDoorKeyServer!");
-		goto fail2;
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail2;
 	}
 	hardWareServer->IFCamerLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getKeyLightPin());
 
 	if(hardWareServer->IFCamerLightServer == NULL ){
 		LOGE("fail to malloc IFCamerLightServer!");
-		goto fail3;
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail3;
 	}
 	hardWareServer->keyboardLightServer = hardWareServer->IFCamerLightServer;
 
@@ -269,37 +351,51 @@ pWB_hardWareOps crateHardWareServer(void)
 			hardWareServer->interfaceOps->getCameraLightPin());
 	if(hardWareServer->camerLightServer == NULL){
 		LOGE("fail to malloc camerLightServer!");
-		goto fail4;
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail4;
 	}
 	hardWareServer->LCDLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLcdSwichPin());
 	if(hardWareServer->LCDLightServer == NULL){
 		LOGE("fail to malloc LCDLightServer!");
-		goto fail5;
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail5;
 	}
 	hardWareServer->optoSensorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLightSensorPin());
 	if(hardWareServer->optoSensorServer == NULL)
 	{
-		goto fail6;
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail6;
 	}
 	hardWareServer->keyBoardServer = createKeyBoardServer("dev/input/event");
 	if(hardWareServer->keyBoardServer == NULL)
 	{
 		goto fail7;
 	}
-
+#if USER_BINDER == 1
 	hardWareServer->binderClient = binder_getServer();
 	if(hardWareServer->binderClient == NULL){
 		LOGE("fail to malloc binderClient!");
-
 	}else{
 		hardWareServer->guardThreadServer = createGuardThreadServer();
 		if(hardWareServer->guardThreadServer == NULL)
 		{
-			LOGE("fail to malloc binderClient!");
+			LOGE("fail to guardThreadServer!");
 		}
 	}
+#else
+	hardWareServer->netClient = createNativeNetServer();
+	if(hardWareServer->netClient == NULL){
+		LOGE("fail to malloc binderClient!");
+	}else{
+		hardWareServer->guardThreadServer = createGuardThreadServer();
+		if(hardWareServer->guardThreadServer == NULL)
+		{
+			LOGE("fail to guardThreadServer!");
+		}
+	}
+#endif
 
 
 	hardWareServer->ops = ops;
@@ -328,24 +424,47 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)*ops;
 	if(hardWareServer == NULL)
 		return ;
-	if(hardWareServer->keyboardLightServer)
+	if(hardWareServer->keyboardLightServer){
+		LOGE("destroyHardWareServer keyboardLightServer");
 		gpio_releaseServer(&hardWareServer->keyboardLightServer);
-	if(hardWareServer->camerLightServer)
+	}
+	if(hardWareServer->camerLightServer){
+		LOGE("destroyHardWareServer camerLightServer");
 		gpio_releaseServer(&hardWareServer->camerLightServer);
-	if(hardWareServer->IFCamerLightServer)
+	}
+#if 0 //键盘灯跟红外灯共用，所以只需要释放键盘灯
+	if(hardWareServer->IFCamerLightServer){
+		LOGE("destroyHardWareServer IFCamerLightServer");
 		gpio_releaseServer(&hardWareServer->IFCamerLightServer);
-	if(hardWareServer->openDoorKeyServer)
+	}
+#endif
+	if(hardWareServer->openDoorKeyServer){
+		LOGE("destroyHardWareServer openDoorKeyServer");
 		gpio_releaseServer(&hardWareServer->openDoorKeyServer);
-	if(hardWareServer->doorServer)
+	}
+	if(hardWareServer->doorServer){
+		LOGE("destroyHardWareServer doorServer");
 		gpio_releaseServer(&hardWareServer->doorServer);
-	if(hardWareServer->pirServer)
+	}
+	if(hardWareServer->pirServer){
+		LOGE("destroyHardWareServer pirServer");
 		destroyWBPirServer(&hardWareServer->pirServer);
-	if(hardWareServer->doorCardServer)
+	}
+	if(hardWareServer->doorCardServer){
+		LOGE("destroyHardWareServer doorCardServer");
 		destroyDoorCardServer(&hardWareServer->doorCardServer);
-	if(hardWareServer->keyBoardServer)
+	}
+	if(hardWareServer->keyBoardServer){
+		LOGE("destroyHardWareServer keyBoardServer");
 		destroyKeyBoardServer(&hardWareServer->keyBoardServer);
+	}
+#if USER_BINDER == 1
 	if(hardWareServer->binderClient)
 		binder_releaseServer(&hardWareServer->binderClient);
+#else
+	if(hardWareServer->netClient)
+		destroyNativeNetServer(&hardWareServer->netClient);
+#endif
 	if(hardWareServer->guardThreadServer)
 		destroyGuardThreadServer(&hardWareServer->guardThreadServer);
 

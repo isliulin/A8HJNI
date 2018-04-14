@@ -15,6 +15,7 @@
 #define ACK_OK				0X61
 #define ACK_ERR				0X62
 //控制命令字
+#define  CMD_CONNECT_SCRIPT 0X00
 #define  CMD_RUN_SCRIPT		0X10
 #define  CMD_HEARTBEAT      0X11
 typedef struct {
@@ -81,12 +82,13 @@ static int sendHeartbeat(struct NativeNetServerOps *ops, const char *str) {
 		return -1;
 	}
 	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_HEARTBEAT, str, strlen(str) + 1);
-	LOGD("msg.len = %d\n",msg.len);
 	return pthis->udpServer->write(pthis->udpServer, msg.buf, msg.len,
 			SERVER_IP_ADDR, SERVER_PORT);
 }
 
 pNativeNetServerOps createNativeNetServer(void) {
+	int time_out = 0,ret;
+	char recvbuf[100] = {0};
 	pNativeNetServer server = malloc(sizeof(NativeNetServer));
 	if (server == NULL) {
 		LOGE("fail to  malloc pNativeNetServer");
@@ -99,6 +101,17 @@ pNativeNetServerOps createNativeNetServer(void) {
 		goto fail1;
 	}
 	server->ops = ops;
+#if 0
+	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);
+	server->udpServer->write(server->udpServer, msg.buf, msg.len,
+						SERVER_IP_ADDR, SERVER_PORT);
+	ret = server->udpServer->read(server->udpServer,recvbuf,sizeof(recvbuf),1000);
+	if(ret <= 0)
+	{
+		goto fail1;
+	}
+#endif
+
 	return (pNativeNetServerOps) server;
 	fail1: free(server);
 	fail0: return NULL;

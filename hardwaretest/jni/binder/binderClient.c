@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "binder/binder.h"
 #include "binderClient.h"
+#include "common/debugLog.h"
 
 #define SERVER_NAME "welbell_nativeserver"
 #define WELBELL_SVR_CMD_RUNSCRIPT  0X00

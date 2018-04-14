@@ -21,7 +21,8 @@ public class HardwareSupport {
 	}
 
 	protected void finalize() {
-		a8HardwareControlExit();
+		Log.d(TAG,"CALL HardwareSupport finalize!");
+		//a8HardwareControlExit();
 	}
 
 	public void addEventCallBack(HardWareUpEvent upEvent) {
@@ -92,7 +93,18 @@ public class HardwareSupport {
 
 				temp.keyBoardEvent((eventData[0]) & 0xff, eventData[1] & 0xff);
 			}
-
+			break;
+		
+		case CallBackState.UI_MAGNETIC_EVENT:
+			for (HardWareUpEvent temp : upEventList) {
+				temp.doorMagneticEvent(eventData[0]);
+			}
+			break;
+		
+		case CallBackState.UI_PREVENTSEPARATE_EVENT:
+			for (HardWareUpEvent temp : upEventList) {
+				temp.preventSeparateEvent(eventData[0]);
+			}
 			break;
 		}
 	}
@@ -146,6 +158,7 @@ public class HardwareSupport {
 
 	public int executeRootShell(String cmdStr) {
 		byte[] cmdData = cmdStr.getBytes();
+		
 		return a8SetKeyValue(controlHardwareCmd.E_EXECURT_SHELL, cmdData,
 				cmdData.length);
 	}
@@ -158,7 +171,7 @@ public class HardwareSupport {
 		System.arraycopy(packName,0,total,0, packName.length);
 		System.arraycopy(space,0,total,packName.length, space.length);
 		System.arraycopy(className,0,total,packName.length+space.length, className.length);
-	
+		
 		return a8SetKeyValue(controlHardwareCmd.E_ADD_GUARD,total,
 				packName.length+className.length+space.length);
 	}
@@ -181,6 +194,17 @@ public class HardwareSupport {
 		String recvStr = new String(recvData);
 		return recvStr;
 	}
+	public String getIdCardUartDev() {
+
+		byte[] recvData = { 0 };
+
+		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_IDCARD_UARTDEV);
+		if (recvData == null)
+			return null;
+		String recvStr = new String(recvData);
+		return recvStr;
+	}
+	
 	public int getOptoSensorState()
 	{
 		byte[] state = {0};

@@ -38,10 +38,10 @@ typedef struct SerialServer{
 	int socketFd; //打开串口时的设备节点
 	pThreadOps recvThreadId; //接收数据的线程
 	int stopRecvThreadFd; //用于停止线程的eventfd
-	pThreadOps parseThreadId; //处理数据的线程
-	int stopParseThreadFd; //
+	pThreadOps parseThreadId;   //处理数据的线程
+	int stopParseThreadFd; 		//
 	struct sockaddr_in remoteInfo;//发送端的网络信息
-	pBufferOps  bufferOps; //缓存的BUF
+	pBufferOps   bufferOps; //缓存的BUF
 	UDPRecvFunc  recvFunc; //上报数据给上层的回调函数
 	UDPParseFunc parseFunc; //用户层提供的解析数据的算法
 	UDPBuildFunc buildFunc; //用户层提供的构造数据的算法

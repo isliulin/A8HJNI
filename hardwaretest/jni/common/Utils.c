@@ -250,7 +250,19 @@ static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream)
     }
     return count;
 }
+static int getHardWareFromRK(char* buf,int len)
+{
+	int ret;
+	FILE * fp = fopen("/system/build.prop", "r");
+	if (fp == NULL){
+		LOGE("OPEN /system/build.prop FAIL !\n");
+		return -1;
+	}
+	ret  = getKey(fp,"ro.rksdk.version",buf,len,'=');
+	fclose(fp);
+	return ret;
 
+}
 static int getHardWareVer(char* buf,int len)
 {
 
@@ -266,13 +278,14 @@ static int getHardWareVer(char* buf,int len)
 }
 static int getCpuVer(void)
 {
-#define A20_CPU " sun7i"
-#define A64_CPU " sun50iw1p1"
+#define A20_CPU 	" sun7i"
+#define A64_CPU 	" sun50iw1p1"
+#define RK3368_CPU  " rockchip,rk3368"
 	int ret;
 	char buf[128] = {0};
 	FILE * fp = fopen("/proc/cpuinfo", "r");
 	if (fp == NULL){
-		LOGE("OPEN /system/build.prop FAIL !\n");
+		LOGE("OPEN /proc/cpuinfo FAIL !\n");
 		return -1;
 	}
 	ret  = getKey(fp,"Hardware",buf,sizeof(buf),':');
@@ -284,8 +297,8 @@ static int getCpuVer(void)
 		return A20;
 	}else if(strcmp(buf,A64_CPU)==0)
 		return A64;
-	else
-		return -1;
+	else  if(strcmp(buf,RK3368_CPU) == 0 )
+		return RK3368;
 	return 0;
 }
 static UtilsOps ops = {
@@ -299,6 +312,7 @@ static UtilsOps ops = {
 		.GetWeiGendCardId = GetWeiGendCardId,
 		.getCpuVer = getCpuVer,
 		.getHardWareVer = getHardWareVer,
+		.getHardWareFromRK = getHardWareFromRK,
 };
 pUtilsOps getUtilsOps(void)
 {

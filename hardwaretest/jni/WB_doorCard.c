@@ -30,6 +30,7 @@ pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type, DoorCardRecvFunc callBa
 				(RecvFunc) callBackFunc);
 		break;
 	default:
+		LOGD("none card Server!\n");
 		return NULL;
 		break;
 	}

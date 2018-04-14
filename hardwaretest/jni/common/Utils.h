@@ -12,6 +12,7 @@
 typedef enum {
 	A20 = 0,
 	A64,
+	RK3368,
 }CPU_VER;
 #endif
 
@@ -25,6 +26,7 @@ typedef struct {
 	void (*printHex)(char *,int);
 	int (*GetWeiGendCardId)(const char *,int , int *);
 	int (*getHardWareVer)(char* ,int );
+	int (*getHardWareFromRK)(char *,int);
 	int (*getCpuVer)(void);
 }UtilsOps,*pUtilsOps;
 

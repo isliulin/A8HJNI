@@ -29,7 +29,7 @@ typedef struct GpioOps{
 	//设置中断触发函数以及触发方式
 }GpioOps,*pGpioOps;
 //创建gpio服务对象
-pGpioOps gpio_getServer(unsigned int gpio);
+pGpioOps gpio_getServer( int gpio);
 //销毁gpio服务对象
 void     gpio_releaseServer(pGpioOps *ops);
 

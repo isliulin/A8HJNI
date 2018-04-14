@@ -14,7 +14,6 @@ import android.view.View;
 public class MainActivity extends Activity implements HardWareUpEvent{
 
 	static final String TAG = "HardwareDemo";
-//	RecvHardwareEvent upEvent = new RecvHardwareEvent();
 	HardwareSupport hardwareResource = new HardwareSupport();
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +22,11 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 
 		setContentView(R.layout.activity_main);
 		String version;
+		String IdCardUartDEV = hardwareResource.getIdCardUartDev();
+		
+		Log.e("","IdCardUartDEV:"+IdCardUartDEV);
 		version = hardwareResource.getHardWareVersion();
+		Log.e("","version:"+version);
 		//添加接口
 		hardwareResource.addEventCallBack(this);
 		//以root权限执行shell脚本:设置IP地址
@@ -44,13 +47,15 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest", "com.welbell.hardwaretest.MainActivity");
 	
-		hardwareResource.executeRootShell("ifconfig eth0 192.168.1.88");
+	//	hardwareResource.executeRootShell("pm install -r  /data/data/yun.apk\n");
 
 		
 		//开启摄像头灯
 		hardwareResource.cameraLightControl(true);
 		//开门
-		hardwareResource.doorLockControl(true);
+	
+
+		hardwareResource.doorLockControl(false);
 		//开启键盘灯
 		hardwareResource.keyboardLightControl(true);
 		//开启红外摄像头灯
@@ -82,26 +87,26 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 	@Override
 	public void doorLockKeyEvent(byte keyState) {
 		// TODO Auto-generated method stub
-		
+		Log.e("doorLockKeyEvent",":"+keyState);
 	}
 	@Override
 	public void doorCardBandAlgEvent( byte type,String icCardID) {
 		// TODO Auto-generated method stub
 		String cardType[] = {"IC卡","CPU卡","身份证"};
 		Log.e("","有人刷"+cardType[type]+"CardID:"+icCardID);
-		hardwareResource.delDaemonServer();
-		hardwareResource.removeEventCallBack(this);
+	//	hardwareResource.delDaemonServer();
+	//	hardwareResource.removeEventCallBack(this);
 	}
 	@Override
 	public void doorCardBandRawEvent(byte type,byte[] icCardID) {
 		// TODO Auto-generated method stub
 		String cardType[] = {"IC卡","CPU卡","身份证"};
-		Log.e("","有人刷"+cardType[type]);
+		Log.e("","有人刷,一会重启"+cardType[type]);
 		for(int i = 0;i < icCardID.length;i++)
 		{
 			Log.e("",""+icCardID[i]);
 		}
-		
+		//hardwareResource.reboot();
 	}
 	@Override
 	public void keyBoardEvent(int code, int value) {
@@ -111,6 +116,19 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		Log.e("keyBoardEvent"," code:"+code+
 			" value:"+(value==1?"down":"up"));
 		
+	}
+
+
+	@Override
+	public void doorMagneticEvent(byte keyState) {
+		// TODO Auto-generated method stub
+		Log.e("doorMagneticEvent",":"+keyState);
+		
+	}
+	@Override
+	public void preventSeparateEvent(byte keyState) {
+		// TODO Auto-generated method stub
+		Log.e("preventSeparateEvent",":"+keyState);
 	}
 	
 

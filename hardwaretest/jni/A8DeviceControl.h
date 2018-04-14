@@ -17,6 +17,7 @@ typedef enum Interface{
 	E_ADD_GUARD,				//把APP加入到守护进程中
 	E_DEL_GUARD,				//删除守护服务
 	E_GET_OPTO_SENSOR_STATE,    //获取光感状态
+	E_GET_IDCARD_UARTDEV,		//获取身份证对应的串口号
 	E_MAX
 }E_INTER_TYPE;
 
@@ -56,5 +57,24 @@ typedef enum Interface{
 
 #define UI_OPENDOOR_KEY_DOWN					 0X36
 #define UI_HARDWARE_INFO	  	                 0X40   //获取FIRMWARE_VERSION
+
 #define UI_KEYBOARD_EVENT					 0X41   //上报键盘事件
+#define UI_MAGNETIC_EVENT                    0X42
+#define UI_PREVENTSEPARATE_EVENT  			 0X43
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

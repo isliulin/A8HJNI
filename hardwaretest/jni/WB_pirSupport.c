@@ -37,6 +37,7 @@ pWBPir_ops crateWBPirServer(int gpioPin,WBPirCallBackFunc upFunc)
 	wbPirServer->gpioServer = gpio_getServer(gpioPin);
 	if(wbPirServer->gpioServer == NULL )
 	{
+		LOGE("fail to wbPirServer->gpioServer ");
 		goto fail1;
 	}
 	wbPirServer->gpioServer->setInterruptFunc(wbPirServer->gpioServer ,gpioInterruptFunc,wbPirServer,FALLING);

@@ -8,6 +8,7 @@
 #include "taskManage/threadManage.h"
 #include "common/debugLog.h"
 #include "binder/binderClient.h"
+#include "common/nativeNetServer.h"
 
 #define SYSFS_GPIO_EXPORT           "/sys/class/gpio/export"
 #define SYSFS_GPIO_UNEXPORT         "/sys/class/gpio/unexport"
@@ -15,10 +16,17 @@
 #define SYSFS_GPIO_RST_DIR_IN       "in"
 #define SYSFS_GPIO_RST_VAL_H        "1"
 #define SYSFS_GPIO_RST_VAL_L        "0"
+
+
 typedef struct GpioServer {
 	GpioOps ops;
+#if USER_BINDER == 1
 	pBinderClientOps binderClient;
+#else
+	pNativeNetServerOps netClient;
+#endif
 	pThreadOps interruptThreadId;
+
 	T_InterruptFunc interruptFunc;
 	void *interruptArg;
 	char gpioPath[64];
@@ -60,31 +68,50 @@ static int setOutputValue(struct GpioOps *base, int value) {
 	pGpioServer gpioServer = (pGpioServer) base;
 	sprintf(cmdStr, "%s/direction", gpioServer->gpioPath);
 	fd = open(cmdStr, O_WRONLY);
-	if (fd < 0) {
-		LOGE("fail to open %s", cmdStr);
-		goto fail0;
+	if (fd > 0) {
+		ret = write(fd, SYSFS_GPIO_RST_DIR_OUT, strlen(SYSFS_GPIO_RST_DIR_OUT) + 1);
+		if (ret < 0) {
+			LOGE("fail to write %s", cmdStr);
+			close(fd);
+			goto user_root;
+		}
+	}else {
+		goto user_root;
 	}
-	ret = write(fd, SYSFS_GPIO_RST_DIR_OUT, strlen(SYSFS_GPIO_RST_DIR_OUT) + 1);
-	if (ret < 0) {
-		LOGE("fail to write %s", cmdStr);
-		goto fail1;
-	}
-	close(fd);
 	bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "%s/value", gpioServer->gpioPath);
 	fd = open(cmdStr, O_WRONLY);
 	if (fd < 0) {
 		LOGE("fail to open %s", cmdStr);
-		goto fail0;
+		close(fd);
+		goto user_root;
 	}
 	ret = write(fd, valueStr, strlen(valueStr) + 1);
 	if (ret < 0) {
 		LOGE("fail to write %s", cmdStr);
-		goto fail1;
+		close(fd);
+		goto user_root;
 	}
-	close(fd);
+	goto succeed;
+user_root:
+	bzero(cmdStr,sizeof(cmdStr));
+	sprintf(cmdStr,"echo out > %s/direction",gpioServer->gpioPath);
+	LOGE("cmdStr:%s ",cmdStr);
+#if USER_BINDER == 1
+	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
+#else
+	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+#endif
+	bzero(cmdStr,sizeof(cmdStr));
+	sprintf(cmdStr,"echo %d > %s/value",value,gpioServer->gpioPath);
+	LOGE("cmdStr:%s",cmdStr);
+#if USER_BINDER == 1
+	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
+#else
+	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+#endif
+succeed:
 	return 0;
-	fail1: close(fd);
 	fail0: return -1;
 }
 static int getInputValue(struct GpioOps *base) {
@@ -134,7 +161,6 @@ static void *gpioloopHandle(void *arg) {
 	gpioState.pin = gpioServer->gpioPin;
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
 		gpioState.state = getInputValue((pGpioOps) gpioServer);
-
 		if (gpioState.state != old_state) {
 			if (interruptMode == RISING && gpioState.state == 1) {
 				gpioServer->interruptFunc(&gpioState);
@@ -310,10 +336,14 @@ static int setInterruptFunc(struct GpioOps *base, T_InterruptFunc callBackfunc,
 
 	return 0;
 }
-pGpioOps gpio_getServer(unsigned int gpio) {
+pGpioOps gpio_getServer( int gpio) {
 	char cmdStr[128] = { 0 };
 	char goioStr[6] = { 0 };
 	int ret = -1;
+	if(gpio <= 0){
+		LOGE("fail to gpio_getServer gpio:%d",gpio);
+		return NULL;
+	}
 	sprintf(goioStr, "%u", gpio);
 	int gpiofd;
 	int exportFd;
@@ -322,11 +352,22 @@ pGpioOps gpio_getServer(unsigned int gpio) {
 		goto fail0;
 	}
 	bzero(gpioServer, sizeof(GpioServer));
+#if USER_BINDER == 1
 	gpioServer->binderClient = binder_getServer();
 	if (gpioServer->binderClient == NULL) {
 		LOGE("fail to crate binderClient!\n");
 		goto fail1;
 	}
+#else
+	gpioServer->netClient = createNativeNetServer();
+	if(gpioServer->netClient == NULL)
+	{
+		LOGE("fail to crate netClient!\n");
+		goto fail1;
+	}
+	LOGE("gpioServer->netClient !");
+#endif
+
 	exportFd = open(SYSFS_GPIO_EXPORT, O_WRONLY);
 	if (exportFd < 0) {
 		LOGE("fail to open %s!", SYSFS_GPIO_EXPORT);
@@ -347,12 +388,20 @@ pGpioOps gpio_getServer(unsigned int gpio) {
 		//用root权限打开
 		//# echo 34 > /sys/class/gpio/export
 		sprintf(cmdStr, "echo %d %s", gpio, SYSFS_GPIO_EXPORT);
+
+
+#if USER_BINDER == 1
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
+#else
+		ret = gpioServer->netClient->runScript(gpioServer->netClient,
+					  cmdStr);
+#endif
 		if (ret < 0) {
 			LOGE("fail to write %s!", SYSFS_GPIO_EXPORT);
 			goto fail3;
 		}
+
 	}
 
 	//尝试再次打开
@@ -373,7 +422,12 @@ pGpioOps gpio_getServer(unsigned int gpio) {
 	return (pGpioOps) (&gpioServer->ops);
 
 	fail3: close(exportFd);
+#if USER_BINDER == 1
 	fail2: binder_releaseServer(&gpioServer->binderClient);
+#else
+	fail2: destroyNativeNetServer(&gpioServer->netClient);
+#endif
+
 	fail1: free(gpioServer);
 	fail0: return NULL;
 }
@@ -429,7 +483,6 @@ void gpio_releaseServer(pGpioOps *ops) {
 	if (gpioServer == NULL)
 		return;
 	if (gpioServer->closeFd > 0) {
-
 		eventfd_write(gpioServer->closeFd, 1);
 		LOGW("[pin:%d]send close sig", gpioServer->gpioPin);
 	}
@@ -447,15 +500,28 @@ void gpio_releaseServer(pGpioOps *ops) {
 
 		bzero(cmdStr, sizeof(cmdStr));
 		sprintf(cmdStr, "echo %d %s", gpioServer->gpioPin, SYSFS_GPIO_UNEXPORT);
+#if USER_BINDER == 1
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
+#else
+		ret = gpioServer->netClient->runScript(gpioServer->netClient,
+						cmdStr);
+#endif
 		if (ret < 0) {
 			LOGE("fail to write %s!", SYSFS_GPIO_UNEXPORT);
 			goto fail1;
 		}
 	}
 	close(fd);
+	free(gpioServer);
+	*ops = NULL;
+	return;
+#if USER_BINDER == 1
 	fail1: binder_releaseServer(&gpioServer->binderClient);
+#else
+	fail1:destroyNativeNetServer(&gpioServer->netClient);
+#endif
+
 	fail0: free(gpioServer);
 	*ops = NULL;
 	return;
