@@ -34,7 +34,7 @@ LOCAL_LDLIBS   := -llog
 #如果用到指纹识别请设置以下参数
 #LOCAL_CFLAGS += -DUSER_FINGER
 #选择门卡型号支持 FM1702NL or ZLG600A
-LOCAL_CFLAGS += -DUSER_ZLG600A
+#LOCAL_CFLAGS += -DUSER_ZLG600A
 #如果用到门铃请设置以下参数
 #LOCAL_CFLAGS += -DUSER_DOOR_BELL
 #如果用到硬件的人脸识别请设置以下参数

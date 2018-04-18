@@ -85,7 +85,7 @@ static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,cons
 		goto fail0;
 	}
 	return hardWareServer->guardThreadServer->setGuardPackagenameAndMainclassname(hardWareServer->guardThreadServer,
-			packName,className,4);
+			packName,className,6);
 	fail0:
 		return -1;
 }

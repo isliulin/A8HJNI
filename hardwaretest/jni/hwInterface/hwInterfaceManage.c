@@ -161,7 +161,7 @@ static int getLcdSwichPin(void) {
 	if (cpuVer == A20)
 		return PH(7);
 	else if (cpuVer == A64)
-		return PH(6);
+		return PD(23);
 	return -1;
 }
 static int getRestartPin(void) {
