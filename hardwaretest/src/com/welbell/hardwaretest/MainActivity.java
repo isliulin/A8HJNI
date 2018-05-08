@@ -21,40 +21,31 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		//获取版本号
 
 		setContentView(R.layout.activity_main);
-		String version;
+		
+		//获取身份证模块所接的串口号
 		String IdCardUartDEV = hardwareResource.getIdCardUartDev();
 		
 		Log.e("","IdCardUartDEV:"+IdCardUartDEV);
-		version = hardwareResource.getHardWareVersion();
+		//获取系统版本号
+		String version = hardwareResource.getHardWareVersion();
 		Log.e("","version:"+version);
 		//添加接口
 		hardwareResource.addEventCallBack(this);
-		//以root权限执行shell脚本:设置IP地址
-		try {
-			Thread.sleep(1);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
 		
 		
-		hardwareResource.executeRootShell("ls");
-		//把本进程添加到守护进程中 
 		/*
 		 * 参数1：app 包名
 		 * 参数2：主Activity全类名
 		 * */
-		
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest", "com.welbell.hardwaretest.MainActivity");
 	
-	//	hardwareResource.executeRootShell("pm install -r  /data/data/yun.apk\n");
 
 		
 		//开启摄像头灯
 		hardwareResource.cameraLightControl(true);
 		//开门
 	
-
 		hardwareResource.doorLockControl(false);
 		//开启键盘灯
 		hardwareResource.keyboardLightControl(true);
@@ -94,19 +85,18 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		// TODO Auto-generated method stub
 		String cardType[] = {"IC卡","CPU卡","身份证"};
 		Log.e("","有人刷"+cardType[type]+"CardID:"+icCardID);
-	//	hardwareResource.delDaemonServer();
-	//	hardwareResource.removeEventCallBack(this);
+
 	}
 	@Override
 	public void doorCardBandRawEvent(byte type,byte[] icCardID) {
 		// TODO Auto-generated method stub
 		String cardType[] = {"IC卡","CPU卡","身份证"};
-		Log.e("","有人刷,一会重启"+cardType[type]);
+
 		for(int i = 0;i < icCardID.length;i++)
 		{
 			Log.e("",""+icCardID[i]);
 		}
-		//hardwareResource.reboot();
+	
 	}
 	@Override
 	public void keyBoardEvent(int code, int value) {

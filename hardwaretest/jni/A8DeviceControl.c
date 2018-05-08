@@ -30,6 +30,7 @@
 #include "WB_virtualHardwareSupport.h"
 #include "WB_guardThread.h"
 #include "hwInterface/gpioServer.h"
+#include <unistd.h>
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
@@ -43,6 +44,7 @@ static int getpackAgeNameAndclassName(char *packAgeName, char *className,
 		const char *local_Value);
 static void magneticUp(pGpioPinState pinState);
 static void preventSeparateUp(pGpioPinState pinState);
+
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
@@ -75,7 +77,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer->setPreventSeparateServerUpFunc(hardWareServer,
 			preventSeparateUp);
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
-
+	hardWareServer->controlDoor(hardWareServer, 0);
 	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
 	fail2: free(JavaMethodServer);
@@ -113,9 +115,9 @@ static void KeyEventUp(int code, int value) {
 		return;
 	}
 	upData[0] = UI_KEYBOARD_EVENT;
-	if(getUtilsOps()->getCpuVer() == A20){
+	if (getUtilsOps()->getCpuVer() == A20) {
 		upData[1] = getMapKeyCode(code);
-	}else {
+	} else {
 		upData[1] = getMapKeyCodeNew(code);
 	}
 	upData[2] = value;
@@ -162,7 +164,6 @@ static int icCardRecvFunc(CARD_TYPE type, unsigned char * data,
 		unsigned int len) {
 	getUtilsOps()->printData(data, len);
 	char valid[128] = { 0 };
-
 	union {
 		char buf[sizeof(uint32_t)];
 		uint32_t id;
@@ -222,11 +223,12 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 	case E_GET_HARDWARE_VER: {
 		LOGD("E_GET_HARDWARE_VER\n");
 		int recvLen;
-		if(getUtilsOps()->getCpuVer()==A20|| getUtilsOps()->getCpuVer()==A64 )
-			 recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
-		else if(getUtilsOps()->getCpuVer()== RK3368)
-		{
-			recvLen = getUtilsOps()->getHardWareFromRK(recvbuf, sizeof(recvbuf));
+		if (getUtilsOps()->getCpuVer() == A20
+				|| getUtilsOps()->getCpuVer() == A64)
+			recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
+		else if (getUtilsOps()->getCpuVer() == RK3368) {
+			recvLen = getUtilsOps()->getHardWareFromRK(recvbuf,
+					sizeof(recvbuf));
 		}
 		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
 
@@ -277,7 +279,7 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 	if (ValueLen > 0) {
 		local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf,
 				NULL);
-		LOGD("Control Interface:%d  ValueLen:%d \n", key, ValueLen);
+		LOGD("Control Interface:%d  Value:%d \n", key, local_Value[0]);
 		memcpy(load_data, local_Value, ValueLen);
 		if (local_Value != NULL)
 			exit: (*env)->ReleaseByteArrayElements(env, ValueBuf,

@@ -176,7 +176,7 @@ static int controlKeyboardLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 		if(hardWareServer == NULL)
 					return -1;
-		if(hardWareServer->keyboardLightServer != NULL ){
+		if(hardWareServer->keyboardLightServer != NULL &&hardWareServer->keyboardLightServer->setOutputValue !=NULL ){
 			return hardWareServer->keyboardLightServer->setOutputValue(
 				hardWareServer->keyboardLightServer,cmd);
 		}

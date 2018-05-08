@@ -160,7 +160,10 @@ static void *gpioloopHandle(void *arg) {
 	gpioState.interruptArg = gpioServer->interruptArg;
 	gpioState.pin = gpioServer->gpioPin;
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
+		usleep(100 * 1000);
 		gpioState.state = getInputValue((pGpioOps) gpioServer);
+		if(gpioState.state == -1)
+			continue;
 		if (gpioState.state != old_state) {
 			if (interruptMode == RISING && gpioState.state == 1) {
 				gpioServer->interruptFunc(&gpioState);
@@ -173,7 +176,7 @@ static void *gpioloopHandle(void *arg) {
 			}
 		}
 		old_state = gpioState.state;
-		usleep(20 * 1000);
+
 	}
 
 	exit: return NULL;
