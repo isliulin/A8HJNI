@@ -52,13 +52,10 @@ static int start(struct TimerOps* base)
 	    hard_evp.sigev_notify_attributes = NULL;//&attr;
 	    if (timer_create(CLOCK_MONOTONIC, &hard_evp, &(timerServer->timerid)) == -1)
 	    {
-	      
 	        pthread_mutex_unlock(&timerServer->mutex);
-		
 	        goto fail0;
 	    }
 	}
-
 	if(timerServer->loopTime <= 0 ){
 		it.it_interval.tv_sec =  0;
 		it.it_interval.tv_nsec = 1000*1000*500LL; 

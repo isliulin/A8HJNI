@@ -29,7 +29,6 @@ static void *poll_thread_func(void *para);
 
 // Export interface implemetation
 
-
 pCpuCardOps createZLG600AServer(const char *devPath, RecvFunc IDHandler) {
 	int ret;
 	pCpuCardServer server = NULL;
@@ -59,7 +58,8 @@ pCpuCardOps createZLG600AServer(const char *devPath, RecvFunc IDHandler) {
 	}
 
 	server->reader->id_report_handler = IDHandler;
-	server->reader->thread = pthread_register(poll_thread_func, &server, sizeof(void*), NULL);
+	server->reader->thread = pthread_register(poll_thread_func, &server,
+			sizeof(void*), NULL);
 	if (!server->reader->thread) {
 		LOGE("%s: pthread_register failed!\n", __func__);
 		goto close_ctl;
@@ -68,7 +68,7 @@ pCpuCardOps createZLG600AServer(const char *devPath, RecvFunc IDHandler) {
 	if (server->reader->thread->start(server->reader->thread) != 0)
 		goto destroy_thread;
 
-	return (pCpuCardOps)server;
+	return (pCpuCardOps) server;
 	destroy_thread:
 	LOGE("%s: pthread_start failed!\n", __func__);
 	pthread_destroy(&(server->reader->thread));
@@ -85,9 +85,9 @@ pCpuCardOps createZLG600AServer(const char *devPath, RecvFunc IDHandler) {
 }
 
 void destroyZLG600AServer(pCpuCardOps *pthis) {
-	if(pthis != NULL && *pthis!=NULL)
+	if (pthis != NULL && *pthis != NULL)
 		return;
-	pCpuCardServer server = (pCpuCardServer)*pthis;
+	pCpuCardServer server = (pCpuCardServer) *pthis;
 	if (server->reader) {
 		if (server->reader->thread) {
 			server->reader->thread->stop(server->reader->thread);
@@ -111,7 +111,7 @@ static void picc_A_card_catch_proc(RecvFunc upfunc) {
 	int i, id_len;
 
 	if (picc_A_active(&atq, &sak, &len, uid) != 0) {
-		LOGE("%s: picc_A_active failed!\n", __func__);
+		//LOGE("%s: picc_A_active failed!\n", __func__);
 		return;
 	}
 
@@ -130,10 +130,10 @@ static void picc_A_card_catch_proc(RecvFunc upfunc) {
 
 //	union card_id_buf id_buf;
 
-	//id_len = GetWeiGendCardId(uid, len, &id_buf.id);
-	//LOGE("Card ID length: %d, ID: ", id_len);
+//id_len = GetWeiGendCardId(uid, len, &id_buf.id);
+//LOGE("Card ID length: %d, ID: ", id_len);
 
-	if(upfunc)
+	if (upfunc)
 		upfunc(card_type, uid, len);
 }
 
@@ -173,31 +173,58 @@ static void picc_B_card_catch_proc(RecvFunc upfunc) {
 
 	if (picc_B_halt())
 		LOGE("%s: picc_B_halt failed!\n", __func__);
-	if (id_len&&upfunc)
+	if (id_len && upfunc)
 		upfunc(card_type, id, id_len);
 }
 
 static void *poll_thread_func(void *para) {
 
-	pCpuCardServer server = (*(pCpuCardServer*)para);
+	pCpuCardServer server = (*(pCpuCardServer*) para);
+	int ret = 0;
 	while (1) {
-		if (Thread_Stop == server->reader->thread->check(server->reader->thread))
+		if (Thread_Stop
+				== server->reader->thread->check(server->reader->thread))
 			break;
 		usleep(1000 * 50);
-
-		if (ctl_set_picc_type(PICC_TYPE_A))
+		ret = ctl_set_picc_type(PICC_TYPE_A);
+		if (ret) {
 			LOGE("%s: ctl_set_picc_type A failed!\n", __func__);
-
-		if (picc_A_request() == 0)
+			if (ret == -ERR_UART_TIME_OUT) {
+				LOGE("send cmd timeout!");
+				goto reset;
+			}
+		}
+		ret = picc_A_request();
+		if (0 == ret) {
 			picc_A_card_catch_proc(server->reader->id_report_handler);
+		} else if (ret == -ERR_UART_TIME_OUT) {
+			LOGE("send cmd timeout!");
+			goto reset;
+		} else {
+			//LOGE("fail to picc_A_request!");
+		}
 
-		if (ctl_set_picc_type(PICC_TYPE_B))
-			LOGE("%s: ctl_set_picc_type B failed!\n", __func__);
-
-		if (picc_B_request() == 0)
+		ret = ctl_set_picc_type(PICC_TYPE_B);
+		if (ret == -ERR_UART_TIME_OUT) {
+			LOGE("send cmd timeout!");
+			goto reset;
+		}
+		ret = picc_B_request();
+		if (ret == 0)
 			picc_B_card_catch_proc(server->reader->id_report_handler);
+		else if (ret == -ERR_UART_TIME_OUT) {
+			LOGE("send cmd timeout!");
+			goto reset;
+		}
+		continue;
+	reset:
+		LOGW("reset dev!");
+		sleep(2);
+		ret = ctl_reset_dev();
+		if (ret) {
+			LOGE("fail to ctl_reset_dev!");
+		}
 	}
-
 	return NULL;
 }
 

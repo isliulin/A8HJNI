@@ -211,8 +211,6 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 	}
 #endif
 
-
-
 }
 
 
@@ -338,7 +336,7 @@ pWB_hardWareOps crateHardWareServer(void)
 			goto fail2;
 	}
 	hardWareServer->IFCamerLightServer = gpio_getServer(
-			hardWareServer->interfaceOps->getKeyLightPin());
+			hardWareServer->interfaceOps->getIFCameraLightPin());
 
 	if(hardWareServer->IFCamerLightServer == NULL ){
 		LOGE("fail to malloc IFCamerLightServer!");
@@ -432,7 +430,7 @@ void destroyHardWareServer(pWB_hardWareOps *ops)
 		LOGE("destroyHardWareServer camerLightServer");
 		gpio_releaseServer(&hardWareServer->camerLightServer);
 	}
-#if 0 //键盘灯跟红外灯共用，所以只需要释放键盘灯
+#if 1
 	if(hardWareServer->IFCamerLightServer){
 		LOGE("destroyHardWareServer IFCamerLightServer");
 		gpio_releaseServer(&hardWareServer->IFCamerLightServer);

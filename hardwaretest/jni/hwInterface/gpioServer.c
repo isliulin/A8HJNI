@@ -75,9 +75,11 @@ static int setOutputValue(struct GpioOps *base, int value) {
 			close(fd);
 			goto user_root;
 		}
+
 	}else {
 		goto user_root;
 	}
+	close(fd);
 	bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "%s/value", gpioServer->gpioPath);
 	fd = open(cmdStr, O_WRONLY);
@@ -92,6 +94,7 @@ static int setOutputValue(struct GpioOps *base, int value) {
 		close(fd);
 		goto user_root;
 	}
+	close(fd);
 	goto succeed;
 user_root:
 	bzero(cmdStr,sizeof(cmdStr));
@@ -288,6 +291,7 @@ static void *gpioInterruptHandleBypoll(void *arg) {
 		gpioServer->interruptFunc(&gpioState);
 		LOGE("do someing!gpio:%d\n", gpioServer->gpioPin);
 	}
+	close(getGpioValueFd);
 	return NULL;
 }
 static int readgpioStateFromFd(int fd)

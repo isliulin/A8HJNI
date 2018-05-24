@@ -150,6 +150,14 @@ static int getCameraLightPin(void) {
 		return PL(11);
 	return -1;
 }
+static int getIFCameraLightPin(void){
+	if (cpuVer == A20)
+		return NULL;
+	else if (cpuVer == A64)
+		return PB(7);
+	return -1;
+
+}
 static int getKeyLightPin(void) {
 	if (cpuVer == A20)
 		return PH(0);
@@ -204,7 +212,10 @@ static char *getDoorCardUART(void) {
 static char * getIdCardUART(void)
 {
 	if (cpuVer == A20)
+	#ifdef USER_ID
 			return "/dev/ttyS6";
+    #endif
+			return NULL;
 	else if (cpuVer == A64)
 			return "/dev/ttyS2";
 	else if(cpuVer == RK3368 )
@@ -227,6 +238,7 @@ static HwInterfaceOps ops = {
 		.getOpenDoorKeyPin = getOpenDoorKeyPin,//控制内部开门按钮
 		.getLightSensorPin = getLightSensorPin,//摄像头光敏反馈
 		.getCameraLightPin = getCameraLightPin,//控制摄像头灯
+		.getIFCameraLightPin = getIFCameraLightPin,//控制摄像头灯
 		.getKeyLightPin = getKeyLightPin,//控制键盘灯
 		.getLcdSwichPin = getLcdSwichPin,//控制屏幕背光
 		.getRestartPin = getRestartPin,//重启机器

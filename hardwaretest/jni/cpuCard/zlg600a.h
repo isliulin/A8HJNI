@@ -16,10 +16,11 @@ enum picc_type {
 // Export function
 // ================================================================================
 int ic_reader_ctl_init(const char *path);
+
 void ic_reader_ctl_close(void);
 // Reader Controller Command
 int ctl_set_picc_type(enum picc_type type);
-
+int ctl_reset_dev(void);
 // ISO14443-A PICC Command
 int picc_A_request(void);
 int picc_A_active(unsigned short *atq, unsigned char *sak,

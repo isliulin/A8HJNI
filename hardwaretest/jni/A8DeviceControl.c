@@ -77,7 +77,6 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer->setPreventSeparateServerUpFunc(hardWareServer,
 			preventSeparateUp);
 	hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
-	hardWareServer->controlDoor(hardWareServer, 0);
 	LOGD("jni_a8HardwareControlInit init succeed!");
 	return 0;
 	fail2: free(JavaMethodServer);
@@ -175,7 +174,7 @@ static int icCardRecvFunc(CARD_TYPE type, unsigned char * data,
 	memcpy(&valid[2], data, len);
 	JavaMethodServer->up(JavaMethodServer, valid, len + 2);
 	getUtilsOps()->printData(data, len);
-	getUtilsOps()->printHex(data, len);
+	//getUtilsOps()->printHex(data, len);
 	bzero(valid, sizeof(valid));
 	valid[0] = UI_DOORCARD_DEVICE_ALG;
 	valid[1] = type;

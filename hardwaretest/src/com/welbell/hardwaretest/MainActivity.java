@@ -63,10 +63,9 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		//hardwareResource.delDaemonServer();
 		//删除回调接口
 		//hardwareResource.removeEventCallBack(this);
-		
 
+		
 	}
-	
 
 
 	@Override

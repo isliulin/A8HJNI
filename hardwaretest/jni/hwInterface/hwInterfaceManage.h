@@ -26,6 +26,7 @@ typedef struct  {
 	int (*getOpenDoorKeyPin)(void);
 	int (*getLightSensorPin)(void);
 	int (*getCameraLightPin)(void);
+	int (*getIFCameraLightPin)(void);
 	int (*getKeyLightPin)(void);
 	int (*getLcdSwichPin)(void);
 	int (*getRestartPin)(void);
