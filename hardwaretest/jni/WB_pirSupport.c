@@ -73,13 +73,14 @@ static int gpioInterruptFunc (pGpioPinState arg)
 
 	clock_gettime(CLOCK_MONOTONIC, &wbPirServer->last_time);
 	pthread_mutex_lock(&wbPirServer->mutex);
-	//每秒钟只需上传一次
-	if((wbPirServer->last_time.tv_sec-wbPirServer->current_time.tv_sec>= 1)
-			&&arg->state == 0)
+	//保证每秒钟只需上传一次
+//	if((wbPirServer->last_time.tv_sec-wbPirServer->current_time.tv_sec>= 1)
+//			&&arg->state == 0)
+	if(gpioState->state == PIR_NEAR)
 	{
 		wbPirServer->pirState = PIR_NEAR;
-		clock_gettime(CLOCK_MONOTONIC, &wbPirServer->current_time);
-		wbPirServer->upStateFunc(wbPirServer->pirState);
+	//	clock_gettime(CLOCK_MONOTONIC, &wbPirServer->current_time);
+		wbPirServer->upStateFunc(wbPirServer->pirState);//上报
 	}
 	pthread_mutex_unlock(&wbPirServer->mutex);
 

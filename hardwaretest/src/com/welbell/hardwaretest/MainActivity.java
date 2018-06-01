@@ -46,7 +46,7 @@ public class MainActivity extends Activity implements HardWareUpEvent{
 		hardwareResource.cameraLightControl(true);
 		//开门
 	
-		hardwareResource.doorLockControl(false);
+		hardwareResource.doorLockControl(true);
 		//开启键盘灯
 		hardwareResource.keyboardLightControl(true);
 		//开启红外摄像头灯

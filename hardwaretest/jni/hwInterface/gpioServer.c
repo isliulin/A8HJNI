@@ -59,7 +59,7 @@ static int gpio_edge(int pin, INTERRUPT_MODE edge);
 static GpioOps g_gpioOps = { .setOutputValue = setOutputValue, .getInputValue =
 		getInputValue, .setInterruptFunc = setInterruptFunc, };
 static int setOutputValue(struct GpioOps *base, int value) {
-	LOGE("setOutputValue");
+	LOGD("setOutputValue");
 	int fd;
 	int ret;
 	char cmdStr[128] = { 0 };
@@ -156,14 +156,14 @@ static void *gpioloopHandle(void *arg) {
 	if (gpioServer == NULL)
 		goto exit;
 	GpioPinState gpioState;
-	LOGE("gpioloopHandle!");
+	LOGD("gpioloopHandle!");
 	INTERRUPT_MODE interruptMode = gpioServer->interruptMode;
 	int old_state = 1;
 	bzero(&gpioState, sizeof(gpioState));
 	gpioState.interruptArg = gpioServer->interruptArg;
 	gpioState.pin = gpioServer->gpioPin;
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
-		usleep(100 * 1000);
+		usleep(150 * 1000);
 		gpioState.state = getInputValue((pGpioOps) gpioServer);
 		if(gpioState.state == -1)
 			continue;
@@ -372,7 +372,7 @@ pGpioOps gpio_getServer( int gpio) {
 		LOGE("fail to crate netClient!\n");
 		goto fail1;
 	}
-	LOGE("gpioServer->netClient !");
+	LOGD("gpioServer user netClient !");
 #endif
 
 	exportFd = open(SYSFS_GPIO_EXPORT, O_WRONLY);

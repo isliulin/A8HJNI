@@ -152,7 +152,7 @@ static int getCameraLightPin(void) {
 }
 static int getIFCameraLightPin(void){
 	if (cpuVer == A20)
-		return NULL;
+		return  PH(0);
 	else if (cpuVer == A64)
 		return PB(7);
 	return -1;
@@ -212,11 +212,12 @@ static char *getDoorCardUART(void) {
 static char * getIdCardUART(void)
 {
 	if (cpuVer == A20)
-	#ifdef USER_ID
+		#ifdef USER_ID
 			return "/dev/ttyS6";
-    #endif
+    	#else
 			return NULL;
-	else if (cpuVer == A64)
+		#endif
+	else if(cpuVer == A64)
 			return "/dev/ttyS2";
 	else if(cpuVer == RK3368 )
 			return "/dev/ttyS0";

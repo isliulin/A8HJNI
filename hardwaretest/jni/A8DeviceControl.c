@@ -42,8 +42,8 @@ static int udpRecvFunc(unsigned char*data, unsigned int len);
 static void KeyEventUp(int code, int value);
 static int getpackAgeNameAndclassName(char *packAgeName, char *className,
 		const char *local_Value);
-static void magneticUp(pGpioPinState pinState);
-static void preventSeparateUp(pGpioPinState pinState);
+static int magneticUp(pGpioPinState pinState);
+static int preventSeparateUp(pGpioPinState pinState);
 
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
@@ -123,36 +123,36 @@ static void KeyEventUp(int code, int value) {
 	JavaMethodServer->up(JavaMethodServer, upData, 3);
 }
 static int udpRecvFunc(unsigned char* data, unsigned int len) {
-	LOGE("data = %s", data);
+	LOGD("data = %s", data);
 	return 0;
 }
 
 static void pirUp(PIR_STATE state) {
-	LOGE("pirUp :%d", state);
+	LOGD("pirUp :%d", state);
 	char upData[6] = { 0 };
 	upData[0] = UI_INFRARED_DEVICE;
 	upData[1] = 1 - state;
 	JavaMethodServer->up(JavaMethodServer, upData, 2);
 }
 
-static void magneticUp(pGpioPinState pinState) {
+static int magneticUp(pGpioPinState pinState) {
 	char upData[6] = { 0 };
-	LOGE("magneticUp :%d", pinState->state);
+	LOGD("magneticUp :%d", pinState->state);
 
 	upData[0] = UI_MAGNETIC_EVENT;
 	upData[1] = 1 - pinState->state;
-	JavaMethodServer->up(JavaMethodServer, upData, 2);
+	return JavaMethodServer->up(JavaMethodServer, upData, 2);
 }
 
-static void preventSeparateUp(pGpioPinState pinState) {
-	LOGE("preventSeparateUp :%d", pinState->state);
+static int preventSeparateUp(pGpioPinState pinState) {
+	LOGD("preventSeparateUp :%d", pinState->state);
 	char upData[6] = { 0 };
 	upData[0] = UI_PREVENTSEPARATE_EVENT;
 	upData[1] = 1 - pinState->state;
-	JavaMethodServer->up(JavaMethodServer, upData, 2);
+	return JavaMethodServer->up(JavaMethodServer, upData, 2);
 }
 static int openDoorKeyUp(pGpioPinState pinState) {
-	LOGE("openDoorKeyUp:%d", pinState->state);
+	LOGD("openDoorKeyUp:%d", pinState->state);
 	char upData[6] = { 0 };
 	upData[0] = UI_OPENDOOR_KEY_DOWN;
 	upData[1] = 1 - pinState->state;
@@ -217,7 +217,7 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		return NULL;
 	}
 	if (hardWareServer == NULL)
-		return -1;
+		return NULL;
 	switch (key) {
 	case E_GET_HARDWARE_VER: {
 		LOGD("E_GET_HARDWARE_VER\n");
@@ -253,7 +253,6 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		}
 	}
 		break;
-
 	case E_GET_IDCARD_UARTDEV: {
 
 		char *uart_dev = crateHwInterfaceServer()->getIdCardUART();
@@ -266,6 +265,7 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 	}
 		break;
 	}
+	return NULL;
 }
 JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 		jbyteArray ValueBuf, jint ValueLen) {

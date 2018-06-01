@@ -343,8 +343,14 @@ pWB_hardWareOps crateHardWareServer(void)
 		if(getUtilsOps()->getCpuVer() != RK3368)
 			goto fail3;
 	}
-	hardWareServer->keyboardLightServer = hardWareServer->IFCamerLightServer;
-
+	hardWareServer->keyboardLightServer = gpio_getServer(
+			hardWareServer->interfaceOps->getKeyLightPin());
+	if(hardWareServer->keyboardLightServer == NULL  )
+	{
+		LOGE("fail to malloc IFCamerLightServer!");
+		if(getUtilsOps()->getCpuVer() != RK3368)
+			goto fail3;
+	}
 	hardWareServer->camerLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getCameraLightPin());
 	if(hardWareServer->camerLightServer == NULL){
