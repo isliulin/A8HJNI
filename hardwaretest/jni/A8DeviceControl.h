@@ -18,6 +18,7 @@ typedef enum Interface{
 	E_DEL_GUARD,				//29 删除守护服务
 	E_GET_OPTO_SENSOR_STATE,    //30 获取光感状态
 	E_GET_IDCARD_UARTDEV,		//31 获取身份证对应的串口号
+	E_GET_CPUMODEL,             //32 获取CPU型号
 	E_MAX
 }E_INTER_TYPE;
 

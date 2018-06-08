@@ -51,6 +51,8 @@ typedef struct  WB_hardWareOps{
 	//删除守护服务
 	int (*delGuardServer)(struct  WB_hardWareOps *);
 
+
+
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象
 pWB_hardWareOps crateHardWareServer(void);

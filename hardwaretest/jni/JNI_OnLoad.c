@@ -4,7 +4,7 @@
 
 
 static const char*  classPathName = "com/welbell/hardware/HardwareSupport";
-static const char * libVersion = "Ver1.0.2.1 For A8HNativeControl(ID)";
+static const char * libVersion = "Ver1.0.2.2 For A8HNativeControl(ZLG600A)";
 /*
  * Register several native methods for one class.
  */
@@ -34,7 +34,6 @@ static int registerNatives(JNIEnv* env) {
 	if (!registerNativeMethods(env,classPathName , methods, sizeof(methods) / sizeof(methods[0]))) {
 		return JNI_FALSE;
 	}
-
 	return JNI_TRUE;
 }
 /*

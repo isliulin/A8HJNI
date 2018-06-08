@@ -17,8 +17,9 @@ public class controlHardwareCmd {
     public static final byte E_ADD_GUARD = 0x1C; //添加app到守护进程中
     public static final byte E_DEL_GUARD = 0x1D; //添加app到守护进程中
     public static final byte E_GET_OPTO_SENSOR_STATE = 0x1E; //获取光感状态
-    public static final byte E_GET_IDCARD_UARTDEV = 0x1F;
+    public static final byte E_GET_IDCARD_UARTDEV = 0x1F; //获取身份证对应的串口号
+    public static final byte E_GET_CPUMODEL = 0x20;//获取CPU型号
     
     
-       
+        
 }

@@ -238,7 +238,33 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		} else {
 			return NULL;
 		}
+	}break;
+	case E_GET_CPUMODEL: {
+		int recvLen = 0;
+		if(getUtilsOps()->getCpuVer() == A20)
+		{
+			strcpy(recvbuf,"allwiner_A20");
+
+		}else if(getUtilsOps()->getCpuVer() == A64)
+		{
+			strcpy(recvbuf,"allwiner_A64");
+		}else if(getUtilsOps()->getCpuVer() == RK3368){
+			strcpy(recvbuf,"rk_3368");
+		}else
+			return NULL;
+		recvLen = strlen(recvbuf);
+		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
+
+		if (recvLen > 0) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
+				(jbyte*) recvbuf);
+					return jarray;
+		} else {
+					return NULL;
+		}
+
 	}
+	break;
 	case E_GET_OPTO_SENSOR_STATE: {
 		char state[1] = { 0 };
 

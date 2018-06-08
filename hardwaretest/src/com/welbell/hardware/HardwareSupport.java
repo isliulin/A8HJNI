@@ -194,6 +194,17 @@ public class HardwareSupport {
 		String recvStr = new String(recvData);
 		return recvStr;
 	}
+	public String getCpuModel() {
+
+		byte[] recvData = { 0 };
+
+		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_CPUMODEL);
+		if (recvData == null)
+			return null;
+		String recvStr = new String(recvData);
+		return recvStr;
+	}
+	
 	public String getIdCardUartDev() {
 
 		byte[] recvData = { 0 };

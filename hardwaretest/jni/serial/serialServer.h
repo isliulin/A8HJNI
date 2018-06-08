@@ -13,6 +13,8 @@ typedef int (*SerialRecvFunc)(unsigned char* ,unsigned int);
  * 参数3：目标数据地址(有效数据的地址)
  * 参数4：目标数据长度(有效数据的长度)
  * 返回值：成功返回被解析数据的总长度，失败返回负数
+ * 注意:底层会通过此返回值来判断是否重复读取BUF，并调用次回调。
+ * 如果长度&0x10000为正，底层将重复调用此回调
  * */
 typedef int (*SerialParseFunc)(const unsigned char* , unsigned int,
 								unsigned char* ,unsigned int *);
@@ -21,7 +23,11 @@ typedef int (*SerialParseFunc)(const unsigned char* , unsigned int,
  * 参数2：源数据长度
  * 参数3：目标数据地址(有效数据的地址)
  * 参数4：目标数据长度(有效数据的长度)
- * 返回值：成功返回构造数据的总长度，失败返回负数
+ * 返回值：成功返回构造数据的总长度
+ * 注意:底层会通过此返回值来判断是否重复读取BUF，并调用次回调。
+ * 如果长度&0x10000为正，底层将重复调用此回调
+ *
+ * ，失败返回负数
  * */
 typedef int (*SerialBuildFunc)(const unsigned char* ,unsigned int,
 								unsigned char* ,unsigned int);
