@@ -16,7 +16,7 @@ LOCAL_SRC_FILES +=  taskManage/threadManage.c taskManage/timerTaskManage.c
 
 LOCAL_SRC_FILES += A8DeviceControl.c JNI_OnLoad.c \
 				   WB_doorCard.c WB_pirSupport.c WB_hardwareSupport.c WB_keyboard.c
-LOCAL_SRC_FILES += WB_virtualHardwareSupport.c WB_guardThread.c
+LOCAL_SRC_FILES += WB_virtualHardwareSupport.c WB_guardThread.c WB_bluetooth.c
 
 
 LOCAL_CFLAGS += -O3 -DNDEBUG -fstrict-aliasing
@@ -34,7 +34,7 @@ LOCAL_LDLIBS   := -llog
 #如果用到指纹识别请设置以下参数
 #LOCAL_CFLAGS += -DUSER_FINGER
 #选择门卡型号支持 FM1702NL or ZLG600A or ID
-LOCAL_CFLAGS += -DUSER_ZLG600A
+LOCAL_CFLAGS += -DUSER_FM1702NL
 #如果用到门铃请设置以下参数
 #LOCAL_CFLAGS += -DUSER_DOOR_BELL
 #如果用到硬件的人脸识别请设置以下参数

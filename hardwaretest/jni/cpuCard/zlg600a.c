@@ -92,6 +92,7 @@ static int _send_command(const unsigned char *cmd, size_t len) {
 // ================================================================================
 int ic_reader_ctl_init(const char *path) {
 	int ret;
+	int restartCount = 0;
 	unsigned char info[MAX_BUF_SIZE];
 	LOGE("ic_reader_ctl_init!");
 	if (NULL == path)
@@ -119,14 +120,26 @@ int ic_reader_ctl_init(const char *path) {
 		ret = -ERR_UART_SERVER_CREATE;
 		goto free_respons;
 	}
-	ctl_serial_baud_sync();
 
-	memset(info, 0, MAX_BUF_SIZE);
+	reset:
+		restartCount++;
 	ret = ctl_get_dev_info(info);
 	if (0 != ret) {
-		LOGE("%s: ctl_get_dev_info error!\n", __func__);
-		goto close_uart;
+			LOGE("%s: ctl_get_dev_info error!\n", __func__);
+			ret = ctl_serial_baud_sync();
+			if(0 )
+			{
+				LOGW("fail to ctl_serial_baud_sync, reset :%d! ",restartCount);
+				usleep(200*1000);
+				if(restartCount > 100)
+				{
+					goto close_uart;
+				}
+				goto reset;
+			}
 	}
+	memset(info, 0, MAX_BUF_SIZE);
+
 	ret = ctl_card_interface_cfg(INTERFACE_ON);
 	if (0 == ret) {
 		LOGE("%s: Success!!!\n", __func__);

@@ -16,10 +16,24 @@ public class HardwareSupport {
 	static private List<HardWareUpEvent> upEventList;
 
 	public HardwareSupport() {
-		a8HardwareControlInit();
-		upEventList = new ArrayList<HardWareUpEvent>();
+	
+		if(upEventList == null )
+			upEventList = new ArrayList<HardWareUpEvent>();
 	}
-
+	public int init()
+	{
+		int ret;
+		ret = a8HardwareControlInit();
+		if(ret < 0)
+		{
+			Log.e(TAG," fail to a8HardwareControlInit !");
+		}
+		return ret;
+	}
+	public int exit()
+	{
+		return a8HardwareControlExit();
+	}
 	protected void finalize() {
 		Log.d(TAG,"CALL HardwareSupport finalize!");
 		//a8HardwareControlExit();
@@ -75,7 +89,19 @@ public class HardwareSupport {
 				}
 			}
 			break;
-
+		case CallBackState.UI_BLUETOOTH_EVENT:{
+		
+			//byte[] recvData = new byte[eventData.length];
+			//Log.d(TAG,"UI_BLUETOOTH_EVENT! len:"+(eventData.length ));
+			//System.arraycopy(eventData, 0, recvData, 0, eventData.length);
+			String str = new String(eventData);
+			if (str != null&&str.length() > 0) {
+				for (HardWareUpEvent temp : upEventList) {
+					temp.buletoothEvent(str);
+				}
+			}
+		}
+		break;
 		case CallBackState.UI_OPENDOOR_KEY_DOWN:
 			if (eventData[0] == 1) {
 				for (HardWareUpEvent temp : upEventList) {
@@ -137,7 +163,6 @@ public class HardwareSupport {
 		return a8SetKeyValue(controlHardwareCmd.E_CAMERA_LIGHT,
 				valve_door_lock, 1);
 	}
-
 	public int ifcameraLightControl(boolean cmd) {
 		byte[] valve_door_lock = new byte[1];
 		if (cmd == true)
@@ -155,13 +180,26 @@ public class HardwareSupport {
 			valve_door_lock[0] = 0;
 		return a8SetKeyValue(controlHardwareCmd.E_KEY_LIGHT, valve_door_lock, 1);
 	}
-
+	
 	public int executeRootShell(String cmdStr) {
 		byte[] cmdData = cmdStr.getBytes();
 		
 		return a8SetKeyValue(controlHardwareCmd.E_EXECURT_SHELL, cmdData,
 				cmdData.length);
 	}
+	public int setBluetoothName(String name) {
+		byte[] cmdData = name.getBytes();
+		
+		return a8SetKeyValue(controlHardwareCmd.E_SET_BLUENAME, cmdData,
+				cmdData.length);
+	}
+	
+	public int sendBluetoothStr(String str){
+		byte[] cmdData = str.getBytes();
+		return a8SetKeyValue(controlHardwareCmd.E_SEND_BLUESTR, cmdData,
+				cmdData.length);
+	}
+	
 	public int addAPPtoDaemon(String packageName,String mainActivityName){
 		
 		byte [] packName = packageName.getBytes();
@@ -223,6 +261,13 @@ public class HardwareSupport {
 		if (state == null)
 			return -1;
 		return state[0];
+	}
+	public boolean getBuletoothState(){
+		byte[] state = {0};
+		state = a8GetKeyValue(controlHardwareCmd.E_GET_BLUETOOTH_STATE);
+		if (state == null)
+			return false;		
+		return  state[0] ==0?true:false;
 	}
 
 	native int a8HardwareControlInit();

@@ -13,5 +13,6 @@ public class CallBackState {
     public static final byte UI_KEYBOARD_EVENT = 0X41;
     public static final byte UI_MAGNETIC_EVENT = 0X42;
     public static final byte UI_PREVENTSEPARATE_EVENT = 0X43;
+    public static final byte UI_BLUETOOTH_EVENT = 0X50;
      
 }	

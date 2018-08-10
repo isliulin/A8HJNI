@@ -6,6 +6,7 @@
 #include "WB_keyboard.h"
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceManage.h"
+#include "WB_bluetooth.h"
 
 typedef enum{
 	CLOSE = 0,
@@ -50,6 +51,16 @@ typedef struct  WB_hardWareOps{
 	int (*setGuardPackagenameAndMainclassname)(struct  WB_hardWareOps *,const char *,const char * );
 	//删除守护服务
 	int (*delGuardServer)(struct  WB_hardWareOps *);
+
+	//蓝牙相关
+	//设置蓝牙回调接收函数
+	int (*setBluetoothRecvFunc)(struct  WB_hardWareOps *,T_bluetoothRecvFunc);
+	//获取蓝牙状态
+	int (*getBluetoothState)(struct  WB_hardWareOps *);
+	//设置蓝牙名
+	int (*setBluetoothName)(struct  WB_hardWareOps *,char *);
+	//发送蓝牙数据
+	int (*sendBluetoothStr)(struct  WB_hardWareOps *,char *);
 
 
 

@@ -19,7 +19,8 @@ public class controlHardwareCmd {
     public static final byte E_GET_OPTO_SENSOR_STATE = 0x1E; //获取光感状态
     public static final byte E_GET_IDCARD_UARTDEV = 0x1F; //获取身份证对应的串口号
     public static final byte E_GET_CPUMODEL = 0x20;//获取CPU型号
-    
-    
-        
+    public static final byte E_GET_BLUETOOTH_STATE = 0x21; //获取蓝牙状态
+    public static final byte E_SET_BLUENAME = 0x22; //设置蓝牙名
+    public static final byte E_SEND_BLUESTR = 0x23;
+  
 }

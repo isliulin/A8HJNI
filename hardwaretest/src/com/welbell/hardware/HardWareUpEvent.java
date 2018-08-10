@@ -15,4 +15,5 @@ public interface HardWareUpEvent {
 	public void doorCardBandAlgEvent(byte type,String icCardID);
 	public void doorCardBandRawEvent(byte type ,byte []icCardID);
 	public void keyBoardEvent(int code ,int value);
+	public void buletoothEvent(String data);
 }

@@ -4,7 +4,7 @@
 
 
 static const char*  classPathName = "com/welbell/hardware/HardwareSupport";
-static const char * libVersion = "Ver1.0.2.2 For A8HNativeControl(ZLG600A)";
+static const char * libVersion = "Ver1.0.2.3 For A8HNativeControl(FM1702NL)";
 /*
  * Register several native methods for one class.
  */
@@ -62,7 +62,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		LOGE("registerNatives failed");
 		goto bail;
 	}
-
 
 	result = JNI_VERSION_1_4;
 

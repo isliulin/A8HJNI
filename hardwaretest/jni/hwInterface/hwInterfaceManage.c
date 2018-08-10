@@ -201,7 +201,14 @@ static int getSecurityPin(void){
 		return PB(6);
 	return -1;
 }
-
+static char *getBluetoothUART(void)
+{
+	if (cpuVer == A20)
+			return NULL;
+	else if (cpuVer == A64)
+			return "/dev/ttyS1";
+	return NULL;
+}
 static char *getDoorCardUART(void) {
 	if (cpuVer == A20)
 		return "/dev/ttyS6";
@@ -249,6 +256,7 @@ static HwInterfaceOps ops = {
 		.getDoorMagneticPin = getDoorMagneticPin,//获取门磁反馈
 		.getSecurityPin = getSecurityPin,//获取防拆按钮反馈
 		.getIdCardUART = getIdCardUART,//获取身份证对应的串口号
+		.getBluetoothUART = getBluetoothUART,
 
 };
 

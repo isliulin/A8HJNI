@@ -22,12 +22,27 @@ pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type, DoorCardRecvFunc callBa
 		server->cardClass = crateFM1702NLOpsServer(
 				crateHwInterfaceServer()->getDoorCardUART(),
 				callBackFunc);
+		if(server->cardClass == NULL)
+		{
+			LOGE("fail to FM1702NL!");
+			return NULL;
+		}else{
+			LOGI("FM1702NL start succeed!");
+		}
 		break;
 	case ZLG600A:
-		LOGD("start ZLG600A!\n");
+		LOGD("start ZLG600A!!!!!!!!!!!!!!!\n");
 		server->cardClass = createZLG600AServer(
 				crateHwInterfaceServer()->getDoorCardUART(),
 				(RecvFunc) callBackFunc);
+		if(server->cardClass == NULL)
+		{
+			LOGE("fail to server->cardClass!");
+			return NULL;
+		}else
+		{
+			LOGI("ZLG600A start succeed!");
+		}
 		break;
 	default:
 		LOGD("none card Server!\n");

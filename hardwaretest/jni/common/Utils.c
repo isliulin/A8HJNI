@@ -236,7 +236,6 @@ static ssize_t  myGetline(char **lineptr, ssize_t *n, FILE *stream)
     }
     while((buf = fgetc(stream))!=EOF)
     {
-
         if(buf == '\n')
         {
              count += 1;

@@ -32,6 +32,9 @@ typedef int (*SerialParseFunc)(const unsigned char* , unsigned int,
 typedef int (*SerialBuildFunc)(const unsigned char* ,unsigned int,
 								unsigned char* ,unsigned int);
 
+
+#define SERIAL_READ_SYNC  1
+#define SERIAL_READ_ASYNC 4
 /*SerialOps：虚函数表
  * 一.setSerialHandle：设置异步处理函数
  *   参数1：串口服务函数操作集指针
@@ -47,6 +50,7 @@ typedef int (*SerialBuildFunc)(const unsigned char* ,unsigned int,
  *   参数4：超时时间(单位ms)
  *   返回值：成功返回读取的数据长度,失败：-1读取错误,-2超时.
  * 四.write：同步方式写函数
+ * 五.切换读模式,mode:SERIAL_READ_SYNC 将异步切换成同步,mode:SERIAL_READ_ASYNC 将同步切换成异步。
  * */
 typedef struct SerialOps{
 	int (*setHandle)(struct SerialOps*,SerialRecvFunc,
@@ -54,6 +58,7 @@ typedef struct SerialOps{
 	int (*setBaudRate)(struct SerialOps* , int );
 	int (*read)(struct SerialOps*,unsigned char *,int,int);
 	int (*write)(struct SerialOps*,const unsigned char *,int);
+	int (*changeReadMode)(struct SerialOps*,int );
 }SerialOps,*pSerialOps;
 /*
 * createSerialServer：创建串口服务

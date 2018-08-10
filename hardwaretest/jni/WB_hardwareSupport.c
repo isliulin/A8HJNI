@@ -16,6 +16,7 @@
 #include "binder/binderClient.h"
 #include "WB_guardThread.h"
 
+
 typedef  struct WB_hardWareServer {
 	WB_hardWareOps  ops;
 	pGpioOps doorServer;
@@ -37,6 +38,7 @@ typedef  struct WB_hardWareServer {
 	pHwInterfaceOps interfaceOps;
 	pWB_KeyBoardOps keyBoardServer;
 	pGuardThreadOps guardThreadServer;
+	pBluetoothOps bluetoothServer;
 
 }WB_hardWareServer,*pWB_hardWareServer;
 
@@ -58,6 +60,10 @@ static int getOptoSensorState(struct  WB_hardWareOps *ops );
 static int setKeyboardEventUpFunc(struct  WB_hardWareOps * ops,KeyEventUpFunc func);
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className);
 static int delGuardServer(struct  WB_hardWareOps *ops);
+static int setBluetoothRecvFunc(struct  WB_hardWareOps *ops,T_bluetoothRecvFunc callback);
+static int getBluetoothState(struct  WB_hardWareOps *ops);
+static int setBluetoothName(struct  WB_hardWareOps *ops,char * name);
+static int sendBluetoothStr(struct  WB_hardWareOps *ops,char * str);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -75,6 +81,10 @@ static WB_hardWareOps ops = {
 		.setPreventSeparateServerUpFunc = setPreventSeparateServerUpFunc,
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
 		.delGuardServer = delGuardServer,
+		.setBluetoothRecvFunc = setBluetoothRecvFunc,
+		.getBluetoothState = getBluetoothState,
+		.setBluetoothName = setBluetoothName,
+		.sendBluetoothStr = sendBluetoothStr,
 
 };
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className)
@@ -212,7 +222,42 @@ static int sendShellCmd(struct  WB_hardWareOps *ops,const char * cmd)
 #endif
 
 }
+static int setBluetoothRecvFunc(struct  WB_hardWareOps *ops,T_bluetoothRecvFunc callback)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL)
+		return -1;
+	if(hardWareServer->bluetoothServer == NULL)
+		return -1;
+	return hardWareServer->bluetoothServer->setRecvFunc(hardWareServer->bluetoothServer,callback);
+}
+static int getBluetoothState(struct  WB_hardWareOps *ops)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL)
+			return -1;
+	if(hardWareServer->bluetoothServer == NULL)
+		return -1;
+	return hardWareServer->bluetoothServer->getState(hardWareServer->bluetoothServer);
 
+}
+static int sendBluetoothStr(struct  WB_hardWareOps *ops,char * str)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+		if(hardWareServer == NULL||hardWareServer->bluetoothServer == NULL)
+				return -1;
+	return hardWareServer->bluetoothServer->sendStr(hardWareServer->bluetoothServer,str);
+
+}
+static int setBluetoothName(struct  WB_hardWareOps *ops,char * name)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+	if(hardWareServer == NULL)
+			return -1;
+	if(hardWareServer->bluetoothServer == NULL)
+		return -1;
+	return hardWareServer->bluetoothServer->setName(hardWareServer->bluetoothServer,name);
+}
 
 static int reboot (struct  WB_hardWareOps * ops)
 {
@@ -377,6 +422,12 @@ pWB_hardWareOps crateHardWareServer(void)
 	{
 		goto fail7;
 	}
+	hardWareServer->bluetoothServer = createBluetoothServer();
+	if(hardWareServer->bluetoothServer == NULL)
+	{
+		LOGW("fail to createBluetoothServer!");
+	}
+
 #if USER_BINDER == 1
 	hardWareServer->binderClient = binder_getServer();
 	if(hardWareServer->binderClient == NULL){

@@ -180,7 +180,6 @@ pWB_KeyBoardOps createKeyBoardServer(const char *devPath) {
 	server->ops = ops;
 	return (pWB_KeyBoardOps) server;
 	fail2: closeEpoolMonitorFds(server->epoolMonitorFds);
-
 	fail1: close(server->epoolfd);
 	fail0: return NULL;
 }

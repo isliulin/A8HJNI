@@ -9,7 +9,7 @@
 
 #define SERVER_PORT 	10800
 #define CLIENT_HB_PORT 	10900
-#define SERVER_IP_ADDR   (inet_addr("127.0.0.1"))
+#define SERVER_IP_ADDR  (inet_addr("127.0.0.1"))
 
 
 typedef struct TimerArg{

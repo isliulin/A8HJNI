@@ -35,6 +35,7 @@ typedef struct  {
 	int (*getSecurityPin)(void);//防拆按钮
 	char *(*getDoorCardUART)(void);
 	char *(*getIdCardUART)(void);
+	char *(*getBluetoothUART)(void); //获取蓝牙模块串口号
 	DOOR_CARD_MODULE (*getDoorType)(void);
 
 }HwInterfaceOps,*pHwInterfaceOps;

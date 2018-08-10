@@ -24,7 +24,6 @@ static int reset(struct TimerOps* base);
 static void notify_function(union sigval signo);
 
 
-
 TimerOps timerOps = {
 	.start = start,
 	.changeParameter = changeParameter,

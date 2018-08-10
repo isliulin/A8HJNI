@@ -75,7 +75,6 @@ static int setOutputValue(struct GpioOps *base, int value) {
 			close(fd);
 			goto user_root;
 		}
-
 	}else {
 		goto user_root;
 	}
@@ -181,7 +180,6 @@ static void *gpioloopHandle(void *arg) {
 		old_state = gpioState.state;
 
 	}
-
 	exit: return NULL;
 }
 static void *gpioInterruptHandle(void *arg) {
