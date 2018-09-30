@@ -33,8 +33,7 @@ LOCAL_LDLIBS   := -llog
 #如果是编译同时带有线网络和无线网络的分机客户端，使用"DFOR_LOCAL_CLIENT"定义，其他移动端设备使用"DFOR_GENERIC_CLIENT"
 #如果用到指纹识别请设置以下参数
 #LOCAL_CFLAGS += -DUSER_FINGER
-#选择门卡型号支持 FM1702NL or ZLG600A or ID
-LOCAL_CFLAGS += -DUSER_FM1702NL
+
 #如果用到门铃请设置以下参数
 #LOCAL_CFLAGS += -DUSER_DOOR_BELL
 #如果用到硬件的人脸识别请设置以下参数

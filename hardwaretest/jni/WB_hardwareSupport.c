@@ -64,6 +64,7 @@ static int setBluetoothRecvFunc(struct  WB_hardWareOps *ops,T_bluetoothRecvFunc 
 static int getBluetoothState(struct  WB_hardWareOps *ops);
 static int setBluetoothName(struct  WB_hardWareOps *ops,char * name);
 static int sendBluetoothStr(struct  WB_hardWareOps *ops,char * str);
+static int setbluetoothReboot(struct  WB_hardWareOps *ops);
 static WB_hardWareOps ops = {
 		.controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight,
@@ -85,6 +86,7 @@ static WB_hardWareOps ops = {
 		.getBluetoothState = getBluetoothState,
 		.setBluetoothName = setBluetoothName,
 		.sendBluetoothStr = sendBluetoothStr,
+		.setbluetoothReboot = setbluetoothReboot,
 
 };
 static int setGuardPackagenameAndMainclassname(struct  WB_hardWareOps * ops,const char *packName,const char * className)
@@ -127,9 +129,7 @@ static int setDoorCardRawUpFunc(struct  WB_hardWareOps * ops ,DoorCardRecvFunc r
 	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
 	if(hardWareServer == NULL)
 		return -1;
-	hardWareServer->doorCardServer = createDoorCardServer(
-			hardWareServer->interfaceOps->getDoorType(),rawUpFunc
-	);
+	hardWareServer->doorCardServer = createDoorCardServer(rawUpFunc);
 	if(hardWareServer->doorCardServer == NULL )
 		return -1;
 	return 0;
@@ -167,7 +167,6 @@ static int controlIFCameraLight(struct  WB_hardWareOps * ops,ControlCmd cmd)
 					hardWareServer->IFCamerLightServer,cmd);
 		}
 		return -1;
-
 }
 static int controlCameraLight(struct  WB_hardWareOps *ops,ControlCmd cmd)
 {
@@ -240,6 +239,15 @@ static int getBluetoothState(struct  WB_hardWareOps *ops)
 		return -1;
 	return hardWareServer->bluetoothServer->getState(hardWareServer->bluetoothServer);
 
+}
+static int setbluetoothReboot(struct  WB_hardWareOps *ops)
+{
+	pWB_hardWareServer hardWareServer  = (pWB_hardWareServer)ops;
+		if(hardWareServer == NULL)
+				return -1;
+		if(hardWareServer->bluetoothServer == NULL)
+			return -1;
+		return hardWareServer->bluetoothServer->reboot(hardWareServer->bluetoothServer);
 }
 static int sendBluetoothStr(struct  WB_hardWareOps *ops,char * str)
 {
@@ -365,8 +373,9 @@ pWB_hardWareOps crateHardWareServer(void)
 		goto fail0;
 	}
 	bzero(hardWareServer,sizeof(WB_hardWareServer));
-	hardWareServer->interfaceOps = crateHwInterfaceServer();
 
+	hardWareServer->interfaceOps = crateHwInterfaceServer();
+#if 1
 	hardWareServer->doorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getDoorLockPin());
 	if(hardWareServer->doorServer == NULL ){
@@ -427,7 +436,7 @@ pWB_hardWareOps crateHardWareServer(void)
 	{
 		LOGW("fail to createBluetoothServer!");
 	}
-
+#endif
 #if USER_BINDER == 1
 	hardWareServer->binderClient = binder_getServer();
 	if(hardWareServer->binderClient == NULL){
@@ -442,12 +451,13 @@ pWB_hardWareOps crateHardWareServer(void)
 #else
 	hardWareServer->netClient = createNativeNetServer();
 	if(hardWareServer->netClient == NULL){
-		LOGE("fail to malloc binderClient!");
+		LOGE("fail to malloc netClient!");
 	}else{
 		hardWareServer->guardThreadServer = createGuardThreadServer();
 		if(hardWareServer->guardThreadServer == NULL)
 		{
 			LOGE("fail to guardThreadServer!");
+			goto fail7;
 		}
 	}
 #endif

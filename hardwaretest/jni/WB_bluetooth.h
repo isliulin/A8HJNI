@@ -7,6 +7,7 @@ typedef struct BluetoothOps {
 	int (*setRecvFunc)(struct BluetoothOps *,T_bluetoothRecvFunc);
 	int (*getState)(struct BluetoothOps *);
 	int (*sendStr)(struct BluetoothOps *,char *);
+	int (*reboot)(struct BluetoothOps *);
 }BluetoothOps,*pBluetoothOps;
 
 pBluetoothOps createBluetoothServer(void);

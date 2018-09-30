@@ -6,7 +6,7 @@ typedef struct {
 
 }DoorCardops,*pDoorCardops;
 
-pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type,DoorCardRecvFunc callBackFunc);
+pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc);
 void destroyDoorCardServer(pDoorCardops *server);
 
 

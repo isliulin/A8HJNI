@@ -34,6 +34,8 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 			return ;
 			
 		}
+		//执行shell脚本: 例 执行重启命令 
+		//hardwareResource.executeRootShell("reboot");
 		// 获取身份证模块所接的串口号
 		String IdCardUartDEV = hardwareResource.getIdCardUartDev();
 
@@ -52,22 +54,26 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		 */
 		//hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
 		//		"com.welbell.hardwaretest.MainActivity");
-
+		hardwareResource.getCpuModel();
+		
 		// 开启摄像头灯
 		hardwareResource.cameraLightControl(true);
 		// 开门
-
+		
 		hardwareResource.doorLockControl(true);
-		// 开启键盘灯
+		// 关闭键盘灯
 		hardwareResource.keyboardLightControl(true);
-		// 开启红外摄像头灯
+		// 关闭红外摄像头灯
 		hardwareResource.ifcameraLightControl(true);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
+		
 		if( true == hardwareResource.getBuletoothState())
 		{
-			hardwareResource.setBluetoothName("6号设备");
+			hardwareResource.setBluetoothName("快来链接我");
 		}
+		
+		//hardwareResource.rebootBluetooth();
 		// 重启机器
 		// hardwareResource.reboot();
 		// 获取光感状态
@@ -78,8 +84,8 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// hardwareResource.delDaemonServer();
 		// 删除回调接口
 		// hardwareResource.removeEventCallBack(this);
-		//设置主机mac地址，重启后生效
-		//hardwareResource.executeRootShell("writeMac 12:23:45:67:89:00");
+		//用root权限执行命令
+		//hardwareResource.executeRootShell("reboot");
 	}
 
 	@Override

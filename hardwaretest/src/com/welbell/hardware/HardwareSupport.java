@@ -169,7 +169,7 @@ public class HardwareSupport {
 			valve_door_lock[0] = 1;
 		else
 			valve_door_lock[0] = 0;
-		return a8SetKeyValue(controlHardwareCmd.E_KEY_LIGHT, valve_door_lock, 1);
+		return a8SetKeyValue(controlHardwareCmd.E_IFCAMERA_LIGHT, valve_door_lock, 1);
 	}
 
 	public int keyboardLightControl(boolean cmd) {
@@ -220,6 +220,10 @@ public class HardwareSupport {
 	
 	public int reboot() {
 		return a8SetKeyValue(controlHardwareCmd.E_RESTART, null, 0);
+	}
+	public int rebootBluetooth(){
+		
+		return a8SetKeyValue(controlHardwareCmd.E_SET_BLUETOOTH_REBOOT, null, 0); 
 	}
 
 	public String getHardWareVersion() {

@@ -11,12 +11,29 @@ typedef struct {
 	void *cardClass;
 	DOOR_CARD_MODULE type;
 }DoorCardServer,*pDoorCardServer;
-pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type, DoorCardRecvFunc callBackFunc) {
+pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 	pDoorCardServer server = (pDoorCardServer)calloc(1,sizeof(DoorCardServer));
 	if(server == NULL)
 		return NULL;
-	server->type = type;
+	DOOR_CARD_MODULE type = ZLG600A;
 	switch (type) {
+
+	case ZLG600A:
+		LOGD("start ZLG600A!\n");
+		server->cardClass = createZLG600AServer(
+				crateHwInterfaceServer()->getDoorCardUART(),
+				(RecvFunc) callBackFunc);
+		if(server->cardClass == NULL)
+		{
+			LOGE("fail to server->cardClass!");
+
+			return NULL;
+		}else
+		{
+			LOGI("ZLG600A start succeed!");
+			server->type = ZLG600A;
+		}
+		break;
 	case FM1702NL:
 		LOGD("start FM1702NL!\n");
 		server->cardClass = crateFM1702NLOpsServer(
@@ -25,26 +42,14 @@ pDoorCardops createDoorCardServer(DOOR_CARD_MODULE type, DoorCardRecvFunc callBa
 		if(server->cardClass == NULL)
 		{
 			LOGE("fail to FM1702NL!");
-			return NULL;
 		}else{
 			LOGI("FM1702NL start succeed!");
+			server->type = FM1702NL;
+			break;
 		}
-		break;
-	case ZLG600A:
-		LOGD("start ZLG600A!!!!!!!!!!!!!!!\n");
-		server->cardClass = createZLG600AServer(
-				crateHwInterfaceServer()->getDoorCardUART(),
-				(RecvFunc) callBackFunc);
-		if(server->cardClass == NULL)
-		{
-			LOGE("fail to server->cardClass!");
-			return NULL;
-		}else
-		{
-			LOGI("ZLG600A start succeed!");
-		}
-		break;
+
 	default:
+		server->type = -1;
 		LOGD("none card Server!\n");
 		return NULL;
 		break;

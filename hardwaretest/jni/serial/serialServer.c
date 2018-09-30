@@ -22,7 +22,9 @@ typedef struct SerialServer {
 	int serialDevFd; //打开串口时的设备节点
 	pThreadOps recvThreadId; //接收数据的线程
 	int stopRecvThreadFd; //用于停止线程的eventfd
-	int changeReadModeFd;//用于切换同步和异步的读模式
+
+	int changeReadModeFd[2];//用于切换同步和异步的读模式
+
 	pThreadOps parseThreadId; //处理数据的线程
 	int stopParseThreadFd; //
 	pBufferOps bufferOps; //缓存的BUF
@@ -69,6 +71,7 @@ static void * serialRecvThreadFunc(void *arg) {
 #define EVENT_NUMS  2
 	int epfd, nfds;
 	int readLen = 0;
+	int result;
 	struct epoll_event ev, events[EVENT_NUMS];
 	char readBuff[1024] = { 0 };
 	pSerialServer serialServer = *((pSerialServer*) arg);
@@ -79,14 +82,17 @@ static void * serialRecvThreadFunc(void *arg) {
 	if (serialServer->stopRecvThreadFd < 0) {
 		goto exit;
 	}
-	serialServer->changeReadModeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-	if (serialServer->changeReadModeFd < 0) {
-		goto exit;
-	}
+
+
+
+
+
+
+
 	epfd = epoll_create(EVENT_NUMS);
 	bzero(&ev, sizeof(ev));
 	ev.data.fd = serialServer->serialDevFd;
-	ev.events = EPOLLET | POLLPRI;
+	ev.events = EPOLLIN | POLLPRI;
 	epoll_ctl(epfd, EPOLL_CTL_ADD, serialServer->serialDevFd, &ev);
 
 	bzero(&ev, sizeof(ev));
@@ -95,9 +101,10 @@ static void * serialRecvThreadFunc(void *arg) {
 	epoll_ctl(epfd, EPOLL_CTL_ADD, serialServer->stopRecvThreadFd, &ev);
 
 	bzero(&ev, sizeof(ev));
-	ev.data.fd = serialServer->changeReadModeFd;
+	ev.data.fd = serialServer->changeReadModeFd[0];
 	ev.events = EPOLLIN | EPOLLPRI;
-	epoll_ctl(epfd, EPOLL_CTL_ADD, serialServer->changeReadModeFd, &ev);
+	epoll_ctl(epfd, EPOLL_CTL_ADD, serialServer->changeReadModeFd[0], &ev);
+	LOGI("serialRecvThreadFunc START!\n");
 	while (serialServer->recvThreadId->check(serialServer->recvThreadId)) {
 		nfds = epoll_wait(epfd, events, EVENT_NUMS, -1);
 		int i;
@@ -117,16 +124,18 @@ static void * serialRecvThreadFunc(void *arg) {
 			} else if (events[i].data.fd == serialServer->stopRecvThreadFd) {
 
 				goto exit;
-			}else if(events[i].data.fd == serialServer->changeReadModeFd){
+			}else if(events[i].data.fd == serialServer->changeReadModeFd[0]){
 				uint64_t counter;
-				eventfd_read(serialServer->changeReadModeFd,&counter);
+				eventfd_read(serialServer->changeReadModeFd[0],&counter);
 				if(counter == SERIAL_READ_ASYNC)
 				{
+					LOGD("set serial SERIAL_READ_ASYNC!\n");
 					bzero(&ev, sizeof(ev));
 					ev.data.fd = serialServer->serialDevFd;
 					ev.events = EPOLLET | EPOLLIN;
 					epoll_ctl(epfd, EPOLL_CTL_ADD, serialServer->serialDevFd, &ev);
 				}else {
+					LOGD("set serial SERIAL_READ_SYNC!\n");
 					bzero(&ev, sizeof(ev));
 					ev.data.fd = serialServer->serialDevFd;
 					epoll_ctl(epfd, EPOLL_CTL_DEL, serialServer->serialDevFd, &ev);
@@ -147,6 +156,7 @@ static void * serialParseThreadFunc(void *arg) {
 	int pullLen = 0;
 	char validBuf[1024] = { 0 };
 	int validLen;
+	LOGI("serialParseThreadFunc START!\n");
 	while (serialServer->recvThreadId->check(serialServer->recvThreadId)) {
 		//读取队列数据
 		//上报给用户
@@ -366,9 +376,11 @@ static int serialWrite(struct SerialOps* base, const unsigned char * lpBuff,
 }
 pSerialOps createSerialServer(const char *devPath, int nBaudRate, int nDataBits,
 		int nStopBits, int nParity) {
+
+
 	pSerialServer serialServer = NULL;
 	int fd = -1;
-	int ret;
+	int ret,result;
 	if (devPath == NULL) {
 		goto fail0;
 	}
@@ -417,7 +429,24 @@ pSerialOps createSerialServer(const char *devPath, int nBaudRate, int nDataBits,
 		goto fail1;
 	}
 
+
+	result = pipe(serialServer->changeReadModeFd);
+	if (result != 0) {
+			goto fail2;
+	}
+		//设置管道成非阻塞模式
+	result = fcntl(serialServer->changeReadModeFd[0], F_SETFL, O_NONBLOCK);
+	if (result != 0) {
+			goto fail3;
+	}
+	result = fcntl(serialServer->changeReadModeFd[1], F_SETFL, O_NONBLOCK);
+	if (result != 0) {
+			goto fail3;
+	}
 	return (pSerialOps) serialServer;
+	fail3:
+		close(serialServer->changeReadModeFd[0]);
+		close(serialServer->changeReadModeFd[1]);
 	fail2: free(serialServer);
 	fail1: close(fd);
 	free(serialServer);
@@ -429,7 +458,7 @@ int changeReadMode(struct SerialOps* base,int mode){
 	if (serialServer == NULL||serialServer->recvThreadId == NULL)
 		return -1;
 
-	return eventfd_write(serialServer->changeReadModeFd, mode);
+	return eventfd_write(serialServer->changeReadModeFd[1], mode);
 }
 void destroySerialServer(pSerialOps * server) {
 	pSerialServer serialServer = (pSerialServer) *server;
@@ -453,8 +482,11 @@ void destroySerialServer(pSerialOps * server) {
 		close(serialServer->serialDevFd);
 	if (serialServer->stopRecvThreadFd > 0)
 		close(serialServer->stopRecvThreadFd);
-	if(serialServer->changeReadModeFd > 0)
-		close(serialServer->changeReadModeFd);
+	if(serialServer->changeReadModeFd[0] > 0)
+		close(serialServer->changeReadModeFd[0]);
+	if(serialServer->changeReadModeFd[1] > 0)
+		close(serialServer->changeReadModeFd[1]);
+
 	free(serialServer);
 	*server = NULL;
 }

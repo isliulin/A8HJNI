@@ -280,6 +280,7 @@ static int getCpuVer(void)
 #define A20_CPU 	" sun7i"
 #define A64_CPU 	" sun50iw1p1"
 #define RK3368_CPU  " rockchip,rk3368"
+#define RK3128_CPU  " Rockchip RK3128"
 	int ret;
 	char buf[128] = {0};
 	FILE * fp = fopen("/proc/cpuinfo", "r");
@@ -298,7 +299,9 @@ static int getCpuVer(void)
 		return A64;
 	else  if(strcmp(buf,RK3368_CPU) == 0 )
 		return RK3368;
-	return 0;
+	else if(strcmp(buf,RK3128_CPU)== 0)
+		return RK3128;
+	return -1;
 }
 static UtilsOps ops = {
 		.ByteCrc8 = ByteCrc8,

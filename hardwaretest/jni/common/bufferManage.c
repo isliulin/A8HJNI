@@ -230,7 +230,6 @@ void destroyBufferServer(pBufferOps *base)
 			break;
 		}
 		pthread_mutex_unlock(&pthis->_mutex);
-		
 		usleep(10*1000);
 		if(timeOut++ >100){
 			LOGE("fail to destroyBufferServer timeout!");

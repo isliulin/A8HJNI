@@ -101,7 +101,7 @@ pNativeNetServerOps createNativeNetServer(void) {
 		goto fail1;
 	}
 	server->ops = ops;
-#if 0
+#if 1
 	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);
 	server->udpServer->write(server->udpServer, msg.buf, msg.len,
 						SERVER_IP_ADDR, SERVER_PORT);

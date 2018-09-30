@@ -3,19 +3,23 @@
 #include <stddef.h>
 static CPU_VER cpuVer;
 
+#define RK_P0(num) (0+num)
+#define RK_P1(num) (32+num)
+#define RK_P2(num) (64+num)
 static int PA(int num) {
 	if (cpuVer == A20 ||cpuVer == A64)
 		return num;
-	else
+	else if(cpuVer == RK3368||cpuVer == RK3128)
 		return num;
+	return -1;
 }
 static int PB(int num) {
 	if (cpuVer == A20)
 		return num + 24;
 	else if (cpuVer == A64)
 		return num + 32;
-	else if(cpuVer == RK3368)
-		return num+8;
+	else if(cpuVer == RK3368||cpuVer == RK3128)
+		return num + 8;
 	return -1;
 }
 static int PC(int num) {
@@ -23,6 +27,8 @@ static int PC(int num) {
 		return num + 54;
 	else if (cpuVer == A64)
 		return num + 64;
+	else if(cpuVer == RK3368||cpuVer == RK3128)
+		return num + 16;
 	return -1;
 }
 static int PD(int num) {
@@ -30,6 +36,8 @@ static int PD(int num) {
 		return num + 85;
 	else if (cpuVer == A64)
 		return num + 96;
+	else if(cpuVer == RK3368||cpuVer == RK3128)
+			return num + 24;
 	return -1;
 }
 static int PE(int num) {
@@ -126,6 +134,8 @@ static int getDoorLockPin(void) {
 		return PB(2); //未设定
 	else if(cpuVer == RK3368)
 		return PB(1);
+	else if(cpuVer == RK3128)
+		return PD(0);
 	return -1;
 }
 static int getOpenDoorKeyPin(void) {
@@ -141,6 +151,8 @@ static int getLightSensorPin(void) {
 		return PI(15);
 	else if (cpuVer == A64)
 		return PB(4); //未设定
+	else if(cpuVer==RK3128)
+		return RK_P0(PB(5));
 	return -1;
 }
 static int getCameraLightPin(void) {
@@ -148,6 +160,8 @@ static int getCameraLightPin(void) {
 		return PH(11);
 	else if (cpuVer == A64)
 		return PL(11);
+	else if(cpuVer==RK3128)
+		return RK_P0(PB(6));
 	return -1;
 }
 static int getIFCameraLightPin(void){
@@ -163,6 +177,8 @@ static int getKeyLightPin(void) {
 		return PH(0);
 	else if (cpuVer == A64)
 		return PL(12);
+	else if(cpuVer==RK3128)
+		return RK_P2(PD(5));
 	return -1;
 }
 static int getLcdSwichPin(void) {
@@ -184,6 +200,8 @@ static int getPirPin(void) {
 		return PH(12);
 	else if (cpuVer == A64)
 		return PL(7);
+	else if(cpuVer==RK3128)
+		return RK_P0(PB(3));
 	return -1;
 }
 //门磁
@@ -199,6 +217,8 @@ static int getSecurityPin(void){
 		return -1;//PH(1);
 	else if (cpuVer == A64)
 		return PB(6);
+	else if(cpuVer==RK3128)
+		return RK_P0(PC(1));
 	return -1;
 }
 static char *getBluetoothUART(void)
@@ -213,6 +233,8 @@ static char *getDoorCardUART(void) {
 	if (cpuVer == A20)
 		return "/dev/ttyS6";
 	else if (cpuVer == A64)
+		return "/dev/ttyS3";
+	else if (cpuVer == RK3128)
 		return "/dev/ttyS3";
 	return NULL;
 }

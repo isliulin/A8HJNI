@@ -31,6 +31,8 @@
 #include "WB_guardThread.h"
 #include "hwInterface/gpioServer.h"
 #include <unistd.h>
+
+
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
@@ -48,7 +50,7 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen);
 
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
-	int ret;
+	int ret  = 0;
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
 		goto fail0;
 	hardWareServer = crateHardWareServer();
@@ -56,7 +58,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 		LOGE("fail to crateHardWareServer!");
 		goto fail0;
 	}
-
+#if 1
 	//创建对象
 	virtualHardWareServer = crateVirtualHWServer();
 	if (virtualHardWareServer == NULL) {
@@ -94,6 +96,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	else {
 		goto fail2;
 	}
+#endif
 	return ret;
 	fail2:
 		if(JavaMethodServer)
@@ -103,13 +106,14 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 			destroyHardWareServer(&hardWareServer);
 
 	fail0: return -1;
+
 }
 
 static int bluetoothRecvUp(char * buf, unsigned int bufLen) {
 	char upData[1024] = { 0 };
 	upData[0] = UI_BLUETOOTH_EVENT;
 	memcpy(&upData[1], buf, bufLen);
-	LOGE("bluetoothRecvUp = %s\n",buf);
+	LOGD("bluetoothRecvUp = %s\n",buf);
 	return JavaMethodServer->up(JavaMethodServer, upData, bufLen + 1);//多加个尾0
 }
 static int getMapKeyCodeNew(int code) {
@@ -275,6 +279,7 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		break;
 	case E_GET_CPUMODEL: {
 		int recvLen = 0;
+
 		if (getUtilsOps()->getCpuVer() == A20) {
 			strcpy(recvbuf, "allwiner_A20");
 
@@ -284,6 +289,7 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 			strcpy(recvbuf, "rk_3368");
 		} else
 			return NULL;
+
 		recvLen = strlen(recvbuf);
 		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
 
@@ -370,6 +376,10 @@ case E_CAMERA_LIGHT:
 	if (local_Value != NULL)
 		ret = hardWareServer->controlCameraLight(hardWareServer, load_data[0]);
 	break; //摄像头灯
+case E_IFCAMERA_LIGHT:
+	if (local_Value != NULL)
+		ret = hardWareServer->controlIFCameraLight(hardWareServer, load_data[0]);
+	break; //红外摄像头灯
 case E_KEY_LIGHT:
 	//控制键盘背光灯
 	if (local_Value != NULL)
@@ -422,7 +432,9 @@ case E_SEND_BLUESTR:{
 	if (local_Value != NULL)
 		ret = hardWareServer->sendBluetoothStr(hardWareServer, load_data);
 }break;
-
+case E_SET_BLUETOOTH_REBOOT:{
+		ret = hardWareServer->setbluetoothReboot(hardWareServer);
+}break;
 
 
 default:

@@ -7,21 +7,23 @@ typedef enum Interface{
 	E_DOOR_LOCK,				//18 锁
 	E_INFRARED,					//19 红外
 	E_CAMERA_LIGHT,				//20 摄像头灯
-	E_KEY_LIGHT,				//21 键盘灯
-	E_LCD_BACKLIGHT,			//22 屏幕背光
-	E_FINGERPRINT,				//23 指纹
-	E_SET_IPADDR,				//24 设置IP地址
-	E_RESTART,				    //25 重启机器
-	E_GET_HARDWARE_VER,			//26 获取硬件版本
-	E_SEND_SHELL_CMD,           //27 发送SHELL指令
-	E_ADD_GUARD,				//28 把APP加入到守护进程中
-	E_DEL_GUARD,				//29 删除守护服务
-	E_GET_OPTO_SENSOR_STATE,    //30 获取光感状态
-	E_GET_IDCARD_UARTDEV,		//31 获取身份证对应的串口号
-	E_GET_CPUMODEL,             //32 获取CPU型号
+	E_IFCAMERA_LIGHT,           //21 控制红外摄像头
+	E_KEY_LIGHT,				//22 键盘灯
+	E_LCD_BACKLIGHT,			//23 屏幕背光
+	E_FINGERPRINT,				//24 指纹
+	E_SET_IPADDR,				//25 设置IP地址
+	E_RESTART,				    //26 重启机器
+	E_GET_HARDWARE_VER,			//27 获取硬件版本
+	E_SEND_SHELL_CMD,           //28 发送SHELL指令
+	E_ADD_GUARD,				//29 把APP加入到守护进程中
+	E_DEL_GUARD,				//30 删除守护服务
+	E_GET_OPTO_SENSOR_STATE,    //31 获取光感状态
+	E_GET_IDCARD_UARTDEV,		//32 获取身份证对应的串口号
+	E_GET_CPUMODEL,             //33 获取CPU型号
 	E_GET_BLUETOOTH_STATE,      //获取蓝牙状态
 	E_SET_BLUENAME,             //设置蓝牙名字
 	E_SEND_BLUESTR,             //发送蓝牙数据
+	E_SET_BLUETOOTH_REBOOT,     //重启蓝牙
 	E_MAX
 }E_INTER_TYPE;
 

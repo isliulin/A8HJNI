@@ -13,6 +13,7 @@ typedef enum {
 	A20 = 0,
 	A64,
 	RK3368,
+	RK3128
 }CPU_VER;
 #endif
 

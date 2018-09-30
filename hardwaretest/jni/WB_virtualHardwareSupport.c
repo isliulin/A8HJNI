@@ -24,8 +24,6 @@ typedef void *(*ThreadFunc)(pThreadArg);
 #define  SIM_SWIPNG_CARD    0X11
 #define  SIM_PEOPHE_CLOSE   0X12
 
-
-
 typedef struct T_Data_Head{
 	unsigned int  sourceID;//源ID
 	unsigned int  desID;	//目标ID
@@ -81,8 +79,9 @@ static int _dialing(char num);
 static int _getKeyNum(char ch);
 static startThreadwork(ThreadFunc func,pThreadArg arg );
 static void * do_callout(pThreadArg arg);
-static int callout( int  callTimeS);
+static void callroomNum(char roomNum [4],unsigned char time);
 static int swipngCard(char *data,int len );
+static int callout( unsigned char room[4],unsigned char  roomnumAndcallTimeS);
 
 static void * do_peopheClose(pThreadArg arg);
 
@@ -170,7 +169,6 @@ static int _dialing(char num)
 	}
 #endif
 
-
 	else{
 		bzero(cmdStrSu,sizeof(cmdStrSu));
 		sprintf(cmdStrSu,"su -c '%s'", cmdStr);
@@ -206,43 +204,60 @@ static startThreadwork(ThreadFunc func,pThreadArg arg )
 			(void *)arg) != 0) {
 		return -1;
 	}
+
 	pthread_detach(thread);
 	return 0;
 }
+static void callroomNum(char roomNum [4],unsigned char time)
+{
+	const int mapKeyCode[12] = { 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 28 };
+	int i;
+
+	for( i = 0 ;i <4 ; i++)
+	{
+		LOGD("key = %d",roomNum[i]);
+		vHWServer->keyboardFunc(mapKeyCode[roomNum[i]],1);
+	    vHWServer->keyboardFunc(mapKeyCode[roomNum[i]],0);
+	    usleep(1000*200);
+	}
+	time = time>110?110:time;
+	LOGD("time : %d\n",time);
+	sleep(time);
+	vHWServer->keyboardFunc(mapKeyCode[11],1);
+	vHWServer->keyboardFunc(mapKeyCode[11],0);
+}
 static void * do_callout(pThreadArg arg)
 {
-		if(arg == NULL)
+		char room[4] = {0};
+		unsigned char time;
+		if(arg == NULL ||arg->len != 5)
 			return NULL;
 
-		if(vHWServer != NULL)
-		{
-			vHWServer->keyboardFunc(5,1);
-			vHWServer->keyboardFunc(5,0);
-			sleep(1);
-			vHWServer->keyboardFunc(30,1);
-			vHWServer->keyboardFunc(30,0);
-			sleep(1);
-			vHWServer->keyboardFunc(5,1);
-			vHWServer->keyboardFunc(5,0);
-			sleep(1);
-			vHWServer->keyboardFunc(30,1);
-			vHWServer->keyboardFunc(30,0);
-			sleep(1);
-		}
-		sleep(*(int*)(arg->data));
-		vHWServer->keyboardFunc(4,1);
-		vHWServer->keyboardFunc(4,0);
+		time = (*(char *)arg->data);
+		memcpy(room,arg->data+1,4);
+
+		 LOGD("roomnum:");
+		 int i;
+		 for(i = 0;i < 4;i++)
+		 {
+			LOGD("%d ",room[i]);
+		 }
+
+
+		callroomNum(room,time);
 		if(arg->data != NULL)
 			free(arg->data);
 		free(arg);
 		return NULL;
 }
-static int callout( int  callTimeS)
+
+static int callout( unsigned char room[4],unsigned char  roomnumAndcallTimeS)
 {
 	pThreadArg arg = malloc(sizeof(ThreadArg));
-	arg->data = malloc(sizeof(int));
-	memcpy(arg->data,&callTimeS,sizeof(int));
-	arg->len = sizeof(int);
+	arg->data = malloc(5);
+	memcpy(arg->data,&roomnumAndcallTimeS,1);
+	memcpy(arg->data+1,room,4);
+	arg->len = 5;
 	startThreadwork(do_callout,arg);
 	return 0;
 }
@@ -332,13 +347,22 @@ static  int udpRecvFunc(unsigned char* data ,unsigned int size)
 	T_Comm_Head * pHead = (T_Comm_Head *)data;
 	getUtilsOps()->printData(data,size);
 	pHead->dataStart.dtatLen = ntohl(pHead->dataStart.dtatLen);
+	int i;
 	if(pHead->ackType == NOT_ACK)
 	{
 		switch(pHead->cmd)
 		{
-			case SIM_CALL_OUT:
-				 LOGD("SIM_CALL_OUT time:%d",pHead->dataStart.dataStart);
-				     callout(pHead->dataStart.dataStart);
+			case SIM_CALL_OUT:{
+				 LOGD("SIM_CALL_OUT!");
+				 getUtilsOps()->printData(&pHead->dataStart.dataStart,pHead->dataStart.dtatLen);
+				 unsigned char room[4] = {0};
+				 unsigned char time = 0;
+				 memcpy(&time,(char *)(&pHead->dataStart.dataStart),1);
+				 memcpy(room,(char *)(&pHead->dataStart.dataStart+1),4);
+
+
+				 callout(room,time);
+				}
 				break;
 			case SIM_SWIPNG_CARD:
 				 LOGD("SIM_SWIPNG_CARD len:%d",pHead->dataStart.dtatLen);

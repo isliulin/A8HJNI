@@ -61,6 +61,7 @@ typedef struct  WB_hardWareOps{
 	int (*setBluetoothName)(struct  WB_hardWareOps *,char *);
 	//发送蓝牙数据
 	int (*sendBluetoothStr)(struct  WB_hardWareOps *,char *);
+	int (*setbluetoothReboot)(struct  WB_hardWareOps *);
 
 
 
