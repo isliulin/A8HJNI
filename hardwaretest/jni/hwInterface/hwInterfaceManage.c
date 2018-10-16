@@ -135,7 +135,7 @@ static int getDoorLockPin(void) {
 	else if(cpuVer == RK3368)
 		return PB(1);
 	else if(cpuVer == RK3128)
-		return PD(0);
+		return RK_P0(PD(0));
 	return -1;
 }
 static int getOpenDoorKeyPin(void) {
@@ -143,6 +143,8 @@ static int getOpenDoorKeyPin(void) {
 		return PG(2);
 	else if (cpuVer == A64)
 		return PB(3);
+	else if(cpuVer == RK3128)
+			return RK_P1(PA(3));
 	return -1;
 }
 
@@ -169,6 +171,8 @@ static int getIFCameraLightPin(void){
 		return  PH(0);
 	else if (cpuVer == A64)
 		return PB(7);
+	else if(cpuVer==RK3128)
+		return RK_P0(PB(6));
 	return -1;
 
 }
@@ -186,6 +190,8 @@ static int getLcdSwichPin(void) {
 		return PH(7);
 	else if (cpuVer == A64)
 		return PD(23);
+	else if(cpuVer == RK3128)
+			return RK_P1(PA(4));
 	return -1;
 }
 static int getRestartPin(void) {
@@ -210,6 +216,8 @@ static int getDoorMagneticPin(void){
 		return PG(1);
 	else if (cpuVer == A64)
 		return PE(17);
+	else if(cpuVer==RK3128)
+			return RK_P1(PA(2));
 	return -1;
 }
 static int getSecurityPin(void){
@@ -235,7 +243,7 @@ static char *getDoorCardUART(void) {
 	else if (cpuVer == A64)
 		return "/dev/ttyS3";
 	else if (cpuVer == RK3128)
-		return "/dev/ttyS3";
+		return "/dev/ttyS1";
 	return NULL;
 }
 static char * getIdCardUART(void)
@@ -249,6 +257,8 @@ static char * getIdCardUART(void)
 	else if(cpuVer == A64)
 			return "/dev/ttyS2";
 	else if(cpuVer == RK3368 )
+			return "/dev/ttyS0";
+	else if(cpuVer == RK3128 )
 			return "/dev/ttyS0";
 	return NULL;
 }

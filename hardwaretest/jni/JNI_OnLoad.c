@@ -4,7 +4,7 @@
 
 
 static const char*  classPathName = "com/welbell/hardware/HardwareSupport";
-static const char * libVersion = "Ver1.0.2.6 For A8HNativeControl";
+static const char * libVersion = "Ver1.0.2.7 For A8HNativeControl";
 /*
  * Register several native methods for one class.
  */

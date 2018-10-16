@@ -26,7 +26,6 @@ pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 		if(server->cardClass == NULL)
 		{
 			LOGE("fail to server->cardClass!");
-
 			return NULL;
 		}else
 		{
@@ -47,7 +46,6 @@ pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 			server->type = FM1702NL;
 			break;
 		}
-
 	default:
 		server->type = -1;
 		LOGD("none card Server!\n");

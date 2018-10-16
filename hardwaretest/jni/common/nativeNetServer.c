@@ -102,14 +102,20 @@ pNativeNetServerOps createNativeNetServer(void) {
 	}
 	server->ops = ops;
 #if 1
-	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);
-	server->udpServer->write(server->udpServer, msg.buf, msg.len,
-						SERVER_IP_ADDR, SERVER_PORT);
-	ret = server->udpServer->read(server->udpServer,recvbuf,sizeof(recvbuf),1000);
-	if(ret <= 0)
-	{
-		goto fail1;
-	}
+	int tryCount = 8;
+	do{
+		MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);
+		server->udpServer->write(server->udpServer, msg.buf, msg.len,
+							SERVER_IP_ADDR, SERVER_PORT);
+		ret = server->udpServer->read(server->udpServer,recvbuf,sizeof(recvbuf),1000);
+		if((ret <= 0)&& (tryCount <=0))
+		{
+			goto fail1;
+		}else {
+			break;
+		}
+		tryCount --;
+	}while(1);
 #endif
 
 	return (pNativeNetServerOps) server;

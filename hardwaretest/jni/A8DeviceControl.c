@@ -53,9 +53,11 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	int ret  = 0;
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
 		goto fail0;
+
 	hardWareServer = crateHardWareServer();
 	if (hardWareServer == NULL) {
 		LOGE("fail to crateHardWareServer!");
+		system("reboot\n");
 		goto fail0;
 	}
 #if 1
@@ -94,17 +96,19 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	if (ret == 0)
 		LOGD("jni_a8HardwareControlInit init succeed!");
 	else {
+		hardWareServer->reboot(hardWareServer);
 		goto fail2;
 	}
 #endif
 	return ret;
 	fail2:
+
 		if(JavaMethodServer)
 			CallbackJavaMethodExit(&JavaMethodServer);
 	fail1:
 		if(hardWareServer)
 			destroyHardWareServer(&hardWareServer);
-
+		system("reboot\n");
 	fail0: return -1;
 
 }

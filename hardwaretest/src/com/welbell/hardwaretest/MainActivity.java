@@ -26,7 +26,7 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// 获取版本号
 		
 		setContentView(R.layout.activity_main);
-
+	
 		ret = hardwareResource.init();
 		if(ret < 0)
 		{
@@ -41,8 +41,8 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 
 		Log.e("", "IdCardUartDEV:" + IdCardUartDEV);
 		// 获取系统版本号
-		String version = hardwareResource.getHardWareVersion();
-		Log.e("", "************version:" + version);
+	//	String version = hardwareResource.getHardWareVersion();
+	//	Log.e("", "************version:" + version);
 		// 获取CPU型号
 		String cpumodel = hardwareResource.getCpuModel();
 
@@ -52,19 +52,19 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		/*
 		 * 参数1：app 包名 参数2：主Activity全类名
 		 */
-		//hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
-		//		"com.welbell.hardwaretest.MainActivity");
+		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
+				"com.welbell.hardwaretest.MainActivity");
 		hardwareResource.getCpuModel();
 		
 		// 开启摄像头灯
-		hardwareResource.cameraLightControl(true);
+		hardwareResource.cameraLightControl(false);
 		// 开门
 		
 		hardwareResource.doorLockControl(true);
 		// 关闭键盘灯
 		hardwareResource.keyboardLightControl(true);
 		// 关闭红外摄像头灯
-		hardwareResource.ifcameraLightControl(true);
+		hardwareResource.ifcameraLightControl(false);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
 		
