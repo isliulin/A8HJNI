@@ -102,7 +102,11 @@ user_root:
 #if USER_BINDER == 1
 	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
 #else
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+	if(gpioServer->netClient != NULL){
+		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+	}else{
+		system(cmdStr);
+	}
 #endif
 	bzero(cmdStr,sizeof(cmdStr));
 	sprintf(cmdStr,"echo %d > %s/value",value,gpioServer->gpioPath);
@@ -110,7 +114,13 @@ user_root:
 #if USER_BINDER == 1
 	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
 #else
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+	if(gpioServer->netClient != NULL){
+		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+	}
+	else{
+		system(cmdStr);
+		}
+
 #endif
 succeed:
 	return 0;
@@ -364,13 +374,14 @@ pGpioOps gpio_getServer( int gpio) {
 		goto fail1;
 	}
 #else
-	gpioServer->netClient = createNativeNetServer();
+	gpioServer->netClient = NULL;//createNativeNetServer();
 	if(gpioServer->netClient == NULL)
 	{
 		LOGE("fail to crate netClient!\n");
-		goto fail1;
+		//goto fail1;
+	}else{
+		LOGD("gpioServer user netClient !");
 	}
-	LOGD("gpioServer user netClient !");
 #endif
 
 	exportFd = open(SYSFS_GPIO_EXPORT, O_WRONLY);
@@ -399,14 +410,17 @@ pGpioOps gpio_getServer( int gpio) {
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
 #else
-		ret = gpioServer->netClient->runScript(gpioServer->netClient,
+		if(gpioServer->netClient != NULL){
+			ret = gpioServer->netClient->runScript(gpioServer->netClient,
 					  cmdStr);
+		}else{
+			system(cmdStr);
+		}
 #endif
 		if (ret < 0) {
 			LOGE("fail to write %s!", SYSFS_GPIO_EXPORT);
 			goto fail3;
 		}
-
 	}
 
 	//尝试再次打开
@@ -417,7 +431,6 @@ pGpioOps gpio_getServer( int gpio) {
 		LOGE("fail to open %s!", cmdStr);
 		goto fail3;
 	}
-
 	succeed: close(exportFd);
 	close(gpiofd);
 	bzero(gpioServer->gpioPath, sizeof(gpioServer->gpioPath));
@@ -509,8 +522,13 @@ void gpio_releaseServer(pGpioOps *ops) {
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
 #else
-		ret = gpioServer->netClient->runScript(gpioServer->netClient,
+		if(gpioServer->netClient == NULL){
+			ret = gpioServer->netClient->runScript(gpioServer->netClient,
 						cmdStr);
+		}else{
+			system(cmdStr);
+		}
+
 #endif
 		if (ret < 0) {
 			LOGE("fail to write %s!", SYSFS_GPIO_UNEXPORT);

@@ -24,6 +24,10 @@ typedef enum Interface{
 	E_SET_BLUENAME,             //设置蓝牙名字
 	E_SEND_BLUESTR,             //发送蓝牙数据
 	E_SET_BLUETOOTH_REBOOT,     //重启蓝牙
+	E_GET_ICCARD_STATE,         //获取门卡模块状态
+	E_SET_RS485INIT,			//RS485初始化
+	E_SET_RS485SEND,			//RS485发送函数
+	E_GET_RS485RECV,            //RS485接收函数
 	E_MAX
 }E_INTER_TYPE;
 

@@ -193,7 +193,7 @@ pIcDoorCardOps crateFM1702NLOpsServer(const unsigned char *devPath,
 	if (IcDoorCardServer == NULL)
 		goto fail0;
 
-	IcDoorCardServer->serialOps = createSerialServer(devPath, 57600, 8, 1, 'n');
+	IcDoorCardServer->serialOps = createSerialServer(devPath, 9600, 8, 1, 'n');
 	if (IcDoorCardServer->serialOps == NULL)
 		goto fail1;
 	IcDoorCardServer->serialOps->setHandle(IcDoorCardServer->serialOps,uartRecvFunc,decodeAlg,NULL );

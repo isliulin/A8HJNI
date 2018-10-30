@@ -5,17 +5,37 @@
 #include "cpuCard/cpu_card.h"
 #include "icCard/fm1702nl.h"
 #include "common/debugLog.h"
+#include "common/Utils.h"
 
 typedef struct {
 	DoorCardops ops;
 	void *cardClass;
 	DOOR_CARD_MODULE type;
+	int state;
 }DoorCardServer,*pDoorCardServer;
+static int getState(pDoorCardops ops);
+
+static const DoorCardops ops = {
+		.getState = getState,
+};
+static int getState(pDoorCardops ops)
+{
+	pDoorCardServer server = ops;
+	return server->state;
+}
+
 pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 	pDoorCardServer server = (pDoorCardServer)calloc(1,sizeof(DoorCardServer));
 	if(server == NULL)
 		return NULL;
-	DOOR_CARD_MODULE type = ZLG600A;
+	bzero(server,sizeof(DoorCardServer));
+	DOOR_CARD_MODULE type ;
+
+	if(getUtilsOps()->getCpuVer() == A20){
+		type = FM1702NL;
+	}else {
+		type = ZLG600A;
+	}
 	switch (type) {
 
 	case ZLG600A:
@@ -31,6 +51,7 @@ pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 		{
 			LOGI("ZLG600A start succeed!");
 			server->type = ZLG600A;
+			server->state = 1;
 		}
 		break;
 	case FM1702NL:
@@ -44,14 +65,17 @@ pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 		}else{
 			LOGI("FM1702NL start succeed!");
 			server->type = FM1702NL;
+			server->state = 1;
 			break;
 		}
+		break;
 	default:
 		server->type = -1;
 		LOGD("none card Server!\n");
 		return NULL;
 		break;
 	}
+	server->ops =ops;
 	return (pDoorCardops)server;
 }
 void destroyDoorCardServer(pDoorCardops *server) {

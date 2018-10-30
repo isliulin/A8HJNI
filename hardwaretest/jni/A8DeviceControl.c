@@ -79,19 +79,23 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	if (JavaMethodServer == NULL)
 		goto fail1;
 	//ret |=
+#if USER_ICCARD
+
 	hardWareServer->setDoorCardRawUpFunc(hardWareServer, icCardRecvFunc);
+#endif
 	ret |= hardWareServer->setOpenDoorKeyUpFunc(hardWareServer, openDoorKeyUp);
 	ret |= hardWareServer->setPirUpFunc(hardWareServer, pirUp);
 	ret |= hardWareServer->setMagneticUpFunc(hardWareServer, magneticUp);
 	ret |= hardWareServer->setPreventSeparateServerUpFunc(hardWareServer,
 			preventSeparateUp);
 	ret |= hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
-
+#if USER_BLUETOOTH
 	//由于部分设备不带蓝牙模块,此处不做容错判断
 	if( hardWareServer->setBluetoothRecvFunc(hardWareServer, bluetoothRecvUp)<0)
 	{
 		LOGW("fail to setBluetoothRecvFunc!\n");
 	}
+#endif
 
 	if (ret == 0)
 		LOGD("jni_a8HardwareControlInit init succeed!");
@@ -251,7 +255,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlExit(JNIEnv * env, jobject obj) {
 	return 0;
 }
 JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
-		jint key) {
+		jint key,jbyteArray ValueBuf, jint ValueLen) {
 
 	unsigned char recvbuf[128] = { 0 };
 	if (key <= 0) {
@@ -259,94 +263,130 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 	}
 	if (hardWareServer == NULL)
 		return NULL;
+	char load_data[4096] = { 0 };
+	if (ValueLen > 0) {
+		char *local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf, NULL);
+		memcpy(load_data, local_Value, ValueLen);
+		if (local_Value != NULL)
+			(*env)->ReleaseByteArrayElements(env, ValueBuf,(jbyte*) local_Value, 0);
+	}
+
+	LOGD("jni_a8GetKeyValue :0x%x\n",key);
 	switch (key) {
-	case E_GET_HARDWARE_VER: {
-		LOGD("E_GET_HARDWARE_VER\n");
-		int recvLen;
-		if (getUtilsOps()->getCpuVer() == A20
-				|| getUtilsOps()->getCpuVer() == A64)
-			recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
-		else if (getUtilsOps()->getCpuVer() == RK3368) {
-			recvLen = getUtilsOps()->getHardWareFromRK(recvbuf,
-					sizeof(recvbuf));
-		}
-		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
+		case E_GET_HARDWARE_VER: {
+			LOGD("E_GET_HARDWARE_VER\n");
+			int recvLen;
+			if (getUtilsOps()->getCpuVer() == A20
+					|| getUtilsOps()->getCpuVer() == A64)
+				recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
+			else if (getUtilsOps()->getCpuVer() == RK3368) {
+				recvLen = getUtilsOps()->getHardWareFromRK(recvbuf,
+						sizeof(recvbuf));
+			}
+			jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
 
-		if (recvLen > 0) {
-			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
-					(jbyte*) recvbuf);
-			return jarray;
-		} else {
-			return NULL;
+			if (recvLen > 0) {
+				(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
+						(jbyte*) recvbuf);
+				return jarray;
+			} else {
+				return NULL;
+			}
 		}
-	}
+			break;
+		case E_GET_CPUMODEL: {
+			int recvLen = 0;
+
+			if (getUtilsOps()->getCpuVer() == A20) {
+				strcpy(recvbuf, "allwiner_A20");
+
+			} else if (getUtilsOps()->getCpuVer() == A64) {
+				strcpy(recvbuf, "allwiner_A64");
+			} else if (getUtilsOps()->getCpuVer() == RK3368) {
+				strcpy(recvbuf, "rk_3368");
+			} else
+				return NULL;
+
+			recvLen = strlen(recvbuf);
+			jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
+
+			if (recvLen > 0) {
+				(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
+						(jbyte*) recvbuf);
+				return jarray;
+			} else {
+				return NULL;
+			}
+		}
+			break;
+		case E_GET_BLUETOOTH_STATE: {
+			char state[1] = { 0 };
+			state[0] = hardWareServer->getBluetoothState(hardWareServer);
+
+			jbyteArray jarray = (*env)->NewByteArray(env, 1);
+			if (state[0] != -1) {
+				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+				return jarray;
+			} else {
+				return NULL;
+			}
+		}
 		break;
-	case E_GET_CPUMODEL: {
-		int recvLen = 0;
-
-		if (getUtilsOps()->getCpuVer() == A20) {
-			strcpy(recvbuf, "allwiner_A20");
-
-		} else if (getUtilsOps()->getCpuVer() == A64) {
-			strcpy(recvbuf, "allwiner_A64");
-		} else if (getUtilsOps()->getCpuVer() == RK3368) {
-			strcpy(recvbuf, "rk_3368");
-		} else
-			return NULL;
-
-		recvLen = strlen(recvbuf);
-		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
-
-		if (recvLen > 0) {
-			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
-					(jbyte*) recvbuf);
-			return jarray;
-		} else {
-			return NULL;
+		case E_GET_OPTO_SENSOR_STATE:
+		{
+			char state[1] = { 0 };
+			state[0] = hardWareServer->getOptoSensorState(hardWareServer);
+			jbyteArray jarray = (*env)->NewByteArray(env, 1);
+			if (state[0] != -1) {
+				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+				return jarray;
+			} else {
+				return NULL;
+			}
 		}
-
-	}
 		break;
-	case E_GET_BLUETOOTH_STATE: {
-		char state[1] = { 0 };
-		state[0] = hardWareServer->getBluetoothState(hardWareServer);
-
-		jbyteArray jarray = (*env)->NewByteArray(env, 1);
-		if (state[0] != -1) {
-			(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+		case E_GET_IDCARD_UARTDEV:
+		{
+			char *uart_dev = crateHwInterfaceServer()->getIdCardUART();
+			if (uart_dev == NULL)
+				return NULL;
+			jbyteArray jarray = (*env)->NewByteArray(env, strlen(uart_dev));
+			(*env)->SetByteArrayRegion(env, jarray, 0, strlen(uart_dev),
+					(jbyte*) uart_dev);
 			return jarray;
-		} else {
-			return NULL;
 		}
-	}
-	break;
-	case E_GET_OPTO_SENSOR_STATE:
-	{
-		char state[1] = { 0 };
-		state[0] = hardWareServer->getOptoSensorState(hardWareServer);
-		jbyteArray jarray = (*env)->NewByteArray(env, 1);
-		if (state[0] != -1) {
-			(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+		break;
+		case E_GET_ICCARD_STATE:
+		{
+			LOGD("E_GET_ICCARD_STATE\n");
+			char state[1] = { 0 };
+			state[0] = hardWareServer->getIcCardState(hardWareServer);
+			jbyteArray jarray = (*env)->NewByteArray(env, 1);
+			if (state[0] != -1) {
+				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+					return jarray;
+				} else {
+					return NULL;
+			}
+		}
+		case  E_GET_RS485RECV:{
+			char rs485buf[4096] = {0};
+			int  recvret;
+			int recvtimeout;
+			if(ValueLen > 0){
+				 recvtimeout = (*(int *)&load_data[0]);
+			}
+			recvret = hardWareServer->rs485RecvMsg(hardWareServer,recvtimeout,rs485buf,sizeof(rs485buf));
+			if(recvret < 0){
+				break;
+			}
+			jbyteArray jarray = (*env)->NewByteArray(env, recvret);
+			(*env)->SetByteArrayRegion(env, jarray, 0, recvret, (jbyte*) rs485buf);
 			return jarray;
-		} else {
-			return NULL;
 		}
+		break;
 	}
-	break;
-	case E_GET_IDCARD_UARTDEV:
-	{
-
-		char *uart_dev = crateHwInterfaceServer()->getIdCardUART();
-		if (uart_dev == NULL)
-			return NULL;
-		jbyteArray jarray = (*env)->NewByteArray(env, strlen(uart_dev));
-		(*env)->SetByteArrayRegion(env, jarray, 0, strlen(uart_dev),
-				(jbyte*) uart_dev);
-		return jarray;
-	}
-	break;
-}
-return NULL;
+	return NULL;
 }
 JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 	jbyteArray ValueBuf, jint ValueLen) {
@@ -355,7 +395,7 @@ int gpioValue = 0;
 char *local_Value = NULL;
 if (hardWareServer == NULL)
 	return -1;
-char load_data[1024] = { 0 };
+char load_data[4096] = { 0 };
 if (ValueLen > 0) {
 	local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf, NULL);
 	LOGD("Control Interface:%d  Value:%d \n", key, local_Value[0]);
@@ -366,84 +406,99 @@ if (ValueLen > 0) {
 }
 switch (key) {
 
-case E_DOOEBEL:
-	break; //有线门铃(西安郑楠项目)
-case E_SMART_HOME:
-	break; //智能家居(西安郑楠项目)
-case E_DOOR_LOCK:
-	if (local_Value != NULL)
-		ret = hardWareServer->controlDoor(hardWareServer, load_data[0]);
-	break; //锁
-case E_INFRARED:
-	break; //红外
-case E_CAMERA_LIGHT:
-	if (local_Value != NULL)
-		ret = hardWareServer->controlCameraLight(hardWareServer, load_data[0]);
-	break; //摄像头灯
-case E_IFCAMERA_LIGHT:
-	if (local_Value != NULL)
-		ret = hardWareServer->controlIFCameraLight(hardWareServer, load_data[0]);
-	break; //红外摄像头灯
-case E_KEY_LIGHT:
-	//控制键盘背光灯
-	if (local_Value != NULL)
-		ret = hardWareServer->controlKeyboardLight(hardWareServer,
-				load_data[0]);
-	break; //键盘灯
-case E_LCD_BACKLIGHT:
-	if (local_Value != NULL)
-		ret = hardWareServer->controlLCDLight(hardWareServer, load_data[0]);
+	case E_DOOEBEL:
+		break; //有线门铃(西安郑楠项目)
+	case E_SMART_HOME:
+		break; //智能家居(西安郑楠项目)
+	case E_DOOR_LOCK:
+		if (local_Value != NULL)
+			ret = hardWareServer->controlDoor(hardWareServer, load_data[0]);
+		break; //锁
+	case E_INFRARED:
+		break; //红外
+	case E_CAMERA_LIGHT:
+		if (local_Value != NULL)
+			ret = hardWareServer->controlCameraLight(hardWareServer, load_data[0]);
+		break; //摄像头灯
+	case E_IFCAMERA_LIGHT:
+		if (local_Value != NULL)
+			ret = hardWareServer->controlIFCameraLight(hardWareServer, load_data[0]);
+		break; //红外摄像头灯
+	case E_KEY_LIGHT:
+		//控制键盘背光灯
+		if (local_Value != NULL)
+			ret = hardWareServer->controlKeyboardLight(hardWareServer,
+					load_data[0]);
+		break; //键盘灯
+	case E_LCD_BACKLIGHT:
+		if (local_Value != NULL)
+			ret = hardWareServer->controlLCDLight(hardWareServer, load_data[0]);
 
-	break; //屏幕背光
-case E_FINGERPRINT:
-	break;
-case E_SET_IPADDR:
-	break;
-case E_RESTART:
-	LOGD("E_RESTART!!");
-	ret = hardWareServer->reboot(hardWareServer);
-	break; //重启机器
-case E_SEND_SHELL_CMD:
-	LOGD("E_SEND_SHELL_CMD:%s", load_data);
-	if (local_Value != NULL)
-		ret = hardWareServer->sendShellCmd(hardWareServer, load_data);
-	break;
-case E_ADD_GUARD: {
-	LOGD("E_ADD_GUARD:%s", local_Value);
-	char packAgeName[128] = { 0 };
-	char className[128] = { 0 };
-	if (local_Value != NULL) {
-		ret = getpackAgeNameAndclassName(packAgeName, className, load_data);
+		break; //屏幕背光
+	case E_FINGERPRINT:
+		break;
+	case E_SET_IPADDR:
+		break;
+	case E_RESTART:
+		LOGD("E_RESTART!!");
+		ret = hardWareServer->reboot(hardWareServer);
+		break; //重启机器
+	case E_SEND_SHELL_CMD:
+		LOGD("E_SEND_SHELL_CMD:%s", load_data);
+		if (local_Value != NULL)
+			ret = hardWareServer->sendShellCmd(hardWareServer, load_data);
+		break;
+	case E_ADD_GUARD: {
+		LOGD("E_ADD_GUARD:%s", local_Value);
+		char packAgeName[128] = { 0 };
+		char className[128] = { 0 };
+		if (local_Value != NULL) {
+			ret = getpackAgeNameAndclassName(packAgeName, className, load_data);
+		}
+		if (ret == 0) {
+			LOGD("%s:%s", packAgeName, className);
+			hardWareServer->setGuardPackagenameAndMainclassname(hardWareServer,
+					packAgeName, className);
+		}
+		break;
 	}
-	if (ret == 0) {
-		LOGD("%s:%s", packAgeName, className);
-		hardWareServer->setGuardPackagenameAndMainclassname(hardWareServer,
-				packAgeName, className);
+	case E_DEL_GUARD: {
+		hardWareServer->delGuardServer(hardWareServer);
 	}
-	break;
-}
-case E_DEL_GUARD: {
-	hardWareServer->delGuardServer(hardWareServer);
-}
-	break;
-case E_SET_BLUENAME:{
-	LOGD("E_SET_BLUENAME:%s\n",load_data);
-	if (local_Value != NULL)
-		ret = hardWareServer->setBluetoothName(hardWareServer, load_data);
-}break;
+		break;
+	case E_SET_BLUENAME:{
+		LOGD("E_SET_BLUENAME:%s\n",load_data);
+		if (local_Value != NULL)
+			ret = hardWareServer->setBluetoothName(hardWareServer, load_data);
+	}break;
 
-case E_SEND_BLUESTR:{
-	if (local_Value != NULL)
-		ret = hardWareServer->sendBluetoothStr(hardWareServer, load_data);
-}break;
-case E_SET_BLUETOOTH_REBOOT:{
+	case E_SEND_BLUESTR:{
+		if (local_Value != NULL)
+			ret = hardWareServer->sendBluetoothStr(hardWareServer, load_data);
+	}break;
+	case E_SET_BLUETOOTH_REBOOT:{
 		ret = hardWareServer->setbluetoothReboot(hardWareServer);
-}break;
-
-
-default:
-	LOGW("cannot find Control Interface!");
+	}break;
+	case E_SET_RS485INIT:
+	{
+		if(ValueLen < 16)
+			return -1;
+		int nBaudRate =*(int *)(&load_data[0]);
+		int nDataBits =*(int *)(&load_data[4]);
+		int nStopBits = *(int *)(&load_data[8]);
+		int nParity = *(int *)(&load_data[12]);
+		LOGD("RS485INIT:nBaudRate = %d,nDataBits = %d,nStopBits = %d,nParity = %c  \n",
+				nBaudRate,nDataBits,nStopBits,nParity);
+		ret = hardWareServer->rs485Init(hardWareServer,nBaudRate,nDataBits,nStopBits,nParity);
+	}break;
+	case E_SET_RS485SEND:{
+		LOGD("ValueLen:%d\n",ValueLen);
+		ret = hardWareServer->rs485SendMsg(hardWareServer,load_data,ValueLen);
+	}
 	break;
+	default:
+		LOGW("cannot find Control Interface!");
+		break;
 }
 return ret;
 }

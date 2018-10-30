@@ -101,7 +101,7 @@ pNativeNetServerOps createNativeNetServer(void) {
 		goto fail1;
 	}
 	server->ops = ops;
-#if 1
+#if 0
 	int tryCount = 8;
 	do{
 		MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);

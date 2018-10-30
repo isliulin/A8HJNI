@@ -25,6 +25,10 @@ public class controlHardwareCmd {
     public static final byte E_SET_BLUENAME = 0x23; //设置蓝牙名
     public static final byte E_SEND_BLUESTR = 0x24;
     public static final byte E_SET_BLUETOOTH_REBOOT = 0x25;
+    public static final byte E_GET_ICCARD_STATE = 0x26;
+    public static final byte E_SET_RS485INIT = 0x27;	//RS485初始化
+    public static final byte E_SET_RS485SEND  = 0x28;	//RS485发送函数
+    public static final byte E_GET_RS485RECV = 0x29;    //RS485接收函数
     
   
 }

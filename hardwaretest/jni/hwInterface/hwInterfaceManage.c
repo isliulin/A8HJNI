@@ -273,6 +273,25 @@ static DOOR_CARD_MODULE getDoorType(void) {
 
 	return -1;
 }
+static char *getRs485UART(void){
+	if (cpuVer == A20){
+		return "/dev/ttyS5";
+	}
+	else if(cpuVer == A64){
+		return "/dev/ttyS0";
+	}
+	return NULL;
+}
+static int getRs485controlPin(void){
+	if (cpuVer == A20){
+		return PH(6);
+	}
+	else if(cpuVer == A64){
+		return PH(8);
+	}
+	return -1;
+}
+
 static HwInterfaceOps ops = {
 		.getDoorLockPin = getDoorLockPin,//控制门锁
 		.getOpenDoorKeyPin = getOpenDoorKeyPin,//控制内部开门按钮
@@ -289,7 +308,8 @@ static HwInterfaceOps ops = {
 		.getSecurityPin = getSecurityPin,//获取防拆按钮反馈
 		.getIdCardUART = getIdCardUART,//获取身份证对应的串口号
 		.getBluetoothUART = getBluetoothUART,
-
+		.getRs485UART = getRs485UART,
+		.getRs485controlPin = getRs485controlPin,
 };
 
 pHwInterfaceOps crateHwInterfaceServer(void) {

@@ -15,9 +15,11 @@ typedef enum{
 	ZLG600A ,
 }DOOR_CARD_MODULE;
 typedef enum{
+
 	IC_CARD=0,
 	CPU_CARD,
 	ID_CARD,
+
 }CARD_TYPE;
 
 typedef int (*DoorCardRecvFunc)(CARD_TYPE,unsigned char*,unsigned int);
@@ -38,6 +40,8 @@ typedef struct  {
 	char *(*getIdCardUART)(void);
 	char *(*getBluetoothUART)(void); //获取蓝牙模块串口号
 	DOOR_CARD_MODULE (*getDoorType)(void);
+	char *(*getRs485UART)(void);
+	int (*getRs485controlPin)(void);
 
 }HwInterfaceOps,*pHwInterfaceOps;
 

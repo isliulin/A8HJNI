@@ -12,7 +12,7 @@
 #include <sys/epoll.h>
 #include <sys/poll.h>
 #include <sys/eventfd.h>
-#include<sys/select.h>
+#include <sys/select.h>
 #include "serialServer.h"
 #include "taskManage/threadManage.h"
 #include "common/bufferManage.h"
@@ -317,6 +317,7 @@ static int _read(int fd, unsigned char * lpBuff, int nBuffSize) {
 	while (len < total) {
 
 		ret = read(fd, lpBuff + len, total - len);
+		LOGE("lpBuff = 0x%x",lpBuff[0]);
 		if (ret <= 0) {
 			LOGE("fail to read ");
 			break;
@@ -366,9 +367,10 @@ static int serialWrite(struct SerialOps* base, const unsigned char * lpBuff,
 	if (serialServer == NULL)
 		return -1;
 	if (serialServer->buildFunc == NULL) {
+
 		return _write(serialServer->serialDevFd, lpBuff, nBuffSize);
 	} else {
-		char sendBuf[256] = { 0 };
+		char sendBuf[4*1024] = { 0 };
 		int sendLen = 0;
 		serialServer->buildFunc(lpBuff, nBuffSize, sendBuf, &sendLen);
 		return _write(serialServer->serialDevFd, sendBuf, sendLen);
@@ -504,7 +506,7 @@ static int _setBaudRate(int fd, int nBaudRate) {
 			tcflush(fd, TCIOFLUSH);
 			cfsetispeed(&Opt, BaudRate_LibValue[idx]);
 			cfsetospeed(&Opt, BaudRate_LibValue[idx]);
-			ret = tcsetattr(fd, TCSANOW, &Opt);
+			ret = tcsetattr(fd, TCSADRAIN, &Opt);
 			if (ret != 0) {
 				LOGE("tcsetattr");
 				break;
@@ -573,7 +575,7 @@ static int _setStopBits(int fd, int nStopBits) {
 		break;
 	}
 	tcflush(fd, TCIFLUSH);
-	ret = tcsetattr(fd, TCSANOW, &Opt);
+	ret = tcsetattr(fd, TCSADRAIN, &Opt);
 	if (ret == -1) {
 		return -1;
 	}
@@ -614,7 +616,7 @@ static int _setParity(int fd, int nParity) {
 	if (nParity != 'n')
 		Opt.c_iflag |= INPCK;
 	tcflush(fd, TCIFLUSH);
-	ret = tcsetattr(fd, TCSANOW, &Opt);
+	ret = tcsetattr(fd, TCSADRAIN, &Opt);
 	if (ret == -1) {
 		return -1;
 	}
@@ -647,8 +649,9 @@ static int _setOtherOpt(int fd) {
 	Opt.c_cflag |= (CLOCAL | CREAD);
 	Opt.c_cc[VTIME] = 1;
 	Opt.c_cc[VMIN] = 128;
-	tcflush(fd, TCIFLUSH);
-	ret = tcsetattr(fd, TCSANOW, &Opt);
+	tcflush(fd, TCOFLUSH  );
+	tcflush(fd, TCIOFLUSH  );
+	ret = tcsetattr(fd, TCSADRAIN, &Opt);
 	if (ret == -1) {
 		return -1;
 	}

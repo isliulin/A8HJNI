@@ -18,34 +18,35 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 
 	static final String TAG = "HardwareDemo";
 	HardwareSupport hardwareResource = new HardwareSupport();
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		int ret;
 		// 获取版本号
-		
+
 		setContentView(R.layout.activity_main);
-	
 		ret = hardwareResource.init();
-		if(ret < 0)
-		{
+		if (ret < 0) {
 			Log.e("", " fail to hardwareResource ");
-			return ;
-			
+			return;
+
 		}
-		//执行shell脚本: 例 执行重启命令 
-		//hardwareResource.executeRootShell("reboot");
+		// 执行shell脚本: 例 执行重启命令
+		// hardwareResource.executeRootShell("reboot");
 		// 获取身份证模块所接的串口号
 		String IdCardUartDEV = hardwareResource.getIdCardUartDev();
 
 		Log.e("", "IdCardUartDEV:" + IdCardUartDEV);
 		// 获取系统版本号
-	//	String version = hardwareResource.getHardWareVersion();
-	//	Log.e("", "************version:" + version);
+		// String version = hardwareResource.getHardWareVersion();
+		// Log.e("", "************version:" + version);
 		// 获取CPU型号
 		String cpumodel = hardwareResource.getCpuModel();
-
+		// 获取ZLG600A门卡状态 有装IC卡返回0 没装返回小于<=0.使用
+		// 中控读卡模块前先获取此状态，如果返回<=0才能调用
+		int state = hardwareResource.getIcCardState();
+		Log.e("", "IdCardstate :" + state);
 
 		// 添加接口
 		hardwareResource.addEventCallBack(this);
@@ -55,11 +56,11 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
 				"com.welbell.hardwaretest.MainActivity");
 		hardwareResource.getCpuModel();
-		
+
 		// 开启摄像头灯
 		hardwareResource.cameraLightControl(false);
 		// 开门
-		
+
 		hardwareResource.doorLockControl(true);
 		// 关闭键盘灯
 		hardwareResource.keyboardLightControl(true);
@@ -67,13 +68,12 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		hardwareResource.ifcameraLightControl(false);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
-		
-		if( true == hardwareResource.getBuletoothState())
-		{
+
+		if (true == hardwareResource.getBuletoothState()) {
 			hardwareResource.setBluetoothName("快来链接我");
 		}
-		
-		//hardwareResource.rebootBluetooth();
+
+		// hardwareResource.rebootBluetooth();
 		// 重启机器
 		// hardwareResource.reboot();
 		// 获取光感状态
@@ -84,8 +84,50 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// hardwareResource.delDaemonServer();
 		// 删除回调接口
 		// hardwareResource.removeEventCallBack(this);
-		//用root权限执行命令
-		//hardwareResource.executeRootShell("reboot");
+		// 用root权限执行命令
+		// hardwareResource.executeRootShell("mount -o remount /system && chmod 000 /system/priv-app/VpnDialogs/*");
+		// rs485初始化,波特率9600，8个数据为
+		hardwareResource.rs485init( 9600, 8, 1, 'n');
+		
+		new Thread(new Runnable() {
+			boolean falg = true;
+
+			public void run() {
+				while (true) {
+					falg = !falg;
+					byte sendData[] = new byte[1240];
+					if(falg == true){
+						Log.d("rs485 ","send");
+						hardwareResource.rs485send(sendData);
+						hardwareResource.doorLockControl(falg);
+						try {
+							Thread.sleep(1*1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}else {
+						byte[] recvData;
+						Log.d("rs485 ","recv");
+						recvData = hardwareResource.rs485recv(6000);
+						if(recvData == null){
+							continue;
+						}
+						for(int i = 0;i<recvData.length;i++ ){
+							
+							Log.d("rs485","[ " + recvData[i]+"]");
+						}
+						hardwareResource.doorLockControl(falg);
+						try {
+							Thread.sleep(5*1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}			
+				}
+			}
+		}).start();
 	}
 
 	@Override
@@ -93,9 +135,8 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// TODO Auto-generated method stub
 		Log.e("someoneCloseEvent",
 				"有人靠近 光敏状态是:" + hardwareResource.getOptoSensorState());
-		
-		if( true == hardwareResource.getBuletoothState())
-		{
+
+		if (true == hardwareResource.getBuletoothState()) {
 			hardwareResource.sendBluetoothStr("someoneCloseEvent");
 		}
 	}
@@ -112,6 +153,7 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		String cardType[] = { "IC卡", "CPU卡", "身份证" };
 		Log.e("", "有人刷" + cardType[type] + "CardID:" + icCardID);
 	}
+
 	@Override
 	public void doorCardBandRawEvent(byte type, byte[] icCardID) {
 		// TODO Auto-generated method stub
@@ -121,6 +163,7 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 			Log.e("", "" + icCardID[i]);
 		}
 	}
+
 	@Override
 	public void keyBoardEvent(int code, int value) {
 		// TODO Auto-generated method stub
@@ -129,9 +172,10 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 				+ (value == 1 ? "down" : "up"));
 
 	}
-	public void  buletoothEvent(String data){
-		Log.e("buletoothEvent", " data:" +data);
-		
+
+	public void buletoothEvent(String data) {
+		Log.e("buletoothEvent", " data:" + data);
+
 	}
 
 	@Override
@@ -146,6 +190,5 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// TODO Auto-generated method stub
 		Log.e("preventSeparateEvent", ":" + keyState);
 	}
-
 
 }

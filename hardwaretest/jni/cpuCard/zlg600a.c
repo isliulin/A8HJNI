@@ -83,7 +83,6 @@ static int _send_command(const unsigned char *cmd, size_t len) {
 		LOGE("%s: Respons frame check error!\n", __func__);
 		return -ERR_CTL_RESPONS_ERROR;
 	}
-
 	return ctl->respons[2];
 }
 
@@ -97,7 +96,6 @@ int ic_reader_ctl_init(const char *path) {
 	LOGE("ic_reader_ctl_init!");
 	if (NULL == path)
 		return -1;
-
 	if (ctl)
 		ic_reader_ctl_close();
 
@@ -127,11 +125,11 @@ int ic_reader_ctl_init(const char *path) {
 	if (0 != ret) {
 			LOGE("%s: ctl_get_dev_info error!\n", __func__);
 			ret = ctl_serial_baud_sync();
-			if(0 )
+			if(ret != 0 )
 			{
 				LOGW("fail to ctl_serial_baud_sync, reset :%d! ",restartCount);
 				usleep(200*1000);
-				if(restartCount > 100)
+				if(restartCount > 5)
 				{
 					goto close_uart;
 				}
@@ -210,7 +208,7 @@ static int ctl_serial_baud_sync(void) {
 
 	for (i = 0; i < 5; i++) {
 		ctl->uart->write(ctl->uart, &val, 1);
-		usleep(500);
+		usleep(5000);
 		ctl->uart->write(ctl->uart, &val, 1);
 
 		if ((ret = ctl->uart->read(ctl->uart, ctl->respons, MAX_BUF_SIZE,

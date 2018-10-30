@@ -45,6 +45,8 @@ typedef struct  WB_hardWareOps{
 	int (*getOptoSensorState)(struct  WB_hardWareOps *ops );
 	//设置IC卡数据回调函数
 	int (*setDoorCardRawUpFunc)(struct  WB_hardWareOps *,DoorCardRecvFunc);
+	//获取IC卡状态
+	int (*getIcCardState)(struct  WB_hardWareOps *);
 	//设置键盘事件上报函数
 	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 	//设置需要守护app的包名和主类名
@@ -61,9 +63,15 @@ typedef struct  WB_hardWareOps{
 	int (*setBluetoothName)(struct  WB_hardWareOps *,char *);
 	//发送蓝牙数据
 	int (*sendBluetoothStr)(struct  WB_hardWareOps *,char *);
+	//蓝牙重启
 	int (*setbluetoothReboot)(struct  WB_hardWareOps *);
 
-
+	//初始化RS485
+	int (*rs485Init)(struct  WB_hardWareOps *,int,int ,int,int);
+	//发送RS485消息
+	int (*rs485SendMsg)(struct  WB_hardWareOps *,char *,int );
+	//接收RS485消息
+	int (*rs485RecvMsg)(struct  WB_hardWareOps *,int ,char *,int );
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

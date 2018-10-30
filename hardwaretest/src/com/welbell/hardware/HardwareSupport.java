@@ -222,15 +222,12 @@ public class HardwareSupport {
 		return a8SetKeyValue(controlHardwareCmd.E_RESTART, null, 0);
 	}
 	public int rebootBluetooth(){
-		
 		return a8SetKeyValue(controlHardwareCmd.E_SET_BLUETOOTH_REBOOT, null, 0); 
 	}
-
 	public String getHardWareVersion() {
 
 		byte[] recvData = { 0 };
-
-		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_HARDWARE_VER);
+		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_HARDWARE_VER,null,0);
 		if (recvData == null)
 			return null;
 		String recvStr = new String(recvData);
@@ -240,7 +237,7 @@ public class HardwareSupport {
 
 		byte[] recvData = { 0 };
 
-		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_CPUMODEL);
+		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_CPUMODEL,null,0);
 		if (recvData == null)
 			return null;
 		String recvStr = new String(recvData);
@@ -251,7 +248,7 @@ public class HardwareSupport {
 
 		byte[] recvData = { 0 };
 
-		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_IDCARD_UARTDEV);
+		recvData = a8GetKeyValue(controlHardwareCmd.E_GET_IDCARD_UARTDEV,null,0);
 		if (recvData == null)
 			return null;
 		String recvStr = new String(recvData);
@@ -261,24 +258,68 @@ public class HardwareSupport {
 	public int getOptoSensorState()
 	{
 		byte[] state = {0};
-		state = a8GetKeyValue(controlHardwareCmd.E_GET_OPTO_SENSOR_STATE);
+		state = a8GetKeyValue(controlHardwareCmd.E_GET_OPTO_SENSOR_STATE,null,0);
+		if (state == null)
+			return -1;
+		return state[0];
+	}
+	
+	public int getIcCardState()
+	{
+		byte[] state = {0};
+		state = a8GetKeyValue(controlHardwareCmd.E_GET_ICCARD_STATE,null,0);
 		if (state == null)
 			return -1;
 		return state[0];
 	}
 	public boolean getBuletoothState(){
 		byte[] state = {0};
-		state = a8GetKeyValue(controlHardwareCmd.E_GET_BLUETOOTH_STATE);
+		state = a8GetKeyValue(controlHardwareCmd.E_GET_BLUETOOTH_STATE,null,0);
 		if (state == null)
 			return false;		
 		return  state[0] ==0?true:false;
 	}
+	static byte[] IntToByteArray(int n) {  
+        byte[] b = new byte[4];  
+        b[0] = (byte) (n & 0xff);  
+        b[1] = (byte) (n >> 8 & 0xff);  
+        b[2] = (byte) (n >> 16 & 0xff);  
+        b[3] = (byte) (n >> 24 & 0xff);  
+        return b;  
+	}
+	
+	public boolean rs485init(int nBaudRate, int nDataBits, int nStopBits, int nParity ){
+		int state = 0;
+		byte[] parameter = new byte[16];
+		byte[] bBaudRate = IntToByteArray(nBaudRate);
+		byte[] bDataBits = IntToByteArray(nDataBits);
+		byte[] bStopBits = IntToByteArray(nStopBits);
+		byte[] bParity =   IntToByteArray(nParity);
+		
+		System.arraycopy(bBaudRate, 0, parameter, 0, 4);
+		System.arraycopy(bDataBits, 0, parameter, 4, 4);
+		System.arraycopy(bStopBits, 0, parameter, 8, 4);
+		System.arraycopy(bParity, 0, parameter, 12, 4);
+		state = a8SetKeyValue(controlHardwareCmd.E_SET_RS485INIT,parameter,16);	
+		return  state>=0?true:false;
+	}
+	
+	public int rs485send( byte[] data){
+		int sendLen;
+		sendLen = a8SetKeyValue(controlHardwareCmd.E_SET_RS485SEND,data,data.length);
+		return sendLen;
+	}
+	public byte[] rs485recv(int timeout){
+		byte[] btimeOut = IntToByteArray(timeout);
+		return a8GetKeyValue(controlHardwareCmd.E_GET_RS485RECV,btimeOut,btimeOut.length);
+	}
+	
 
 	native int a8HardwareControlInit();
 
 	native int a8SetKeyValue(int key, byte[] valve, int valueLen);
 
-	native byte[] a8GetKeyValue(int key);
+	native byte[] a8GetKeyValue(int key,byte[] valve, int valueLen);
 
 	native int a8HardwareControlExit();
 
