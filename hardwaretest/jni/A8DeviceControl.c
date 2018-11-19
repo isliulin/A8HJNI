@@ -32,7 +32,6 @@
 #include "hwInterface/gpioServer.h"
 #include <unistd.h>
 
-
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops virtualHardWareServer;
 static pJavaMethodOps JavaMethodServer;
@@ -50,7 +49,7 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen);
 
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
-	int ret  = 0;
+	int ret = 0;
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
 		goto fail0;
 
@@ -76,8 +75,10 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
 	}
 	JavaMethodServer = CallbackJavaMethodInit(env, obj, "systemCallBack");
-	if (JavaMethodServer == NULL)
+	if (JavaMethodServer == NULL) {
+		LOGE("fail to CallbackJavaMethodInit!");
 		goto fail1;
+	}
 	//ret |=
 #if USER_ICCARD
 
@@ -86,7 +87,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	ret |= hardWareServer->setOpenDoorKeyUpFunc(hardWareServer, openDoorKeyUp);
 	ret |= hardWareServer->setPirUpFunc(hardWareServer, pirUp);
 	ret |= hardWareServer->setMagneticUpFunc(hardWareServer, magneticUp);
-	ret |= hardWareServer->setPreventSeparateServerUpFunc(hardWareServer,
+	hardWareServer->setPreventSeparateServerUpFunc(hardWareServer,
 			preventSeparateUp);
 	ret |= hardWareServer->setKeyboardEventUpFunc(hardWareServer, KeyEventUp);
 #if USER_BLUETOOTH
@@ -107,12 +108,11 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	return ret;
 	fail2:
 
-		if(JavaMethodServer)
-			CallbackJavaMethodExit(&JavaMethodServer);
-	fail1:
-		if(hardWareServer)
-			destroyHardWareServer(&hardWareServer);
-		system("reboot\n");
+	if (JavaMethodServer)
+		CallbackJavaMethodExit(&JavaMethodServer);
+	fail1: if (hardWareServer)
+		destroyHardWareServer(&hardWareServer);
+	system("reboot\n");
 	fail0: return -1;
 
 }
@@ -121,8 +121,8 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen) {
 	char upData[1024] = { 0 };
 	upData[0] = UI_BLUETOOTH_EVENT;
 	memcpy(&upData[1], buf, bufLen);
-	LOGD("bluetoothRecvUp = %s\n",buf);
-	return JavaMethodServer->up(JavaMethodServer, upData, bufLen + 1);//多加个尾0
+	LOGD("bluetoothRecvUp = %s\n", buf);
+	return JavaMethodServer->up(JavaMethodServer, upData, bufLen + 1); //多加个尾0
 }
 static int getMapKeyCodeNew(int code) {
 
@@ -181,7 +181,7 @@ static int magneticUp(pGpioPinState pinState) {
 
 	upData[0] = UI_MAGNETIC_EVENT;
 	upData[1] = 1 - pinState->state;
-	if(JavaMethodServer != NULL)
+	if (JavaMethodServer != NULL)
 		return JavaMethodServer->up(JavaMethodServer, upData, 2);
 	return -1;
 }
@@ -191,16 +191,16 @@ static int preventSeparateUp(pGpioPinState pinState) {
 	char upData[6] = { 0 };
 	upData[0] = UI_PREVENTSEPARATE_EVENT;
 	upData[1] = 1 - pinState->state;
-	if(JavaMethodServer != NULL)
-	return JavaMethodServer->up(JavaMethodServer, upData, 2);
+	if (JavaMethodServer != NULL)
+		return JavaMethodServer->up(JavaMethodServer, upData, 2);
 }
 static int openDoorKeyUp(pGpioPinState pinState) {
 	LOGD("openDoorKeyUp:%d", pinState->state);
 	char upData[6] = { 0 };
 	upData[0] = UI_OPENDOOR_KEY_DOWN;
 	upData[1] = 1 - pinState->state;
-	if(JavaMethodServer != NULL)
-	JavaMethodServer->up(JavaMethodServer, upData, 2);
+	if (JavaMethodServer != NULL)
+		JavaMethodServer->up(JavaMethodServer, upData, 2);
 	return 0;
 }
 static int icCardRecvFunc(CARD_TYPE type, unsigned char * data,
@@ -212,21 +212,21 @@ static int icCardRecvFunc(CARD_TYPE type, unsigned char * data,
 		uint32_t id;
 	} cardNum;
 	bzero(&cardNum, sizeof(cardNum));
-	LOGD("type = %d\n", type);
+	LOGD("****************type = %d\n", type);
 	valid[0] = UI_DOORCARD_DEVICE;
 	valid[1] = type;
 	memcpy(&valid[2], data, len);
-	if(JavaMethodServer != NULL)
-	JavaMethodServer->up(JavaMethodServer, valid, len + 2);
+	if (JavaMethodServer != NULL)
+		JavaMethodServer->up(JavaMethodServer, valid, len + 2);
 	getUtilsOps()->printData(data, len);
-	//getUtilsOps()->printHex(data, len);
+	getUtilsOps()->printHex(data, len);
 	bzero(valid, sizeof(valid));
 	valid[0] = UI_DOORCARD_DEVICE_ALG;
 	valid[1] = type;
 	getUtilsOps()->GetWeiGendCardId(data, len, &cardNum.id);
 	memcpy(&valid[2], cardNum.buf, sizeof(cardNum.buf));
-	if(JavaMethodServer != NULL)
-	JavaMethodServer->up(JavaMethodServer, valid, sizeof(cardNum.buf) + 2);
+	if (JavaMethodServer != NULL)
+		JavaMethodServer->up(JavaMethodServer, valid, sizeof(cardNum.buf) + 2);
 	return len;
 }
 static int getpackAgeNameAndclassName(char *packAgeName, char *className,
@@ -255,7 +255,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlExit(JNIEnv * env, jobject obj) {
 	return 0;
 }
 JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
-		jint key,jbyteArray ValueBuf, jint ValueLen) {
+		jint key, jbyteArray ValueBuf, jint ValueLen) {
 
 	unsigned char recvbuf[128] = { 0 };
 	if (key <= 0) {
@@ -265,146 +265,146 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		return NULL;
 	char load_data[4096] = { 0 };
 	if (ValueLen > 0) {
-		char *local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf, NULL);
+		char *local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf,
+				NULL);
 		memcpy(load_data, local_Value, ValueLen);
 		if (local_Value != NULL)
-			(*env)->ReleaseByteArrayElements(env, ValueBuf,(jbyte*) local_Value, 0);
+			(*env)->ReleaseByteArrayElements(env, ValueBuf,
+					(jbyte*) local_Value, 0);
 	}
 
-	LOGD("jni_a8GetKeyValue :0x%x\n",key);
+	LOGD("jni_a8GetKeyValue :0x%x\n", key);
 	switch (key) {
-		case E_GET_HARDWARE_VER: {
-			LOGD("E_GET_HARDWARE_VER\n");
-			int recvLen;
-			if (getUtilsOps()->getCpuVer() == A20
-					|| getUtilsOps()->getCpuVer() == A64)
-				recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
-			else if (getUtilsOps()->getCpuVer() == RK3368) {
-				recvLen = getUtilsOps()->getHardWareFromRK(recvbuf,
-						sizeof(recvbuf));
-			}
-			jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
-
-			if (recvLen > 0) {
-				(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
-						(jbyte*) recvbuf);
-				return jarray;
-			} else {
-				return NULL;
-			}
+	case E_GET_HARDWARE_VER: {
+		LOGD("E_GET_HARDWARE_VER\n");
+		int recvLen;
+		if (getUtilsOps()->getCpuVer() == A20
+				|| getUtilsOps()->getCpuVer() == A64)
+			recvLen = getUtilsOps()->getHardWareVer(recvbuf, sizeof(recvbuf));
+		else if (getUtilsOps()->getCpuVer() == RK3368) {
+			recvLen = getUtilsOps()->getHardWareFromRK(recvbuf,
+					sizeof(recvbuf));
 		}
-			break;
-		case E_GET_CPUMODEL: {
-			int recvLen = 0;
+		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
 
-			if (getUtilsOps()->getCpuVer() == A20) {
-				strcpy(recvbuf, "allwiner_A20");
-
-			} else if (getUtilsOps()->getCpuVer() == A64) {
-				strcpy(recvbuf, "allwiner_A64");
-			} else if (getUtilsOps()->getCpuVer() == RK3368) {
-				strcpy(recvbuf, "rk_3368");
-			} else
-				return NULL;
-
-			recvLen = strlen(recvbuf);
-			jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
-
-			if (recvLen > 0) {
-				(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
-						(jbyte*) recvbuf);
-				return jarray;
-			} else {
-				return NULL;
-			}
-		}
-			break;
-		case E_GET_BLUETOOTH_STATE: {
-			char state[1] = { 0 };
-			state[0] = hardWareServer->getBluetoothState(hardWareServer);
-
-			jbyteArray jarray = (*env)->NewByteArray(env, 1);
-			if (state[0] != -1) {
-				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
-				return jarray;
-			} else {
-				return NULL;
-			}
-		}
-		break;
-		case E_GET_OPTO_SENSOR_STATE:
-		{
-			char state[1] = { 0 };
-			state[0] = hardWareServer->getOptoSensorState(hardWareServer);
-			jbyteArray jarray = (*env)->NewByteArray(env, 1);
-			if (state[0] != -1) {
-				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
-				return jarray;
-			} else {
-				return NULL;
-			}
-		}
-		break;
-		case E_GET_IDCARD_UARTDEV:
-		{
-			char *uart_dev = crateHwInterfaceServer()->getIdCardUART();
-			if (uart_dev == NULL)
-				return NULL;
-			jbyteArray jarray = (*env)->NewByteArray(env, strlen(uart_dev));
-			(*env)->SetByteArrayRegion(env, jarray, 0, strlen(uart_dev),
-					(jbyte*) uart_dev);
+		if (recvLen > 0) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
+					(jbyte*) recvbuf);
 			return jarray;
+		} else {
+			return NULL;
 		}
+	}
 		break;
-		case E_GET_ICCARD_STATE:
-		{
-			LOGD("E_GET_ICCARD_STATE\n");
-			char state[1] = { 0 };
-			state[0] = hardWareServer->getIcCardState(hardWareServer);
-			jbyteArray jarray = (*env)->NewByteArray(env, 1);
-			if (state[0] != -1) {
-				(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
-					return jarray;
-				} else {
-					return NULL;
-			}
-		}
-		case  E_GET_RS485RECV:{
-			char rs485buf[4096] = {0};
-			int  recvret;
-			int recvtimeout;
-			if(ValueLen > 0){
-				 recvtimeout = (*(int *)&load_data[0]);
-			}
-			recvret = hardWareServer->rs485RecvMsg(hardWareServer,recvtimeout,rs485buf,sizeof(rs485buf));
-			if(recvret < 0){
-				break;
-			}
-			jbyteArray jarray = (*env)->NewByteArray(env, recvret);
-			(*env)->SetByteArrayRegion(env, jarray, 0, recvret, (jbyte*) rs485buf);
+	case E_GET_CPUMODEL: {
+		int recvLen = 0;
+		if (getUtilsOps()->getCpuVer() == A20) {
+			strcpy(recvbuf, "allwiner_A20");
+
+		} else if (getUtilsOps()->getCpuVer() == A64) {
+			strcpy(recvbuf, "allwiner_A64");
+		} else if (getUtilsOps()->getCpuVer() == RK3368) {
+			strcpy(recvbuf, "rk_3368");
+		} else
+			return NULL;
+
+		recvLen = strlen(recvbuf);
+		jbyteArray jarray = (*env)->NewByteArray(env, recvLen);
+
+		if (recvLen > 0) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, recvLen,
+					(jbyte*) recvbuf);
 			return jarray;
+		} else {
+			return NULL;
 		}
+	}
+		break;
+	case E_GET_BLUETOOTH_STATE: {
+		char state[1] = { 0 };
+		state[0] = hardWareServer->getBluetoothState(hardWareServer);
+
+		jbyteArray jarray = (*env)->NewByteArray(env, 1);
+		if (state[0] != -1) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+			return jarray;
+		} else {
+			return NULL;
+		}
+	}
+		break;
+	case E_GET_OPTO_SENSOR_STATE: {
+		char state[1] = { 0 };
+		state[0] = hardWareServer->getOptoSensorState(hardWareServer);
+		jbyteArray jarray = (*env)->NewByteArray(env, 1);
+		if (state[0] != -1) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+			return jarray;
+		} else {
+			return NULL;
+		}
+	}
+		break;
+	case E_GET_IDCARD_UARTDEV: {
+		char *uart_dev = crateHwInterfaceServer()->getIdCardUART();
+		if (uart_dev == NULL)
+			return NULL;
+		jbyteArray jarray = (*env)->NewByteArray(env, strlen(uart_dev));
+		(*env)->SetByteArrayRegion(env, jarray, 0, strlen(uart_dev),
+				(jbyte*) uart_dev);
+		return jarray;
+	}
+		break;
+	case E_GET_ICCARD_STATE: {
+		LOGD("E_GET_ICCARD_STATE\n");
+		char state[1] = { 0 };
+		state[0] = hardWareServer->getIcCardState(hardWareServer);
+		jbyteArray jarray = (*env)->NewByteArray(env, 1);
+		if (state[0] != -1) {
+			(*env)->SetByteArrayRegion(env, jarray, 0, 1, (jbyte*) state);
+			return jarray;
+		} else {
+			return NULL;
+		}
+	}
+	case E_GET_RS485RECV: {
+		char rs485buf[4096] = { 0 };
+		int recvret;
+		int recvtimeout;
+		if (ValueLen > 0) {
+			recvtimeout = (*(int *) &load_data[0]);
+		}
+		recvret = hardWareServer->rs485RecvMsg(hardWareServer, recvtimeout,
+				rs485buf, sizeof(rs485buf));
+		if (recvret < 0) {
+			break;
+		}
+		jbyteArray jarray = (*env)->NewByteArray(env, recvret);
+		(*env)->SetByteArrayRegion(env, jarray, 0, recvret, (jbyte*) rs485buf);
+		return jarray;
+	}
 		break;
 	}
 	return NULL;
 }
 JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
-	jbyteArray ValueBuf, jint ValueLen) {
-int ret = 0;
-int gpioValue = 0;
-char *local_Value = NULL;
-if (hardWareServer == NULL)
-	return -1;
-char load_data[4096] = { 0 };
-if (ValueLen > 0) {
-	local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf, NULL);
-	LOGD("Control Interface:%d  Value:%d \n", key, local_Value[0]);
-	memcpy(load_data, local_Value, ValueLen);
-	if (local_Value != NULL)
-		exit: (*env)->ReleaseByteArrayElements(env, ValueBuf,
-				(jbyte*) local_Value, 0);
-}
-switch (key) {
+		jbyteArray ValueBuf, jint ValueLen) {
+	int ret = 0;
+	int gpioValue = 0;
+	char *local_Value = NULL;
+	if (hardWareServer == NULL)
+		return -1;
+	char load_data[4096] = { 0 };
+	if (ValueLen > 0) {
+		local_Value = (char *) (*env)->GetByteArrayElements(env, ValueBuf,
+				NULL);
+		LOGD("Control Interface:%d  Value:%d \n", key, local_Value[0]);
+		memcpy(load_data, local_Value, ValueLen);
+		if (local_Value != NULL)
+			exit: (*env)->ReleaseByteArrayElements(env, ValueBuf,
+					(jbyte*) local_Value, 0);
+	}
+	switch (key) {
 
 	case E_DOOEBEL:
 		break; //有线门铃(西安郑楠项目)
@@ -418,11 +418,13 @@ switch (key) {
 		break; //红外
 	case E_CAMERA_LIGHT:
 		if (local_Value != NULL)
-			ret = hardWareServer->controlCameraLight(hardWareServer, load_data[0]);
+			ret = hardWareServer->controlCameraLight(hardWareServer,
+					load_data[0]);
 		break; //摄像头灯
 	case E_IFCAMERA_LIGHT:
 		if (local_Value != NULL)
-			ret = hardWareServer->controlIFCameraLight(hardWareServer, load_data[0]);
+			ret = hardWareServer->controlIFCameraLight(hardWareServer,
+					load_data[0]);
 		break; //红外摄像头灯
 	case E_KEY_LIGHT:
 		//控制键盘背光灯
@@ -466,39 +468,42 @@ switch (key) {
 		hardWareServer->delGuardServer(hardWareServer);
 	}
 		break;
-	case E_SET_BLUENAME:{
-		LOGD("E_SET_BLUENAME:%s\n",load_data);
+	case E_SET_BLUENAME: {
+		LOGD("E_SET_BLUENAME:%s\n", load_data);
 		if (local_Value != NULL)
 			ret = hardWareServer->setBluetoothName(hardWareServer, load_data);
-	}break;
-
-	case E_SEND_BLUESTR:{
+	}
+		break;
+	case E_SEND_BLUESTR: {
 		if (local_Value != NULL)
 			ret = hardWareServer->sendBluetoothStr(hardWareServer, load_data);
-	}break;
-	case E_SET_BLUETOOTH_REBOOT:{
-		ret = hardWareServer->setbluetoothReboot(hardWareServer);
-	}break;
-	case E_SET_RS485INIT:
-	{
-		if(ValueLen < 16)
-			return -1;
-		int nBaudRate =*(int *)(&load_data[0]);
-		int nDataBits =*(int *)(&load_data[4]);
-		int nStopBits = *(int *)(&load_data[8]);
-		int nParity = *(int *)(&load_data[12]);
-		LOGD("RS485INIT:nBaudRate = %d,nDataBits = %d,nStopBits = %d,nParity = %c  \n",
-				nBaudRate,nDataBits,nStopBits,nParity);
-		ret = hardWareServer->rs485Init(hardWareServer,nBaudRate,nDataBits,nStopBits,nParity);
-	}break;
-	case E_SET_RS485SEND:{
-		LOGD("ValueLen:%d\n",ValueLen);
-		ret = hardWareServer->rs485SendMsg(hardWareServer,load_data,ValueLen);
 	}
-	break;
+		break;
+	case E_SET_BLUETOOTH_REBOOT: {
+		ret = hardWareServer->setbluetoothReboot(hardWareServer);
+	}
+		break;
+	case E_SET_RS485INIT: {
+		if (ValueLen < 16)
+			return -1;
+		int nBaudRate = *(int *) (&load_data[0]);
+		int nDataBits = *(int *) (&load_data[4]);
+		int nStopBits = *(int *) (&load_data[8]);
+		int nParity = *(int *) (&load_data[12]);
+		LOGD(
+				"RS485INIT:nBaudRate = %d,nDataBits = %d,nStopBits = %d,nParity = %c  \n", nBaudRate, nDataBits, nStopBits, nParity);
+		ret = hardWareServer->rs485Init(hardWareServer, nBaudRate, nDataBits,
+				nStopBits, nParity);
+	}
+		break;
+	case E_SET_RS485SEND: {
+		LOGD("ValueLen:%d\n", ValueLen);
+		ret = hardWareServer->rs485SendMsg(hardWareServer, load_data, ValueLen);
+	}
+		break;
 	default:
 		LOGW("cannot find Control Interface!");
 		break;
-}
-return ret;
+	}
+	return ret;
 }

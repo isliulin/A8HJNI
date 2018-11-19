@@ -375,13 +375,14 @@ pGpioOps gpio_getServer( int gpio) {
 	}
 #else
 	gpioServer->netClient = NULL;//createNativeNetServer();
-	if(gpioServer->netClient == NULL)
+	/*if(gpioServer->netClient == NULL)
 	{
 		LOGE("fail to crate netClient!\n");
 		//goto fail1;
 	}else{
 		LOGD("gpioServer user netClient !");
 	}
+	*/
 #endif
 
 	exportFd = open(SYSFS_GPIO_EXPORT, O_WRONLY);

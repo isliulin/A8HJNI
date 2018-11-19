@@ -52,10 +52,8 @@ static int push(struct BufferOps* base,void * data,int len)
 	pthread_mutex_lock(&pthis->_mutex);
 	if(pthis->validLen + len  > pthis->bufferTotalLen){
 		if(pthis->bufferTotalLen+RESERVED < MAX_SIZE ){
-
 			pthis->buffer = realloc(pthis->buffer ,pthis->bufferTotalLen+RESERVED);
 			pthis->bufferTotalLen += RESERVED;
-
 		}else
 		{
 			pthread_mutex_unlock(&pthis->_mutex);

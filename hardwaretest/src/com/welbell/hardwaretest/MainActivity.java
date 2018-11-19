@@ -98,10 +98,10 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 					byte sendData[] = new byte[1240];
 					if(falg == true){
 						Log.d("rs485 ","send");
-						hardwareResource.rs485send(sendData);
+					//	hardwareResource.rs485send(sendData);
 						hardwareResource.doorLockControl(falg);
 						try {
-							Thread.sleep(1*1000);
+							Thread.sleep(2*60*1000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -109,17 +109,17 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 					}else {
 						byte[] recvData;
 						Log.d("rs485 ","recv");
-						recvData = hardwareResource.rs485recv(6000);
-						if(recvData == null){
-							continue;
-						}
-						for(int i = 0;i<recvData.length;i++ ){
-							
-							Log.d("rs485","[ " + recvData[i]+"]");
-						}
+//						recvData = hardwareResource.rs485recv(6000);
+//						if(recvData == null){
+//							continue;
+//						}
+//						for(int i = 0;i<recvData.length;i++ ){
+//							
+//							Log.d("rs485","[ " + recvData[i]+"]");
+//						}
 						hardwareResource.doorLockControl(falg);
 						try {
-							Thread.sleep(5*1000);
+							Thread.sleep(3*1000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
