@@ -1,4 +1,5 @@
 #include "hwInterface/hwInterfaceManage.h"
+#include "hwInterface/hwInterfaceConfig.h"
 #include "common/Utils.h"
 #include <stddef.h>
 static CPU_VER cpuVer;
@@ -120,13 +121,7 @@ static int PO(int num) {
 		return (num + 448);
 	return -1;
 }
-static int getDoorBellPin(void) {
-	if (cpuVer == A20)
-		return PH(1);
-	else if (cpuVer == A64)
-		return -1; //未设定
-	return -1;
-}
+
 static int getDoorLockPin(void) {
 	if (cpuVer == A20)
 		return PG(3);
@@ -291,9 +286,33 @@ static int getRs485controlPin(void){
 	}
 	return -1;
 }
+static int getRedLedPin(void){
+	if(cpuVer == A64){
+		return PL(4);
+	}
+	return -1;
+
+}
+static int getGreenLedPin(void){
+	if(cpuVer == A64){
+		return PL(5);
+	}
+	return -1;
+
+}
+static int getBlueLedPin(void){
+	if(cpuVer == A64){
+		return PL(6);
+	}
+	return -1;
+}
+
 
 static HwInterfaceOps ops = {
 		.getDoorLockPin = getDoorLockPin,//控制门锁
+		.getRedLedPin = getRedLedPin,//获取红色LED PIN
+		.getGreenLedPin = getGreenLedPin,//获取绿色LED PIN
+		.getBlueLedPin = getBlueLedPin,//获取蓝色LED PIN
 		.getOpenDoorKeyPin = getOpenDoorKeyPin,//控制内部开门按钮
 		.getLightSensorPin = getLightSensorPin,//摄像头光敏反馈
 		.getCameraLightPin = getCameraLightPin,//控制摄像头灯
@@ -314,5 +333,9 @@ static HwInterfaceOps ops = {
 
 pHwInterfaceOps crateHwInterfaceServer(void) {
 	cpuVer = getUtilsOps()->getCpuVer();
+	pHwInterfaceOps pops = NULL;
+	pops = getHwInterfaceConfigServer();
+	if(pops != NULL)
+		return pops;
 	return &ops;
 }

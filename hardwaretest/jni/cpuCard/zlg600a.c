@@ -20,7 +20,7 @@ static const int serial_baud = 115200;
 static const int uart_data_bit = 8;
 static const int uart_stop_bit = 1;
 static const int uart_parity_bit = 0;
-static const int time_out_ms = 100;
+static const int time_out_ms = 200;
 // Function forward decleration
 static int ctl_serial_baud_sync(void);
 static int ctl_get_dev_info(unsigned char *info);
@@ -128,8 +128,8 @@ int ic_reader_ctl_init(const char *path) {
 			if(ret != 0 )
 			{
 				LOGW("fail to ctl_serial_baud_sync, reset :%d! ",restartCount);
-				usleep(200*1000);
-				if(restartCount > 5)
+				usleep(1000);
+				if(restartCount > 3)
 				{
 					goto close_uart;
 				}
@@ -206,7 +206,7 @@ static int ctl_serial_baud_sync(void) {
 
 	ctl->respons[0] = 0x00;
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 3; i++) {
 		ctl->uart->write(ctl->uart, &val, 1);
 		usleep(5000);
 		ctl->uart->write(ctl->uart, &val, 1);

@@ -17,7 +17,6 @@
 #define SYSFS_GPIO_RST_VAL_H        "1"
 #define SYSFS_GPIO_RST_VAL_L        "0"
 
-
 typedef struct GpioServer {
 	GpioOps ops;
 #if USER_BINDER == 1
@@ -35,7 +34,7 @@ typedef struct GpioServer {
 	int closeFd;
 } GpioServer, *pGpioServer;
 /*
- 创建步骤gpio步骤：
+ 创建步骤gpio步骤
  1. 导出
  # echo 55 > /sys/class/gpio/export
  2. 设置方向
@@ -69,13 +68,14 @@ static int setOutputValue(struct GpioOps *base, int value) {
 	sprintf(cmdStr, "%s/direction", gpioServer->gpioPath);
 	fd = open(cmdStr, O_WRONLY);
 	if (fd > 0) {
-		ret = write(fd, SYSFS_GPIO_RST_DIR_OUT, strlen(SYSFS_GPIO_RST_DIR_OUT) + 1);
+		ret = write(fd, SYSFS_GPIO_RST_DIR_OUT,
+				strlen(SYSFS_GPIO_RST_DIR_OUT) + 1);
 		if (ret < 0) {
 			LOGE("fail to write %s", cmdStr);
 			close(fd);
 			goto user_root;
 		}
-	}else {
+	} else {
 		goto user_root;
 	}
 	close(fd);
@@ -95,35 +95,30 @@ static int setOutputValue(struct GpioOps *base, int value) {
 	}
 	close(fd);
 	goto succeed;
-user_root:
-	bzero(cmdStr,sizeof(cmdStr));
-	sprintf(cmdStr,"echo out > %s/direction",gpioServer->gpioPath);
-	LOGE("cmdStr:%s ",cmdStr);
+	user_root: bzero(cmdStr, sizeof(cmdStr));
+	sprintf(cmdStr, "echo out > %s/direction", gpioServer->gpioPath);
 #if USER_BINDER == 1
 	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
 #else
-	if(gpioServer->netClient != NULL){
-		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-	}else{
+	if (gpioServer->netClient != NULL) {
+		gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
+	} else {
 		system(cmdStr);
 	}
 #endif
-	bzero(cmdStr,sizeof(cmdStr));
-	sprintf(cmdStr,"echo %d > %s/value",value,gpioServer->gpioPath);
-	LOGE("cmdStr:%s",cmdStr);
+	bzero(cmdStr, sizeof(cmdStr));
+	sprintf(cmdStr, "echo %d > %s/value", value, gpioServer->gpioPath);
 #if USER_BINDER == 1
 	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
 #else
-	if(gpioServer->netClient != NULL){
-		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-	}
-	else{
+	if (gpioServer->netClient != NULL) {
+		gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
+	} else {
 		system(cmdStr);
-		}
+	}
 
 #endif
-succeed:
-	return 0;
+	succeed: return 0;
 	fail0: return -1;
 }
 static int getInputValue(struct GpioOps *base) {
@@ -174,7 +169,7 @@ static void *gpioloopHandle(void *arg) {
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
 		usleep(150 * 1000);
 		gpioState.state = getInputValue((pGpioOps) gpioServer);
-		if(gpioState.state == -1)
+		if (gpioState.state == -1)
 			continue;
 		if (gpioState.state != old_state) {
 			if (interruptMode == RISING && gpioState.state == 1) {
@@ -232,7 +227,8 @@ static void *gpioInterruptHandle(void *arg) {
 		for (i = 0; i < nfds; ++i) {
 			if (events[i].data.fd == getGpioValueFd) {
 				ret = readgpioStateFromFd(getGpioValueFd);
-				if(ret < 0) continue;
+				if (ret < 0)
+					continue;
 				gpioState.pin = gpioServer->gpioPin;
 				gpioState.state = ret;
 				gpioState.interruptArg = gpioServer->interruptArg;
@@ -257,7 +253,7 @@ static void *gpioInterruptHandleBypoll(void *arg) {
 	GpioPinState gpioState;
 	int getGpioValueFd;
 	char gpioValuePath[64] = { 0 };
-	char value_str[3] = {0};
+	char value_str[3] = { 0 };
 	int ret;
 	char buff[10];
 	int epfd, nfds;
@@ -276,8 +272,8 @@ static void *gpioInterruptHandleBypoll(void *arg) {
 	fds[0].events = POLLPRI;
 
 	gpioServer->closeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-	fds[1].fd = gpioServer->closeFd ;
-	fds[1].events  = POLLIN|POLLPRI;
+	fds[1].fd = gpioServer->closeFd;
+	fds[1].events = POLLIN | POLLPRI;
 //
 	ret = read(getGpioValueFd, buff, 10);
 	if (ret == -1)
@@ -285,12 +281,11 @@ static void *gpioInterruptHandleBypoll(void *arg) {
 	while (gpioServer->interruptThreadId->check(gpioServer->interruptThreadId)) {
 		LOGE("start poll\n");
 		ret = poll(fds, 1, -1);
-		if(ret < 0)
+		if (ret < 0)
 			continue;
 		ret = readgpioStateFromFd(getGpioValueFd);
-		if(ret < 0)
-		{
-			 continue;
+		if (ret < 0) {
+			continue;
 		}
 		gpioState.state = ret;
 		gpioState.pin = gpioServer->gpioPin;
@@ -302,16 +297,14 @@ static void *gpioInterruptHandleBypoll(void *arg) {
 	close(getGpioValueFd);
 	return NULL;
 }
-static int readgpioStateFromFd(int fd)
-{
-	char value_str[3] = {0};
+static int readgpioStateFromFd(int fd) {
+	char value_str[3] = { 0 };
 	int ret;
 	ret = lseek(fd, 0, SEEK_SET);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		return ret;
 	}
-	if (read(fd, value_str, sizeof(value_str)/sizeof(value_str[0])) < 0) {
+	if (read(fd, value_str, sizeof(value_str) / sizeof(value_str[0])) < 0) {
 		LOGE("Failed to read value!\n");
 		return -1;
 	}
@@ -351,12 +344,12 @@ static int setInterruptFunc(struct GpioOps *base, T_InterruptFunc callBackfunc,
 
 	return 0;
 }
-pGpioOps gpio_getServer( int gpio) {
+pGpioOps gpio_getServer(int gpio) {
 	char cmdStr[128] = { 0 };
 	char goioStr[6] = { 0 };
 	int ret = -1;
-	if(gpio <= 0){
-		LOGE("fail to gpio_getServer gpio:%d",gpio);
+	if (gpio <= 0) {
+		LOGE("fail to gpio_getServer gpio:%d", gpio);
 		return NULL;
 	}
 	sprintf(goioStr, "%u", gpio);
@@ -374,15 +367,15 @@ pGpioOps gpio_getServer( int gpio) {
 		goto fail1;
 	}
 #else
-	gpioServer->netClient = NULL;//createNativeNetServer();
+	gpioServer->netClient = NULL; //createNativeNetServer();
 	/*if(gpioServer->netClient == NULL)
-	{
-		LOGE("fail to crate netClient!\n");
-		//goto fail1;
-	}else{
-		LOGD("gpioServer user netClient !");
-	}
-	*/
+	 {
+	 LOGE("fail to crate netClient!\n");
+	 //goto fail1;
+	 }else{
+	 LOGD("gpioServer user netClient !");
+	 }
+	 */
 #endif
 
 	exportFd = open(SYSFS_GPIO_EXPORT, O_WRONLY);
@@ -406,15 +399,14 @@ pGpioOps gpio_getServer( int gpio) {
 		//# echo 34 > /sys/class/gpio/export
 		sprintf(cmdStr, "echo %d %s", gpio, SYSFS_GPIO_EXPORT);
 
-
 #if USER_BINDER == 1
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
 #else
-		if(gpioServer->netClient != NULL){
+		if (gpioServer->netClient != NULL) {
 			ret = gpioServer->netClient->runScript(gpioServer->netClient,
-					  cmdStr);
-		}else{
+					cmdStr);
+		} else {
 			system(cmdStr);
 		}
 #endif
@@ -523,10 +515,10 @@ void gpio_releaseServer(pGpioOps *ops) {
 		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
 				cmdStr);
 #else
-		if(gpioServer->netClient == NULL){
+		if (gpioServer->netClient == NULL) {
 			ret = gpioServer->netClient->runScript(gpioServer->netClient,
-						cmdStr);
-		}else{
+					cmdStr);
+		} else {
 			system(cmdStr);
 		}
 
@@ -543,7 +535,7 @@ void gpio_releaseServer(pGpioOps *ops) {
 #if USER_BINDER == 1
 	fail1: binder_releaseServer(&gpioServer->binderClient);
 #else
-	fail1:destroyNativeNetServer(&gpioServer->netClient);
+	fail1: destroyNativeNetServer(&gpioServer->netClient);
 #endif
 
 	fail0: free(gpioServer);

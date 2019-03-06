@@ -281,6 +281,7 @@ static int getCpuVer(void)
 #define A64_CPU 	" sun50iw1p1"
 #define RK3368_CPU  " rockchip,rk3368"
 #define RK3128_CPU  " Rockchip RK3128"
+#define RK3288_CPU  " Rockchip RK3288"
 	int ret;
 	char buf[128] = {0};
 	FILE * fp = fopen("/proc/cpuinfo", "r");
@@ -301,6 +302,8 @@ static int getCpuVer(void)
 		return RK3368;
 	else if(strcmp(buf,RK3128_CPU)== 0)
 		return RK3128;
+	else if(strcmp(buf,RK3288_CPU) == 0)
+		return RK3288;
 	return -1;
 }
 static UtilsOps ops = {

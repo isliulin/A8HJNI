@@ -263,6 +263,37 @@ public class HardwareSupport {
 			return -1;
 		return state[0];
 	}
+	public int controlRedLed(boolean state ){
+		
+		int ret ;
+		byte[] data = new byte[2];
+		data[0] = controlHardwareCmd.LED_TYPE.RED;
+		data[1] = (byte)(state ==true?0:1);
+		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
+	
+		return ret;
+	}
+	public int controlGreenLed(boolean state ){
+		
+		int ret ;
+		byte[] data = new byte[2];
+		data[0] = controlHardwareCmd.LED_TYPE.GREEN;
+		data[1] = (byte)(state ==true?0:1);
+		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
+	
+		return ret;
+	}
+	public int controlBlueLed(boolean state ){
+
+		int ret ;
+		byte[] data = new byte[2];
+		data[0] = controlHardwareCmd.LED_TYPE.BLUE;
+		data[1] = (byte)(state ==true?0:1);
+		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
+		
+		return ret;
+	}
+	
 	
 	public int getIcCardState()
 	{

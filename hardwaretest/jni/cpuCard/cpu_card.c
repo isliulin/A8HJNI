@@ -114,7 +114,6 @@ static void picc_A_card_catch_proc(RecvFunc upfunc) {
 		//LOGE("%s: picc_A_active failed!\n", __func__);
 		return;
 	}
-
 	if (picc_A_halt() != 0)
 		LOGE("%s: picc_A_halt failed!\n", __func__);
 

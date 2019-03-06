@@ -66,6 +66,7 @@ static MsgBody UdpBuildMsg(unsigned char ackType, unsigned char cmd,
 	tmpMsg.len = totalLen;
 	return tmpMsg;
 }
+
 static int runScript(struct NativeNetServerOps * ops, const char * str) {
 	pNativeNetServer pthis = (pNativeNetServer) ops;
 	if (pthis == NULL || pthis->udpServer == NULL) {

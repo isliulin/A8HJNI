@@ -14,7 +14,7 @@ import android.app.Activity;
 import android.util.Log;
 import android.view.View;
 
-public class MainActivity extends Activity implements HardWareUpEvent {
+public class MainActivity<EthernetDevInfo> extends Activity implements HardWareUpEvent {
 
 	static final String TAG = "HardwareDemo";
 	HardwareSupport hardwareResource = new HardwareSupport();
@@ -26,12 +26,13 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// 获取版本号
 
 		setContentView(R.layout.activity_main);
+		Log.e("", " init************start");
 		ret = hardwareResource.init();
 		if (ret < 0) {
-			Log.e("", " fail to hardwareResource ");
+			Log.e("", " fail to hardwareResource!!!!!!!!!!!!!ret =  "+ret);
 			return;
-
 		}
+		Log.e("", " init************end");
 		// 执行shell脚本: 例 执行重启命令
 		// hardwareResource.executeRootShell("reboot");
 		// 获取身份证模块所接的串口号
@@ -59,20 +60,48 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 
 		// 开启摄像头灯
 		hardwareResource.cameraLightControl(false);
-		// 开门
+		// 开门 true:开 false:关
 
 		hardwareResource.doorLockControl(true);
 		// 关闭键盘灯
-		hardwareResource.keyboardLightControl(true);
+		hardwareResource.keyboardLightControl(false);
 		// 关闭红外摄像头灯
 		hardwareResource.ifcameraLightControl(false);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
-
+		hardwareResource.controlRedLed(false); //开灯
+		hardwareResource.controlGreenLed(true);
+		hardwareResource.controlBlueLed(true);
 		if (true == hardwareResource.getBuletoothState()) {
 			hardwareResource.setBluetoothName("快来链接我");
 		}
-
+		
+		/*
+		//重启网络方案
+		hardwareResource.executeRootShell("echo 0 > /sys/devices/misc_power_en.23/usbhub");
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		hardwareResource.executeRootShell("echo 1 > /sys/devices/misc_power_en.23/usbhub");
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		hardwareResource.executeRootShell("busybox ifconfig eth0 down && busybox ifconfig eth0 up");
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		hardwareResource.executeRootShell("busybox udhcpc -i eth0");
+		*/
+		
 		// hardwareResource.rebootBluetooth();
 		// 重启机器
 		// hardwareResource.reboot();
@@ -87,13 +116,15 @@ public class MainActivity extends Activity implements HardWareUpEvent {
 		// 用root权限执行命令
 		// hardwareResource.executeRootShell("mount -o remount /system && chmod 000 /system/priv-app/VpnDialogs/*");
 		// rs485初始化,波特率9600，8个数据为
-		hardwareResource.rs485init( 9600, 8, 1, 'n');
+		//hardwareResource.rs485init( 9600, 8, 1, 'n');
+		//hardwareResource.executeRootShell("date -s  20181126.114951");
+		Log.d("hardware","iccard_type:******************"+ hardwareResource.getIcCardState());
 		
 		new Thread(new Runnable() {
-			boolean falg = true;
-
+			boolean falg = false;
 			public void run() {
-				while (true) {
+				boolean start = false;
+				while (start) {
 					falg = !falg;
 					byte sendData[] = new byte[1240];
 					if(falg == true){

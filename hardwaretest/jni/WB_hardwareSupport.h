@@ -14,6 +14,13 @@ typedef enum{
 }ControlCmd;
 
 typedef enum{
+	RED_LED = 0,
+	GREEN_LED = 1,
+	BLUE_LED = 2,
+
+}LED_TYPE;
+
+typedef enum{
 	YES = 0,
 	NO
 }StateCmd;
@@ -72,6 +79,7 @@ typedef struct  WB_hardWareOps{
 	int (*rs485SendMsg)(struct  WB_hardWareOps *,char *,int );
 	//接收RS485消息
 	int (*rs485RecvMsg)(struct  WB_hardWareOps *,int ,char *,int );
+	int (*controlRGB)(struct  WB_hardWareOps *ops,LED_TYPE led,int state);
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

@@ -2,7 +2,11 @@ package com.welbell.hardware;
 
 
 public class controlHardwareCmd {
-
+	public class LED_TYPE{
+		 public static final byte RED = 0;
+		 public static final byte GREEN = 1;
+		 public static final byte BLUE = 2;
+	};
     public static final byte E_DOOR_LOCK = 0x12; // 锁
     /* 控制摄像头灯 例：开灯：buf[] = {0x14,0x01} */
     public static final byte E_CAMERA_LIGHT = 0x14; // 摄像头灯
@@ -29,6 +33,6 @@ public class controlHardwareCmd {
     public static final byte E_SET_RS485INIT = 0x27;	//RS485初始化
     public static final byte E_SET_RS485SEND  = 0x28;	//RS485发送函数
     public static final byte E_GET_RS485RECV = 0x29;    //RS485接收函数
-    
-  
+    public static final byte E_SET_RGB_LED   = 0x2a;
+
 }

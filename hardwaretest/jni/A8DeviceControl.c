@@ -30,6 +30,7 @@
 #include "WB_virtualHardwareSupport.h"
 #include "WB_guardThread.h"
 #include "hwInterface/gpioServer.h"
+#include "hwInterface/hwInterfaceConfig.h"
 #include <unistd.h>
 
 static pWB_hardWareOps hardWareServer;
@@ -56,7 +57,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer = crateHardWareServer();
 	if (hardWareServer == NULL) {
 		LOGE("fail to crateHardWareServer!");
-		system("reboot\n");
+
 		goto fail0;
 	}
 #if 1
@@ -79,7 +80,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 		LOGE("fail to CallbackJavaMethodInit!");
 		goto fail1;
 	}
-	//ret |=
+
 #if USER_ICCARD
 
 	hardWareServer->setDoorCardRawUpFunc(hardWareServer, icCardRecvFunc);
@@ -98,21 +99,20 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	}
 #endif
 
-	if (ret == 0)
+	if (ret == 0) {
 		LOGD("jni_a8HardwareControlInit init succeed!");
-	else {
+		return 0;
+	} else {
 		hardWareServer->reboot(hardWareServer);
 		goto fail2;
 	}
 #endif
-	return ret;
 	fail2:
-
+	LOGD("fail to jni_a8HardwareControlInit!");
 	if (JavaMethodServer)
 		CallbackJavaMethodExit(&JavaMethodServer);
 	fail1: if (hardWareServer)
 		destroyHardWareServer(&hardWareServer);
-	system("reboot\n");
 	fail0: return -1;
 
 }
@@ -212,7 +212,7 @@ static int icCardRecvFunc(CARD_TYPE type, unsigned char * data,
 		uint32_t id;
 	} cardNum;
 	bzero(&cardNum, sizeof(cardNum));
-	LOGD("****************type = %d\n", type);
+	LOGD("type = %d\n", type);
 	valid[0] = UI_DOORCARD_DEVICE;
 	valid[1] = type;
 	memcpy(&valid[2], data, len);
@@ -305,6 +305,8 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 			strcpy(recvbuf, "allwiner_A64");
 		} else if (getUtilsOps()->getCpuVer() == RK3368) {
 			strcpy(recvbuf, "rk_3368");
+		} else if (getUtilsOps()->getCpuVer() == RK3288) {
+			strcpy(recvbuf, "rk_3288");
 		} else
 			return NULL;
 
@@ -433,6 +435,7 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 					load_data[0]);
 		break; //键盘灯
 	case E_LCD_BACKLIGHT:
+		LOGD("E_LCD_BACKLIGHT!!");
 		if (local_Value != NULL)
 			ret = hardWareServer->controlLCDLight(hardWareServer, load_data[0]);
 
@@ -499,6 +502,12 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 	case E_SET_RS485SEND: {
 		LOGD("ValueLen:%d\n", ValueLen);
 		ret = hardWareServer->rs485SendMsg(hardWareServer, load_data, ValueLen);
+	}
+		break;
+	case E_SET_RGB_LED: {
+		LOGD("E_SET_RGB_LED:%d %d\n", load_data[0], load_data[1]);
+		ret = hardWareServer->controlRGB(hardWareServer, load_data[0],
+				load_data[1]);
 	}
 		break;
 	default:

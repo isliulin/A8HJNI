@@ -97,7 +97,6 @@ static int getState(pBluetoothOps ops)
 	int ret;
 	if(server == NULL)
 		goto fail0;
-
 	switch(server->type){
 		case BL_HC:{
 			server->serialServer->changeReadMode(server->serialServer,SERIAL_READ_SYNC);

@@ -73,9 +73,9 @@ static void addEventFdToEpool(pWB_KeyBoardServer server) {
 
 	for (i = 0; i < sizeof(fds) / sizeof(fds[0]); i++) {
 		sprintf(evnetDev, "%s%d", server->devPath, i);
-		LOGD("open %s", evnetDev);
+	//	LOGD("open %s", evnetDev);
 		if ((fd = open(evnetDev, O_RDONLY, 0)) >= 0) {
-			LOGD("open %s succeed fd:%d", evnetDev, fd);
+		//	LOGD("open %s succeed fd:%d", evnetDev, fd);
 			fcntl(fd, F_SETFL, O_NONBLOCK);
 			bzero(&ev, sizeof(ev));
 			ev.data.fd = fd;
@@ -120,7 +120,7 @@ static void * readEventThreadFunc(void *arg) {
 				readn = read(epoolEvents[i].data.fd, keyEvent,
 						sizeof(keyEvent));
 			} while (readn == -1 && errno == EINTR);
-			if(readn <= 0)
+			if (readn <= 0)
 				continue;
 			for (j = 0; j < readn / sizeof(struct input_event); j++) {
 				if (keyEvent[j].type == EV_KEY) {
