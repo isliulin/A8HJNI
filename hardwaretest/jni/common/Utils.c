@@ -293,17 +293,19 @@ static int getCpuVer(void)
 
 
 	fclose(fp);
+	LOGD("cpu ver:%s",buf);
 	if(strcmp(buf,A20_CPU)==0)
 	{
 		return A20;
-	}else if(strcmp(buf,A64_CPU)==0)
+	}else if(strncmp(buf,A64_CPU,strlen(A64_CPU))==0)
 		return A64;
-	else  if(strcmp(buf,RK3368_CPU) == 0 )
+	else  if(strncmp(buf,RK3368_CPU,strlen(RK3368_CPU)) == 0 )
 		return RK3368;
-	else if(strcmp(buf,RK3128_CPU)== 0)
+	else if(strncmp(buf,RK3128_CPU,strlen(RK3128_CPU))== 0)
 		return RK3128;
-	else if(strcmp(buf,RK3288_CPU) == 0)
+	else if(strncmp(buf,RK3288_CPU,strlen(RK3288_CPU)) == 0)
 		return RK3288;
+	LOGE("Unknown CPU version");
 	return -1;
 }
 static UtilsOps ops = {

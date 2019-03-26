@@ -217,19 +217,22 @@ static int checkXLWstate(pSerialOps serialServer)
 			usleep(100*1000);
 			continue;
 		}
+
 		bzero(readBuf,sizeof(readBuf));
 		ret = serialServer->read(serialServer,readBuf,sizeof(readBuf),500);
 		if(ret <= 0)
 		{
-			LOGE(" fail to read \n");
+			LOGE("fail to read \n");
 			usleep(100*1000);
 			continue;
 		}else {
 			LOGD("len :%d blueTooth str = %s\n",ret,readBuf);
 			return 0;
 		}
+
 	}
 	fail0:
+		LOGE("fail to checkXLWstate\n");
 		return -1;
 }
 static int bluetoothServerInit(pBluetoothServer server)
@@ -262,27 +265,33 @@ fail0:
 }
 pBluetoothOps createBluetoothServer(void)
 {
-	int ret;
+	int ret =  -1;
 	pBluetoothServer server = (pBluetoothServer)malloc(sizeof(BluetoothServer));
 	if(server == NULL)
 	{
 		goto fail0;
 	}
+	LOGD("start checkXLWstate! ");
 	server->serialServer = createSerialServer(crateHwInterfaceServer()->getBluetoothUART(), 115200, 8, 1, 'n');
 	if(server->serialServer == NULL)
 	{
 		goto fail1;
 	}
 	ret = checkXLWstate(server->serialServer);
+
 	if(ret  == 0)
 	{
 		server->type = BL_XLW;
-		LOGD("this is BL_XLW! ");
+		LOGD("this is BL_XLW!");
 		goto succeed;
 	}else {
-		LOGE("fail to BL_XLW!");
+
 		destroySerialServer(&server->serialServer);
+		LOGE("fail to BL_XLW!");
 	}
+
+	LOGD("start checkHCstate! ");
+
 	server->serialServer = createSerialServer(crateHwInterfaceServer()->getBluetoothUART(), 9600, 8, 1, 'n');
 	if(server->serialServer == NULL)
 	{
@@ -299,6 +308,7 @@ pBluetoothOps createBluetoothServer(void)
 		destroySerialServer(&server->serialServer);
 		goto fail2;
 	}
+
 
 succeed:
 	ret =  bluetoothServerInit(server);

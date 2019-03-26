@@ -85,7 +85,7 @@ pCpuCardOps createZLG600AServer(const char *devPath, RecvFunc IDHandler) {
 }
 
 void destroyZLG600AServer(pCpuCardOps *pthis) {
-	if (pthis != NULL && *pthis != NULL)
+	if (pthis == NULL || *pthis == NULL)
 		return;
 	pCpuCardServer server = (pCpuCardServer) *pthis;
 	if (server->reader) {

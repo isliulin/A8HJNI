@@ -24,7 +24,8 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		super.onCreate(savedInstanceState);
 		int ret;
 		// 获取版本号
-
+		
+		
 		setContentView(R.layout.activity_main);
 		Log.e("", " init************start");
 		ret = hardwareResource.init();
@@ -62,7 +63,7 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		hardwareResource.cameraLightControl(false);
 		// 开门 true:开 false:关
 
-		hardwareResource.doorLockControl(true);
+		hardwareResource.doorLockControl(false);
 		// 关闭键盘灯
 		hardwareResource.keyboardLightControl(false);
 		// 关闭红外摄像头灯

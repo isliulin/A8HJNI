@@ -1,6 +1,7 @@
 #include "hwInterface/hwInterfaceManage.h"
 #include "hwInterface/hwInterfaceConfig.h"
 #include "common/Utils.h"
+#include "common/debugLog.h"
 #include <stddef.h>
 static CPU_VER cpuVer;
 
@@ -334,6 +335,7 @@ static HwInterfaceOps ops = {
 pHwInterfaceOps crateHwInterfaceServer(void) {
 	cpuVer = getUtilsOps()->getCpuVer();
 	pHwInterfaceOps pops = NULL;
+	LOGD("cpu ver:%d",cpuVer);
 	pops = getHwInterfaceConfigServer();
 	if(pops != NULL)
 		return pops;

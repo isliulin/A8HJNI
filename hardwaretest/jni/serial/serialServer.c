@@ -84,11 +84,6 @@ static void * serialRecvThreadFunc(void *arg) {
 	}
 
 
-
-
-
-
-
 	epfd = epoll_create(EVENT_NUMS);
 	bzero(&ev, sizeof(ev));
 	ev.data.fd = serialServer->serialDevFd;
@@ -466,29 +461,34 @@ void destroySerialServer(pSerialOps * server) {
 	pSerialServer serialServer = (pSerialServer) *server;
 	if (serialServer == NULL)
 		return;
-
+	LOGD("%s:%d",__func__,__LINE__);
 	/*stop recv thread*/
 	if (serialServer->recvThreadId != NULL) {
+		LOGD("%s:%d",__func__,__LINE__);
 		eventfd_write(serialServer->stopRecvThreadFd, 1);
 		serialServer->recvThreadId->stop(serialServer->recvThreadId);
 		pthread_destroy(&serialServer->recvThreadId);
 	}
 	if (serialServer->parseThreadId != NULL) {
+		LOGD("%s:%d",__func__,__LINE__);
 		serialServer->bufferOps->exitWait(serialServer->bufferOps);
 		pthread_destroy(&serialServer->parseThreadId);
 	}
 	if (serialServer->bufferOps != NULL)
 		destroyBufferServer(&serialServer->bufferOps);
-
+	LOGD("%s:%d",__func__,__LINE__);
 	if (serialServer->serialDevFd > 0)
 		close(serialServer->serialDevFd);
+	LOGD("%s:%d",__func__,__LINE__);
 	if (serialServer->stopRecvThreadFd > 0)
 		close(serialServer->stopRecvThreadFd);
+	LOGD("%s:%d",__func__,__LINE__);
 	if(serialServer->changeReadModeFd[0] > 0)
 		close(serialServer->changeReadModeFd[0]);
+	LOGD("%s:%d",__func__,__LINE__);
 	if(serialServer->changeReadModeFd[1] > 0)
 		close(serialServer->changeReadModeFd[1]);
-
+	LOGD("%s:%d",__func__,__LINE__);
 	free(serialServer);
 	*server = NULL;
 }
@@ -625,6 +625,7 @@ static int _setParity(int fd, int nParity) {
 static int _setNoblock(int fd, int bNoBlock) {
 	if (fd < 0)
 		return -1;
+
 	if (ioctl(fd, FIONBIO, &bNoBlock) < 0)
 		return -1;
 	return 0;

@@ -30,7 +30,7 @@ typedef int (*SerialParseFunc)(const unsigned char* , unsigned int,
  * ，失败返回负数
  * */
 typedef int (*SerialBuildFunc)(const unsigned char* ,unsigned int,
-								unsigned char* ,unsigned int);
+								unsigned char* ,unsigned int *);
 
 
 #define SERIAL_READ_SYNC  1

@@ -46,7 +46,6 @@
 //接rs485_uart
 #define RS485_UART 				"rs485_uart"
 
-
 static int readKey(char *key, char *value);
 static CPU_VER cpuVer;
 
@@ -54,37 +53,55 @@ static CPU_VER cpuVer;
 #define RK_P1(num) (32+num)
 #define RK_P2(num) (64+num)
 static int PA(int num) {
-	if (cpuVer == A20 || cpuVer == A64)
+
+	switch (cpuVer) {
+	case A20:
+	case A64:
+	case RK3368:
+	case RK3128:
+	case RK3288:
 		return num;
-	else if (cpuVer == RK3368 || cpuVer == RK3128)
-		return num;
+	}
 	return -1;
 }
 static int PB(int num) {
-	if (cpuVer == A20)
+
+	switch (cpuVer) {
+	case A20:
 		return num + 24;
-	else if (cpuVer == A64)
+	case A64:
 		return num + 32;
-	else if (cpuVer == RK3368 || cpuVer == RK3128)
+	case RK3368:
+	case RK3128:
+	case RK3288:
 		return num + 8;
+	}
 	return -1;
 }
 static int PC(int num) {
-	if (cpuVer == A20)
+	switch (cpuVer) {
+	case A20:
 		return num + 54;
-	else if (cpuVer == A64)
+	case A64:
 		return num + 64;
-	else if (cpuVer == RK3368 || cpuVer == RK3128)
+	case RK3368:
+	case RK3128:
+	case RK3288:
 		return num + 16;
+	}
 	return -1;
 }
 static int PD(int num) {
-	if (cpuVer == A20)
+	switch (cpuVer) {
+	case A20:
 		return num + 85;
-	else if (cpuVer == A64)
+	case A64:
 		return num + 96;
-	else if (cpuVer == RK3368 || cpuVer == RK3128)
+	case RK3368:
+	case RK3128:
+	case RK3288:
 		return num + 24;
+	}
 	return -1;
 }
 static int PE(int num) {
@@ -171,14 +188,14 @@ static int PO(int num) {
 static int GPIO(int num) {
 	return 32 * num;
 }
-static int isNum(char *str){
-	if(str ==NULL ||*str == 0 )
+static int isNum(char *str) {
+	if (str == NULL || *str == 0)
 		return 0;
-	while(*str){
-		if((*str <'0') || (*str >'9')){
+	while (*str) {
+		if ((*str < '0') || (*str > '9')) {
 			return 0;
 		}
-		str ++;
+		str++;
 	}
 	return 1;
 }
@@ -192,28 +209,34 @@ static int resolverGpio(char *gpioStr) {
 			{ "PI", PI }, { "PJ", PJ }, { "PK", PK }, { "PL", PL },
 			{ "PM", PM }, { "PN", PN }, { "PO", PO }, { "GPIO", GPIO }, };
 	int i, lGpioInt = -1;
-	char *lGpioStr = NULL;
+	char lGpioStr[1024] = {0};
 	for (i = 0; i < sizeof(resolverList) / sizeof(resolverList[0]); i++) {
 		if (!strncmp(resolverList[i].gpioStr, gpioStr,
 				strlen(resolverList[i].gpioStr))) {
 
 			if (strcmp(resolverList[i].gpioStr, "GPIO")) {
 				//PB8
-				lGpioStr = gpioStr + strlen(resolverList[i].gpioStr);
-				if(!isNum(lGpioStr))
+				bzero(lGpioStr,sizeof(lGpioStr));
+				strcpy(lGpioStr,gpioStr + strlen(resolverList[i].gpioStr));
+
+				if (!isNum(lGpioStr))
 					return -1;
 				lGpioInt = atoi(lGpioStr);
+				LOGD("%s:%d",gpioStr,lGpioInt);
 				return resolverList[i].func(lGpioInt);
 			} else {
 				//GPIO9_PB8
 				int pg = -1, pi = -1;
-				lGpioStr = gpioStr + strlen(resolverList[i].gpioStr);
+				bzero(lGpioStr,sizeof(lGpioStr));
+				strcpy(lGpioStr,gpioStr + strlen(resolverList[i].gpioStr));
+
 				*(lGpioStr + 1) = 0;
-				if(!isNum(lGpioStr))
+				if (!isNum(lGpioStr))
 					return -1;
 				lGpioInt = atoi(lGpioStr);
 				pg = resolverList[i].func(lGpioInt);
-				pi = resolverGpio(lGpioStr + 2);
+				pi = resolverGpio(gpioStr + strlen(resolverList[i].gpioStr )+ 2);
+				LOGD("gpio:[%s][%s]  pg = %d pi = %d",lGpioStr,gpioStr+strlen(resolverList[i].gpioStr )+ 2,pg,pi);
 				if (pg < 0 || pi < 0) {
 					return -1;
 				}
@@ -232,9 +255,8 @@ static int getDoorLockPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-
-	gpiopin =  resolverGpio(value);
-	LOGD("[%s]:%d\n", OPENDOOR_PIN, gpiopin);
+	gpiopin = resolverGpio(value);
+	LOGD("[%s]:[%s]:[%d]\n", OPENDOOR_PIN,value, gpiopin);
 	return gpiopin;
 	fail0: return -1;
 }
@@ -246,8 +268,8 @@ static int getOpenDoorKeyPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
-	LOGD("[%s]:%d\n", INTERIORKEY_PIN,gpiopin);
+	gpiopin = resolverGpio(value);
+	LOGD("[%s]:%d\n", INTERIORKEY_PIN, gpiopin);
 
 	return gpiopin;
 	fail0: return -1;
@@ -261,7 +283,7 @@ static int getLightSensorPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", LIGHTSENSOR_PIN, gpiopin);
 
 	return gpiopin;
@@ -275,7 +297,7 @@ static int getCameraLightPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", VL_CAMERALED_PIN, gpiopin);
 
 	return gpiopin;
@@ -289,7 +311,7 @@ static int getIFCameraLightPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", IF_CAMERALED_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -303,7 +325,7 @@ static int getKeyLightPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", KEYBOARD_LIGHT_PIN, gpiopin);
 
 	return gpiopin;
@@ -317,8 +339,8 @@ static int getLcdSwichPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
-	LOGD("[%s]:%d\n", LCDBACKLIGHT_PIN,gpiopin);
+	gpiopin = resolverGpio(value);
+	LOGD("[%s]:%d\n", LCDBACKLIGHT_PIN, gpiopin);
 
 	return gpiopin;
 	fail0: return -1;
@@ -334,7 +356,7 @@ static int getPirPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", PIR_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -343,26 +365,26 @@ static int getPirPin(void) {
 static int getDoorMagneticPin(void) {
 	int ret = -1;
 	char value[128] = { 0 };
-	int gpiopin =  -1;
+	int gpiopin = -1;
 	ret = readKey(DOORMAGNETIC_PIN, value);
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
-	LOGD("[%s]:%d\n", DOORMAGNETIC_PIN,gpiopin);
+	gpiopin = resolverGpio(value);
+	LOGD("[%s]:%d\n", DOORMAGNETIC_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
 }
 static int getSecurityPin(void) {
 	int ret = -1;
 	char value[128] = { 0 };
-	int gpiopin =  -1;
+	int gpiopin = -1;
 	ret = readKey(PREVENT_SEPARATE_PIN, value);
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
-	LOGD("[%s]:%d\n", PREVENT_SEPARATE_PIN,gpiopin);
+	gpiopin = resolverGpio(value);
+	LOGD("[%s]:%d\n", PREVENT_SEPARATE_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
 }
@@ -407,14 +429,14 @@ static DOOR_CARD_MODULE getDoorType(void) {
 }
 static char *getRs485UART(void) {
 	int ret = -1;
-		static char value[128] = { 0 };
-		ret = readKey(ID_CARD_UART, value);
-		if (ret < 0) {
-			goto fail0;
-		}
-		LOGD("[%s]:%s\n", ID_CARD_UART, value);
-		return value;
-		fail0: return NULL;
+	static char value[128] = { 0 };
+	ret = readKey(ID_CARD_UART, value);
+	if (ret < 0) {
+		goto fail0;
+	}
+	LOGD("[%s]:%s\n", ID_CARD_UART, value);
+	return value;
+	fail0: return NULL;
 }
 static int getRs485controlPin(void) {
 	int ret = -1;
@@ -424,7 +446,7 @@ static int getRs485controlPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", RS485CONTROL_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -437,7 +459,7 @@ static int getRedLedPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", PREVENT_SEPARATE_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -450,7 +472,7 @@ static int getGreenLedPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", PREVENT_SEPARATE_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -463,7 +485,7 @@ static int getBlueLedPin(void) {
 	if (ret < 0) {
 		goto fail0;
 	}
-	gpiopin =  resolverGpio(value);
+	gpiopin = resolverGpio(value);
 	LOGD("[%s]:%d\n", PREVENT_SEPARATE_PIN, gpiopin);
 	return gpiopin;
 	fail0: return -1;
@@ -510,7 +532,9 @@ static int readKey(char *key, char *value) {
 	memset(str, 0, KEY_LENGTH);
 	while (fgets(str, KEY_LENGTH, mhKeyFile)) {
 		if (!strncmp(key, str, strlen(key))) {
+
 			getValue(str, value);
+			LOGD("str:%s value:%s",str,value);
 			bRet = true;
 			break;
 		}
@@ -544,9 +568,8 @@ static HwInterfaceOps ops = {
 pHwInterfaceOps getHwInterfaceConfigServer(void) {
 	LOGD("getHwInterfaceConfigServer\n");
 	cpuVer = getUtilsOps()->getCpuVer();
-	 if((access(HW_CONFIG_PATH,F_OK))!=-1)
-	 {
-		 return &ops;
-	 }
-	 return NULL;
+	if ((access(HW_CONFIG_PATH, F_OK)) != -1) {
+		return &ops;
+	}
+	return NULL;
 }
