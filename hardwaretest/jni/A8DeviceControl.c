@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 #include <linux/stddef.h>
 #include <jni.h>
+#include <time.h>
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceManage.h"
 #include "A8DeviceControl.h"
@@ -31,6 +32,7 @@
 #include "WB_guardThread.h"
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceConfig.h"
+#include "taskManage/timerTaskManage.h"
 #include <unistd.h>
 
 static pWB_hardWareOps hardWareServer;
@@ -50,6 +52,28 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen);
 
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 
+
+
+#if 0
+
+	int fd;
+	//先执行adb shell “chmod 666 sys/class/gpio/export”
+	///sys/class/gpio/gpio171/value
+	char *path = "sys/class/gpio/gpio171/value";
+	fd = open(path, O_RDWR);
+	if (fd < 0) {
+		LOGE("Failed to open %s !!!!!\n",path);
+		close(fd);
+		return -1;
+	}else{
+
+		LOGD("Open %s succeed!!!!!####\n",path);
+	}
+	return 0;
+
+#endif
+
+
 	int ret = 0;
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
 		goto fail0;
@@ -57,7 +81,6 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer = crateHardWareServer();
 	if (hardWareServer == NULL) {
 		LOGE("fail to crateHardWareServer!");
-
 		goto fail0;
 	}
 #if 1
@@ -111,6 +134,8 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	LOGD("fail to jni_a8HardwareControlInit!");
 	if (JavaMethodServer)
 		CallbackJavaMethodExit(&JavaMethodServer);
+
+
 	fail1: if (hardWareServer)
 		destroyHardWareServer(&hardWareServer);
 	fail0: return -1;
@@ -126,6 +151,9 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen) {
 }
 static int getMapKeyCodeNew(int code) {
 
+
+
+
 	const int mapKeyCode[12] = { 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 28 };
 //	const int mapKeyCode[12] = { 9, 3, 2, 11, 4, 7, 48, 5, 8, 30, 6, 10 };
 	int retCode;
@@ -134,6 +162,9 @@ static int getMapKeyCodeNew(int code) {
 		if (mapKeyCode[retCode] == code)
 			return retCode;
 	}
+
+
+
 	return code;
 }
 static int getMapKeyCode(int code) {
@@ -177,7 +208,7 @@ static void pirUp(PIR_STATE state) {
 
 static int magneticUp(pGpioPinState pinState) {
 	char upData[6] = { 0 };
-	LOGD("magneticUp :%d", pinState->state);
+	LOGE("magneticUp :%d", pinState->state);
 
 	upData[0] = UI_MAGNETIC_EVENT;
 	upData[1] = 1 - pinState->state;
@@ -186,16 +217,41 @@ static int magneticUp(pGpioPinState pinState) {
 	return -1;
 }
 
+
+void  preventSeparateUpPthread(void *arg ){
+	if(arg == NULL)
+		return ;
+	pGpioPinState pinState = arg;
+	char upData[6] = { 0 };
+	memcpy(pinState,arg,sizeof(GpioPinState));
+	upData[0] = UI_PREVENTSEPARATE_EVENT;
+	upData[1] = 1 - pinState->state;
+	JavaMethodServer->up(JavaMethodServer, upData, 2);
+
+
+}
+
 static int preventSeparateUp(pGpioPinState pinState) {
-	LOGD("preventSeparateUp :%d", pinState->state);
+
+	static struct timeval curr_tv;
+	static struct timeval last_tv;
+	gettimeofday(&curr_tv,NULL);
+	static pTimerOps timerServer = NULL;
 	char upData[6] = { 0 };
 	upData[0] = UI_PREVENTSEPARATE_EVENT;
 	upData[1] = 1 - pinState->state;
-	if (JavaMethodServer != NULL)
-		return JavaMethodServer->up(JavaMethodServer, upData, 2);
+	if(pinState->state == 1){
+		 if(timerServer == NULL){
+			 timerServer =  createTimerTaskServer(1000,0,1,1,preventSeparateUpPthread,pinState,sizeof(GpioPinState));
+			 timerServer->start(timerServer);
+			 return 0;
+		 }
+	}
+	destroyTimerTaskServer(&timerServer);
+	return 0;
 }
 static int openDoorKeyUp(pGpioPinState pinState) {
-	LOGD("openDoorKeyUp:%d", pinState->state);
+	//LOGD("openDoorKeyUp:%d", pinState->state);
 	char upData[6] = { 0 };
 	upData[0] = UI_OPENDOOR_KEY_DOWN;
 	upData[1] = 1 - pinState->state;

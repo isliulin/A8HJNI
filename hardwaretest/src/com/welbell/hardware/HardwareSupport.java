@@ -268,7 +268,7 @@ public class HardwareSupport {
 		int ret ;
 		byte[] data = new byte[2];
 		data[0] = controlHardwareCmd.LED_TYPE.RED;
-		data[1] = (byte)(state ==true?0:1);
+		data[1] = (byte)(state ==true?1:0);
 		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
 	
 		return ret;
@@ -278,7 +278,7 @@ public class HardwareSupport {
 		int ret ;
 		byte[] data = new byte[2];
 		data[0] = controlHardwareCmd.LED_TYPE.GREEN;
-		data[1] = (byte)(state ==true?0:1);
+		data[1] = (byte)(state ==true?1:0);
 		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
 	
 		return ret;
@@ -288,7 +288,7 @@ public class HardwareSupport {
 		int ret ;
 		byte[] data = new byte[2];
 		data[0] = controlHardwareCmd.LED_TYPE.BLUE;
-		data[1] = (byte)(state ==true?0:1);
+		data[1] = (byte)(state ==true?1:0);
 		ret = a8SetKeyValue(controlHardwareCmd.E_SET_RGB_LED,data,data.length);
 		
 		return ret;

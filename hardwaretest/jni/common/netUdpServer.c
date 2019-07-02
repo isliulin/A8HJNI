@@ -262,7 +262,7 @@ static int _readAndWait(struct UdpOps* base, unsigned char * lpBuff,
 	//获取缓冲区数据长度
 	do {
 		ret = select(udpServer->socketFd + 1, &fds, 0, 0, &tv);
-	} while (ret == -1 && errno == EINTR);
+	} while ((ret == -1) &&( errno == EINTR));
 	switch (ret) {
 	case 0:
 		LOGW("read timeout!");

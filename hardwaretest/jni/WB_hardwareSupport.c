@@ -405,12 +405,14 @@ static int setMagneticUpFunc(struct WB_hardWareOps *ops,
 static int setPreventSeparateServerUpFunc(struct WB_hardWareOps *ops,
 		T_InterruptFunc preventSeparateUpFunc) {
 	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
+
 	hardWareServer->preventSeparateServer = gpio_getServer(
 			hardWareServer->interfaceOps->getSecurityPin());
 	if (hardWareServer->preventSeparateServer == NULL) {
 		LOGE("fail to setPreventSeparateServerUpFunc");
 		return -1;
 	}
+
 	hardWareServer->preventSeparateServer->setInterruptFunc(
 			hardWareServer->preventSeparateServer, preventSeparateUpFunc, NULL,
 			BOTH);
@@ -491,13 +493,15 @@ pWB_hardWareOps crateHardWareServer(void) {
 	hardWareServer->LCDLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLcdSwichPin());
 	if (hardWareServer->LCDLightServer == NULL) {
-		LOGE("fail to malloc LCDLightServer!");
-		if (getUtilsOps()->getCpuVer() != RK3368)
+		LOGE("fail to malloc LCDLightServer! cpu:[%d]",getUtilsOps()->getCpuVer());
+		if (getUtilsOps()->getCpuVer() != RK3368 && getUtilsOps()->getCpuVer() != RK3288 &&
+				getUtilsOps()->getCpuVer() != RK3128)
 			goto fail5;
 	}
 	hardWareServer->optoSensorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLightSensorPin());
 	if (hardWareServer->optoSensorServer == NULL) {
+		LOGE("fail to malloc getLightSensorPin!");
 		if (getUtilsOps()->getCpuVer() != RK3368)
 			goto fail6;
 	}
@@ -505,6 +509,10 @@ pWB_hardWareOps crateHardWareServer(void) {
 	if (hardWareServer->keyBoardServer == NULL) {
 		goto fail7;
 	}
+
+
+
+
 #if	USER_BLUETOOTH
 	hardWareServer->bluetoothServer = createBluetoothServer();
 	if(hardWareServer->bluetoothServer == NULL)

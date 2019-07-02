@@ -1,5 +1,6 @@
 package com.welbell.hardwaretest;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -11,6 +12,7 @@ import com.welbell.hardwaretest.R;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 
@@ -25,9 +27,21 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		int ret;
 		// 获取版本号
 		
-		
+//		TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+//        String simSerialNumber = telephonyManager.getSimOperatorName();
+        
+		 File myFile = new File("/mnt/sdcard/test");
+		   //判断文件是否存在，如果不存在则调用createNewFile()方法创建新目录，否则跳至异常处理代码
+		   if(!myFile.exists())
+			try {
+				myFile.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
 		setContentView(R.layout.activity_main);
-		Log.e("", " init************start");
+		Log.e("", " init************startsimSerialNumber:");
 		ret = hardwareResource.init();
 		if (ret < 0) {
 			Log.e("", " fail to hardwareResource!!!!!!!!!!!!!ret =  "+ret);
@@ -55,8 +69,10 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		/*
 		 * 参数1：app 包名 参数2：主Activity全类名
 		 */
+		
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
 				"com.welbell.hardwaretest.MainActivity");
+		
 		hardwareResource.getCpuModel();
 
 		// 开启摄像头灯
@@ -65,16 +81,18 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 
 		hardwareResource.doorLockControl(false);
 		// 关闭键盘灯
-		hardwareResource.keyboardLightControl(false);
+		hardwareResource.keyboardLightControl(true);
 		// 关闭红外摄像头灯
 		hardwareResource.ifcameraLightControl(false);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
 		hardwareResource.controlRedLed(false); //开灯
 		hardwareResource.controlGreenLed(true);
-		hardwareResource.controlBlueLed(true);
+		hardwareResource.controlBlueLed(false);
 		if (true == hardwareResource.getBuletoothState()) {
-			hardwareResource.setBluetoothName("快来链接我");
+			hardwareResource.setBluetoothName("HC01");
+			hardwareResource.sendBluetoothStr("hello word!");
+	
 		}
 		
 		/*
@@ -118,8 +136,20 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		// hardwareResource.executeRootShell("mount -o remount /system && chmod 000 /system/priv-app/VpnDialogs/*");
 		// rs485初始化,波特率9600，8个数据为
 		//hardwareResource.rs485init( 9600, 8, 1, 'n');
-		//hardwareResource.executeRootShell("date -s  20181126.114951");
+
+		hardwareResource.executeRootShell("date -s  20181126.114951");
+		hardwareResource.executeRootShell("date -s  20181126.114951");
+
+		
+		
+		
+		
+		
 		Log.d("hardware","iccard_type:******************"+ hardwareResource.getIcCardState());
+		
+		
+
+		
 		
 		new Thread(new Runnable() {
 			boolean falg = false;
@@ -131,9 +161,12 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 					if(falg == true){
 						Log.d("rs485 ","send");
 					//	hardwareResource.rs485send(sendData);
-						hardwareResource.doorLockControl(falg);
+					//	hardwareResource.doorLockControl(falg);
+						hardwareResource.cameraLightControl(falg);
+						hardwareResource.keyboardLightControl(falg);
+					
 						try {
-							Thread.sleep(2*60*1000);
+							Thread.sleep(1*1000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -149,9 +182,11 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 //							
 //							Log.d("rs485","[ " + recvData[i]+"]");
 //						}
-						hardwareResource.doorLockControl(falg);
+					//	hardwareResource.doorLockControl(falg);
+						
+						hardwareResource.keyboardLightControl(falg);
 						try {
-							Thread.sleep(3*1000);
+							Thread.sleep(1*1000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();

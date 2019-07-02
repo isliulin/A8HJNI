@@ -69,13 +69,34 @@ static MsgBody UdpBuildMsg(unsigned char ackType, unsigned char cmd,
 
 static int runScript(struct NativeNetServerOps * ops, const char * str) {
 	pNativeNetServer pthis = (pNativeNetServer) ops;
+
+	LOGD(" runScript[%s]!",str);
+	int ret  =-1;
 	if (pthis == NULL || pthis->udpServer == NULL) {
 		return -1;
 	}
+	char recvbuf[1024] = {0};
 	MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_RUN_SCRIPT, str, strlen(str) + 1);
 
-	return pthis->udpServer->write(pthis->udpServer, msg.buf, msg.len,
+	ret = pthis->udpServer->write(pthis->udpServer, msg.buf, msg.len,
 			SERVER_IP_ADDR, SERVER_PORT);
+	if(ret < 0){
+		LOGE("[%s] fail to write!",str);
+		goto fail0;
+	}
+
+	ret = pthis->udpServer->read(pthis->udpServer,recvbuf,sizeof(recvbuf),1000);
+	if(ret < 0){
+		LOGE("[%s] fail to read!",str);
+		goto fail0;
+	}
+	pT_Comm_Head ackComm =  &recvbuf;
+	LOGD("ackComm.dataPack.dataStart : %d\n",ackComm->dataPack.dataStart);
+	return ackComm->dataPack.dataStart;
+fail0:
+	LOGE(" fail to runScript!");
+	return -1;
+
 }
 static int sendHeartbeat(struct NativeNetServerOps *ops, const char *str) {
 	pNativeNetServer pthis = (pNativeNetServer) ops;
@@ -102,7 +123,7 @@ pNativeNetServerOps createNativeNetServer(void) {
 		goto fail1;
 	}
 	server->ops = ops;
-#if 0
+#if 1
 	int tryCount = 8;
 	do{
 		MsgBody msg = UdpBuildMsg(NOT_ACK, CMD_CONNECT_SCRIPT, NULL, 0);

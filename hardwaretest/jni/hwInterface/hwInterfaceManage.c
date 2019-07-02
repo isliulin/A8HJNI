@@ -11,7 +11,7 @@ static CPU_VER cpuVer;
 static int PA(int num) {
 	if (cpuVer == A20 ||cpuVer == A64)
 		return num;
-	else if(cpuVer == RK3368||cpuVer == RK3128)
+	else if(cpuVer == RK3368||cpuVer == RK3128||cpuVer == RK3288)
 		return num;
 	return -1;
 }
@@ -20,7 +20,7 @@ static int PB(int num) {
 		return num + 24;
 	else if (cpuVer == A64)
 		return num + 32;
-	else if(cpuVer == RK3368||cpuVer == RK3128)
+	else if(cpuVer == RK3368||cpuVer == RK3128||cpuVer == RK3288)
 		return num + 8;
 	return -1;
 }
@@ -29,7 +29,7 @@ static int PC(int num) {
 		return num + 54;
 	else if (cpuVer == A64)
 		return num + 64;
-	else if(cpuVer == RK3368||cpuVer == RK3128)
+	else if(cpuVer == RK3368||cpuVer == RK3128||cpuVer == RK3288)
 		return num + 16;
 	return -1;
 }
@@ -38,7 +38,7 @@ static int PD(int num) {
 		return num + 85;
 	else if (cpuVer == A64)
 		return num + 96;
-	else if(cpuVer == RK3368||cpuVer == RK3128)
+	else if(cpuVer == RK3368||cpuVer == RK3128||cpuVer == RK3288)
 			return num + 24;
 	return -1;
 }

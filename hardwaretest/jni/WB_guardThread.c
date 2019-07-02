@@ -137,7 +137,7 @@ static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 #endif
 
 	strcpy(timerArg.heartbeatString,heartbeatString);
-	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(5, heartbeatTime*1000,-1,1,sendHeartbeatToserver,
+	pthis->packAgeList[index].timeTaskId = createTimerTaskServer(3, heartbeatTime*1000,-1,1,sendHeartbeatToserver,
 						&timerArg,sizeof(TimerArg));
 	if(pthis->packAgeList[index].timeTaskId == NULL)
 	{

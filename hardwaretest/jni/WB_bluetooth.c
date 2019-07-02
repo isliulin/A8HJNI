@@ -11,9 +11,6 @@
 #include "common/Utils.h"
 
 
-
-
-
 typedef enum BLUETOOTH_TYPE {
 	BL_HC = 0,
 	BL_XLW = 1,

@@ -282,6 +282,7 @@ static int getCpuVer(void)
 #define RK3368_CPU  " rockchip,rk3368"
 #define RK3128_CPU  " Rockchip RK3128"
 #define RK3288_CPU  " Rockchip RK3288"
+#define WC_RK3288_CPU " Generic DT based system" //万橙方案商主板
 	int ret;
 	char buf[128] = {0};
 	FILE * fp = fopen("/proc/cpuinfo", "r");
@@ -295,15 +296,16 @@ static int getCpuVer(void)
 	fclose(fp);
 	LOGD("cpu ver:%s",buf);
 	if(strcmp(buf,A20_CPU)==0)
-	{
 		return A20;
-	}else if(strncmp(buf,A64_CPU,strlen(A64_CPU))==0)
+	else if(strncmp(buf,A64_CPU,strlen(A64_CPU))==0)
 		return A64;
 	else  if(strncmp(buf,RK3368_CPU,strlen(RK3368_CPU)) == 0 )
 		return RK3368;
 	else if(strncmp(buf,RK3128_CPU,strlen(RK3128_CPU))== 0)
 		return RK3128;
 	else if(strncmp(buf,RK3288_CPU,strlen(RK3288_CPU)) == 0)
+		return RK3288;
+	else if(strncmp(buf,WC_RK3288_CPU,strlen(WC_RK3288_CPU)) ==0)
 		return RK3288;
 	LOGE("Unknown CPU version");
 	return -1;

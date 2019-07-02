@@ -186,7 +186,17 @@ static int PO(int num) {
 	return -1;
 }
 static int GPIO(int num) {
-	return 32 * num;
+		//RK 3288 GPIO0只有24个
+	if (cpuVer == RK3288){
+		if(num > 0){
+			return (24 + 32 * (num-1));
+		}else{
+			return 0;
+		}
+	}else if(cpuVer == RK3128){
+		return 32*num;
+	}
+	return 0;
 }
 static int isNum(char *str) {
 	if (str == NULL || *str == 0)
