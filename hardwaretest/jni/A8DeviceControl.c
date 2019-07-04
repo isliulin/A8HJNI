@@ -221,33 +221,30 @@ static int magneticUp(pGpioPinState pinState) {
 void  preventSeparateUpPthread(void *arg ){
 	if(arg == NULL)
 		return ;
-	pGpioPinState pinState = arg;
+	GpioPinState pinState;
 	char upData[6] = { 0 };
-	memcpy(pinState,arg,sizeof(GpioPinState));
+	memcpy(&pinState,arg,sizeof(GpioPinState));
+	LOGD("preventSeparateUpPthread :%d", pinState.state);
 	upData[0] = UI_PREVENTSEPARATE_EVENT;
-	upData[1] = 1 - pinState->state;
+	upData[1] = 1 - pinState.state;
 	JavaMethodServer->up(JavaMethodServer, upData, 2);
-
-
 }
 
 static int preventSeparateUp(pGpioPinState pinState) {
 
 	static struct timeval curr_tv;
 	static struct timeval last_tv;
-	gettimeofday(&curr_tv,NULL);
-	static pTimerOps timerServer = NULL;
-	char upData[6] = { 0 };
-	upData[0] = UI_PREVENTSEPARATE_EVENT;
-	upData[1] = 1 - pinState->state;
-	if(pinState->state == 1){
-		 if(timerServer == NULL){
-			 timerServer =  createTimerTaskServer(1000,0,1,1,preventSeparateUpPthread,pinState,sizeof(GpioPinState));
-			 timerServer->start(timerServer);
-			 return 0;
-		 }
+	static pTimerOps timerServer ;
+	LOGD("preventSeparateUp :%d", pinState->state);
+	//防止按键误触发做的机制
+	if(timerServer != NULL)
+			destroyTimerTaskServer(&timerServer);
+	if(timerServer == NULL){
+		LOGD("start thread up !\n");
+		timerServer =  createTimerTaskServer(1000,0,1,1,preventSeparateUpPthread,pinState,sizeof(GpioPinState));
+		timerServer->start(timerServer);
+		return 0;
 	}
-	destroyTimerTaskServer(&timerServer);
 	return 0;
 }
 static int openDoorKeyUp(pGpioPinState pinState) {
