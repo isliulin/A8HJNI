@@ -25,11 +25,16 @@ typedef struct {
 	void (*YUYVToNV12)(const void* , void *, int , int );
 	int  (*charToInt)(char );
 	void (*printData)(char *, int );
+	void (*printFloat)(float *, int );
 	void (*printHex)(char *,int);
 	int (*GetWeiGendCardId)(const char *,int , int *);
 	int (*getHardWareVer)(char* ,int );
 	int (*getHardWareFromRK)(char *,int);
 	int (*getCpuVer)(void);
+
+
+
+
 }UtilsOps,*pUtilsOps;
 
 pUtilsOps getUtilsOps(void);

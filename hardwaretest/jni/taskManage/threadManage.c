@@ -84,7 +84,6 @@ ThreadRunState pthread_checkRunState(pThreadOps base)
 	state = this->workState;
 	pthread_mutex_unlock(&this->_mutex);
 	return state;
-	
 }
 static int pthread_start(pThreadOps base)
 {	

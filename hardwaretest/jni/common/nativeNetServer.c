@@ -85,7 +85,7 @@ static int runScript(struct NativeNetServerOps * ops, const char * str) {
 		goto fail0;
 	}
 
-	ret = pthis->udpServer->read(pthis->udpServer,recvbuf,sizeof(recvbuf),1000);
+	ret = pthis->udpServer->read(pthis->udpServer,recvbuf,sizeof(recvbuf),1000*10);
 	if(ret < 0){
 		LOGE("[%s] fail to read!",str);
 		goto fail0;

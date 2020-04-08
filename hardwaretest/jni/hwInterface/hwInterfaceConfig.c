@@ -8,7 +8,8 @@
 #include "common/Utils.h"
 #include "hwInterface/hwInterfaceConfig.h"
 
-#define HW_CONFIG_PATH  "/etc/hwConfig.cfg"
+#define DEFAULT_HW_CONFIG_PATH  "/etc/hwConfig.cfg"
+#define USER_HW_CONFIG_PATH  	"data/etc/hwConfig.cfg"
 //外接电磁锁的GPIO
 #define OPENDOOR_PIN 			"opendoor_pin"
 //接内部开门按键的GPIO
@@ -40,6 +41,9 @@
 #define IC_CARD_UART 			"ic_card_uart"
 //接身份证模块的串口
 #define ID_CARD_UART 			"id_card_uart"
+
+//接温度传感器模块的串口
+#define TEMP_DETEC_UART 		"temp_detec_uart"
 //接蓝牙模块的串口
 #define BT_UART 				"bt_uart"
 
@@ -48,7 +52,7 @@
 
 static int readKey(char *key, char *value);
 static CPU_VER cpuVer;
-
+static  char * configFilePath = USER_HW_CONFIG_PATH;
 #define RK_P0(num) (0+num)
 #define RK_P1(num) (32+num)
 #define RK_P2(num) (64+num)
@@ -433,6 +437,18 @@ static char * getIdCardUART(void) {
 	return value;
 	fail0: return NULL;
 }
+static char *getTemperatureDetectionUART(void){
+	int ret = -1;
+	static char value[128] = { 0 };
+	ret = readKey(TEMP_DETEC_UART, value);
+	if (ret < 0) {
+		goto fail0;
+	}
+	LOGD("[%s]:%s\n", TEMP_DETEC_UART, value);
+	return value;
+	fail0: return NULL;
+
+}
 static DOOR_CARD_MODULE getDoorType(void) {
 
 	return -1;
@@ -530,12 +546,12 @@ static int readKey(char *key, char *value) {
 		LOGE("error input para");
 		return false;
 	}
-	mhKeyFile = fopen(HW_CONFIG_PATH, "rb");
+	mhKeyFile = fopen(configFilePath, "rb");
 	if (mhKeyFile <= 0) {
-		LOGE("open file %s failed", HW_CONFIG_PATH);
+		LOGE("open file %s failed", configFilePath);
 		return false;
 	} else {
-		LOGD("open file %s OK", HW_CONFIG_PATH);
+		LOGD("open file %s OK", configFilePath);
 	}
 	fseek(mhKeyFile, 0L, SEEK_SET);
 
@@ -573,12 +589,18 @@ static HwInterfaceOps ops = {
 		.getSecurityPin = getSecurityPin, //获取防拆按钮反馈
 		.getIdCardUART = getIdCardUART, //获取身份证对应的串口号
 		.getBluetoothUART = getBluetoothUART, .getRs485UART = getRs485UART,
-		.getRs485controlPin = getRs485controlPin, };
-
+		.getRs485controlPin = getRs485controlPin,
+		.getTemperatureDetectionUART = getTemperatureDetectionUART,
+	};
 pHwInterfaceOps getHwInterfaceConfigServer(void) {
 	LOGD("getHwInterfaceConfigServer\n");
 	cpuVer = getUtilsOps()->getCpuVer();
-	if ((access(HW_CONFIG_PATH, F_OK)) != -1) {
+
+	if ((access(USER_HW_CONFIG_PATH, F_OK)) != -1) {
+		configFilePath = USER_HW_CONFIG_PATH;
+		return &ops;
+	}else if ((access(DEFAULT_HW_CONFIG_PATH, F_OK)) != -1) {
+		configFilePath = DEFAULT_HW_CONFIG_PATH;
 		return &ops;
 	}
 	return NULL;

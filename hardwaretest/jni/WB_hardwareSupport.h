@@ -7,6 +7,7 @@
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceManage.h"
 #include "WB_bluetooth.h"
+#include "WB_temperatureDetection.h"
 
 typedef enum{
 	CLOSE = 0,
@@ -58,6 +59,10 @@ typedef struct  WB_hardWareOps{
 	int (*setKeyboardEventUpFunc)(struct  WB_hardWareOps *,KeyEventUpFunc);
 	//设置需要守护app的包名和主类名
 	int (*setGuardPackagenameAndMainclassname)(struct  WB_hardWareOps *,const char *,const char * );
+
+	//发送心跳包给守护进程
+	int (*sendHearBeatToServer)(struct  WB_hardWareOps *,const char *,const char * );
+
 	//删除守护服务
 	int (*delGuardServer)(struct  WB_hardWareOps *);
 
@@ -79,7 +84,39 @@ typedef struct  WB_hardWareOps{
 	int (*rs485SendMsg)(struct  WB_hardWareOps *,char *,int );
 	//接收RS485消息
 	int (*rs485RecvMsg)(struct  WB_hardWareOps *,int ,char *,int );
+	//控制RGB灯
 	int (*controlRGB)(struct  WB_hardWareOps *ops,LED_TYPE led,int state);
+
+	/*功能:设置温度补偿系数
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		parameter:补偿系数 范围(0.93-1.0)
+		 *
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+	int (*setTemperatureCompensation)(struct  WB_hardWareOps *ops,float parameter);
+
+		/*功能:获取所有像素点温度
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		data:数据指针
+		 * 		len:数据长度 <=1024
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+		int (*getGlobalTemperature)(struct  WB_hardWareOps *ops, float *data,int len);
+		/*功能:获取特殊温度值
+		 *  参数:
+		 * 		centre:坐标中心温度
+		 * 		max:最大值
+		 * 		mini:最小值
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+		int (*getSpecialTemperature)(struct  WB_hardWareOps *ops,float  *centre,float *max,float *mini);
+
+
 
 }WB_hardWareOps,*pWB_hardWareOps;
 //创建硬件服务对象

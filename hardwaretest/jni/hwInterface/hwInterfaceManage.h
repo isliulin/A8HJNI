@@ -47,6 +47,7 @@ typedef struct  {
 	DOOR_CARD_MODULE (*getDoorType)(void);
 	char *(*getRs485UART)(void);
 	int (*getRs485controlPin)(void);
+	char * (*getTemperatureDetectionUART)(void);
 
 }HwInterfaceOps,*pHwInterfaceOps;
 

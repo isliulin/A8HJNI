@@ -29,7 +29,10 @@ typedef enum Interface{
 	E_SET_RS485SEND,			//RS485发送函数
 	E_GET_RS485RECV,            //RS485接收函数
 	E_SET_RGB_LED,              //LED灯控制接口
-	E_MAX
+	E_SEND_HEARBEAT,            //发送心跳包
+	E_GET_GLOBAL_TEMP, 			//获取全部温度数据
+	E_GET_SPECIAL_TEMP, 		//设置特殊温度数据
+	E_SET_COMPENSATION_TEMP,    //设置温度系数(0.93-1.0)
 }E_INTER_TYPE;
 
 

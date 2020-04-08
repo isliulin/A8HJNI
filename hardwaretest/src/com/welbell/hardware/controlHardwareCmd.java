@@ -34,5 +34,10 @@ public class controlHardwareCmd {
     public static final byte E_SET_RS485SEND  = 0x28;	//RS485发送函数
     public static final byte E_GET_RS485RECV = 0x29;    //RS485接收函数
     public static final byte E_SET_RGB_LED   = 0x2a;
+    public static final byte E_SEND_HEARBEAT   = 0x2b;
+    public static final byte E_GET_GLOBAL_TEMP = 0x2c; 			//获取全部温度数据
+    public static final byte E_GET_SPECIAL_TEMP = 0x2d; 		//获取特殊温度数据
+    public static final byte E_SET_COMPENSATION_TEMP = 0x2e;    //设置温度系数(0.93-1.0)
+    
 
 }

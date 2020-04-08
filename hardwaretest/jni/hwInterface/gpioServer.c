@@ -97,8 +97,7 @@ static int setOutputValue(struct GpioOps *base, int value) {
 	}
 	close(fd);
 	goto succeed;
-	user_root:
-	bzero(cmdStr, sizeof(cmdStr));
+	user_root: bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "echo out > %s/direction", gpioServer->gpioPath);
 #if USER_BINDER == 1
 	gpioServer->binderClient->runScript(gpioServer->binderClient,cmdStr);
@@ -126,7 +125,7 @@ static int setOutputValue(struct GpioOps *base, int value) {
 }
 static int getInputValue(struct GpioOps *base) {
 	char path[64] = { 0 };
-	char cmdStr[128]  ={0};
+	char cmdStr[128] = { 0 };
 	char value_str[3];
 	int fd, ret;
 	pGpioServer gpioServer = (pGpioServer) base;
@@ -143,7 +142,6 @@ static int getInputValue(struct GpioOps *base) {
 		goto fail1;
 	}
 	close(fd);
-
 
 	snprintf(path, sizeof(path), "%s/value", gpioServer->gpioPath);
 	fd = open(path, O_RDONLY);
@@ -215,7 +213,8 @@ static void *gpioInterruptHandle(void *arg) {
 	ev.data.fd = getGpioValueFd;
 	//设置要处理的事件类型
 
-	ev.events = EPOLLPRI;; //EPOLLPRI;// |EPOLLET|
+	ev.events = EPOLLPRI;
+	; //EPOLLPRI;// |EPOLLET|
 	epoll_ctl(epfd, EPOLL_CTL_ADD, getGpioValueFd, &ev);
 
 	gpioServer->closeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
@@ -232,7 +231,6 @@ static void *gpioInterruptHandle(void *arg) {
 		int i;
 		for (i = 0; i < nfds; ++i) {
 			if (events[i].data.fd == getGpioValueFd) {
-
 
 				ret = readgpioStateFromFd(getGpioValueFd);
 				if (ret < 0)
@@ -363,6 +361,7 @@ pGpioOps gpio_getServer(int gpio) {
 	sprintf(goioStr, "%u", gpio);
 	int gpiofd;
 	int exportFd;
+	int tryCount = 3;
 	pGpioServer gpioServer = (pGpioServer) malloc(sizeof(GpioServer));
 	if (gpioServer == NULL) {
 		goto fail0;
@@ -376,82 +375,49 @@ pGpioOps gpio_getServer(int gpio) {
 	}
 #else
 	gpioServer->netClient = createNativeNetServer();
-	if(gpioServer->netClient == NULL)
-	 {
-			LOGE("fail to crate netClient!\n");
-			goto fail1;
-	 }else{
-		 	 LOGD("gpioServer user netClient !");
-	 }
+	if (gpioServer->netClient == NULL) {
+		LOGE("fail to crate netClient!\n");
+		goto fail1;
+	} else {
+		LOGD("gpioServer user netClient !");
+	}
 #endif
+tryRequestExport:
 	bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "chmod 666 %s", SYSFS_GPIO_EXPORT);
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+	gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
 	bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "chmod 666 %s", SYSFS_GPIO_UNEXPORT);
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-	/*
-	bzero(cmdStr, sizeof(cmdStr));
-	sprintf(cmdStr, "setenforce 0");
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-
-	bzero(cmdStr, sizeof(cmdStr));
-	sprintf(cmdStr, "echo 0 > /sys/fs/selinux/enforce");
-	gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-	*/
-
+	gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
+	tryCount --;
 	exportFd = open(SYSFS_GPIO_EXPORT, O_RDWR);
 	if (exportFd < 0) {
-		LOGE("fail to open %s errno:%d!", SYSFS_GPIO_EXPORT,errno);
+		LOGE("fail to open %s errno:%d!", SYSFS_GPIO_EXPORT, errno);
+			if(tryCount > 0)
+				goto tryRequestExport;
+			else {
+				goto fail2;
+			}
 
-
-	//	goto fail2;
-
-	}else {
+	} else {
 		LOGD(" open %s succeed", SYSFS_GPIO_EXPORT);
+		tryCount = 3;
 	}
 
-
-	//尝试先打开判断文件是否存在
-	/*
-	bzero(cmdStr, sizeof(cmdStr));
-	sprintf(cmdStr, "/sys/class/gpio/gpio%d/value", gpio);
-	gpiofd = open(cmdStr, O_RDWR);
-	if (gpiofd > 0) {
-		LOGD(" %s is exist!", cmdStr);
-		goto succeed;
-	}
-	*/
-
-	ret =  write(exportFd, goioStr, strlen(goioStr) + 1);
-	if (ret < 0) {
-		//用root权限打开
-		//# echo 34 > /sys/class/gpio/export
-
-#if USER_BINDER == 1
-		ret = gpioServer->binderClient->runScript(gpioServer->binderClient,
-				cmdStr);
-#else
-		if (gpioServer->netClient != NULL) {
-			bzero(cmdStr, sizeof(cmdStr));
-			sprintf(cmdStr, "echo %d >%s", gpio, SYSFS_GPIO_EXPORT);
-			gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-		} else {
-			bzero(cmdStr, sizeof(cmdStr));
-			sprintf(cmdStr, "echo %d >%s", gpio, SYSFS_GPIO_EXPORT);
-			system(cmdStr);
-		}
-#endif
-	}
+tryRequestGpio:
 
 	if (gpioServer->netClient != NULL) {
+
+		bzero(cmdStr, sizeof(cmdStr));
+		sprintf(cmdStr, "echo %d >%s", gpio, SYSFS_GPIO_EXPORT);
+		gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
 		bzero(cmdStr, sizeof(cmdStr));
 		sprintf(cmdStr, "chmod 666  /sys/class/gpio/gpio%d/direction ", gpio);
-		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
+		gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
 		bzero(cmdStr, sizeof(cmdStr));
 		sprintf(cmdStr, "chmod 666  /sys/class/gpio/gpio%d/value ", gpio);
-		gpioServer->netClient->runScript(gpioServer->netClient,cmdStr);
-	}else {
+		gpioServer->netClient->runScript(gpioServer->netClient, cmdStr);
+	} else {
 		bzero(cmdStr, sizeof(cmdStr));
 		sprintf(cmdStr, "chmod 666  /sys/class/gpio/gpio%d/direction ", gpio);
 		system(cmdStr);
@@ -461,9 +427,14 @@ pGpioOps gpio_getServer(int gpio) {
 	bzero(cmdStr, sizeof(cmdStr));
 	sprintf(cmdStr, "/sys/class/gpio/gpio%d/value", gpio);
 	gpiofd = open(cmdStr, O_RDWR);
+	tryCount --;
 	if (gpiofd <= 0) {
-		LOGE("fail to open %s! errno:%d", cmdStr,errno);
-		goto fail3;
+		if (tryCount < 0) {
+			LOGE("fail to open %s! errno:%d", cmdStr, errno);
+			goto fail3;
+		} else {
+			goto tryRequestGpio;
+		}
 	}
 	succeed: close(exportFd);
 	close(gpiofd);

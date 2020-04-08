@@ -1,11 +1,12 @@
 #include <linux/stddef.h>
+
+
 #include "WB_guardThread.h"
 #include "taskManage/timerTaskManage.h"
 #include "common/nativeNetServer.h"
-#include "common/communicationServer.h"
-#include "common/netUdpServer.h"
 #include "common/debugLog.h"
-#include "binder/binderClient.h"
+
+
 
 #define SERVER_PORT 	10800
 #define CLIENT_HB_PORT 	10900
@@ -40,9 +41,12 @@ typedef struct GuardThreadServer{
 }GuardThreadServer,*pGuardThreadServer;
 static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 		const char *packageName,const char * mainClassName,int heartbeatTime );
+static int sendHearBeatToServer(struct GuardThreadOps* ops,
+		const char *packageName,const char * mainClassName,int heartbeatTime );
 
 static GuardThreadOps ops = {
 		.setGuardPackagenameAndMainclassname = setGuardPackagenameAndMainclassname,
+		.sendHearBeatToServer = sendHearBeatToServer,
 };
 
 static void  sendHeartbeatToserver(void *arg)
@@ -57,7 +61,6 @@ static void  sendHeartbeatToserver(void *arg)
 	if(timerArg == NULL||timerArg->netClient == NULL)
 		return ;
 	timerArg->netClient->sendHeartbeat(timerArg->netClient,timerArg->heartbeatString);
-
 
 #endif
 	return ;
@@ -103,13 +106,42 @@ static int stopHeartbeat(struct GuardThreadOps* ops,
 fail0:
 	return -1;
 }
+
+
+static int sendHearBeatToServer(struct GuardThreadOps* ops,
+		const char *packageName,const char * mainClassName,int heartbeatTime ){
+	char heartbeatString[256] = {0};
+	pGuardThreadServer pthis  = (pGuardThreadServer)ops;
+	if(pthis == NULL)
+	{
+		goto fail0;
+	}
+	sprintf(heartbeatString,"state:0;pack:%s;class:%s;time:%d;",packageName,mainClassName,heartbeatTime);
+#if USER_BINDER == 1
+	if(pthis->binderClient != NULL ){
+		pthis->binderClient(pthis->binderClient,heartbeatString);
+	}
+	else{
+		goto fail0;
+	}
+#else
+	if(pthis->netClient != NULL){
+		pthis->netClient->sendHeartbeat(pthis->netClient,heartbeatString);
+	}else{
+		goto fail0;
+	}
+#endif
+	return 0;
+	fail0:
+		return -1;
+}
 static int setGuardPackagenameAndMainclassname(struct GuardThreadOps* ops,
 		const char *packageName,const char * mainClassName,int heartbeatTime )
 {
 	int index;
 	TimerArg timerArg;
 	bzero(&timerArg,sizeof(TimerArg));
-	char heartbeatString[128] = {0};
+	char heartbeatString[256] = {0};
 	pGuardThreadServer pthis  = (pGuardThreadServer)ops;
 	if(pthis == NULL)
 	{

@@ -26,6 +26,7 @@
 #include "common/Utils.h"
 #include "common/CallbackJavaMethod.h"
 #include "common/netUdpServer.h"
+#include "common/nativeNetServer.h"
 #include "WB_hardwareSupport.h"
 #include "WB_keyboard.h"
 #include "WB_virtualHardwareSupport.h"
@@ -33,7 +34,10 @@
 #include "hwInterface/gpioServer.h"
 #include "hwInterface/hwInterfaceConfig.h"
 #include "taskManage/timerTaskManage.h"
+#include "WB_temperatureDetection.h"
 #include <unistd.h>
+
+
 
 static pWB_hardWareOps hardWareServer;
 static pVirtualHWops virtualHardWareServer;
@@ -49,30 +53,8 @@ static int getpackAgeNameAndclassName(char *packAgeName, char *className,
 static int magneticUp(pGpioPinState pinState);
 static int preventSeparateUp(pGpioPinState pinState);
 static int bluetoothRecvUp(char * buf, unsigned int bufLen);
-
+static void test_module(void);
 JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
-
-
-
-#if 0
-
-	int fd;
-	//先执行adb shell “chmod 666 sys/class/gpio/export”
-	///sys/class/gpio/gpio171/value
-	char *path = "sys/class/gpio/gpio171/value";
-	fd = open(path, O_RDWR);
-	if (fd < 0) {
-		LOGE("Failed to open %s !!!!!\n",path);
-		close(fd);
-		return -1;
-	}else{
-
-		LOGD("Open %s succeed!!!!!####\n",path);
-	}
-	return 0;
-
-#endif
-
 
 	int ret = 0;
 	if (hardWareServer != NULL || JavaMethodServer != NULL)
@@ -81,8 +63,10 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	hardWareServer = crateHardWareServer();
 	if (hardWareServer == NULL) {
 		LOGE("fail to crateHardWareServer!");
+
 		goto fail0;
 	}
+
 #if 1
 	//创建对象
 	virtualHardWareServer = crateVirtualHWServer();
@@ -122,6 +106,12 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	}
 #endif
 
+
+
+	//test_module();
+
+
+
 	if (ret == 0) {
 		LOGD("jni_a8HardwareControlInit init succeed!");
 		return 0;
@@ -131,17 +121,63 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	}
 #endif
 	fail2:
+	{
+		//先尝试重启设备
+		pNativeNetServerOps netClient = createNativeNetServer();
+		if (netClient != NULL) {
+			netClient->runScript(netClient, "reboot");
+
+		}
+	}
 	LOGD("fail to jni_a8HardwareControlInit!");
 	if (JavaMethodServer)
 		CallbackJavaMethodExit(&JavaMethodServer);
-
 
 	fail1: if (hardWareServer)
 		destroyHardWareServer(&hardWareServer);
 	fail0: return -1;
 
 }
+static void test_module(void){
 
+	pTemperatureDetectionOps server = createTemperatureDetectionServer("/dev/ttyS1");
+	if(server == NULL){
+		LOGE("fail to createTemperatureDetectionServer!\n");
+		goto fail0;
+	}
+	float  centre;
+	float max;
+	float mini;
+	float fdata[1024];
+	int ret;
+
+//	ret = server->setBaudRate(server,115200);
+//	if(ret != 0){
+//		LOGE("fail to setBaudRate!\n");
+//		goto fail0;
+//	}
+	ret  = server->setTemperatureCompensation(server,0.97);
+	if(ret != 0){
+		LOGE("fail to setTemperatureCompensation!\n");
+		goto fail0;
+	}
+	ret = server->getSpecialTemperature(server,&centre,&max,&mini);
+	if(ret != 0){
+		LOGE("fail to getSpecialTemperature!\n");
+		goto fail0;
+	}
+	LOGD("-------------%f %f %f\n",centre,max,mini);
+	ret = server->getGlobalTemperature(server,fdata,1024);
+	if(ret == 0){
+		LOGE("fail to getGlobalTemperature!\n");
+		goto fail0;
+	}
+
+	return ;
+	fail0:
+		return ;
+
+}
 static int bluetoothRecvUp(char * buf, unsigned int bufLen) {
 	char upData[1024] = { 0 };
 	upData[0] = UI_BLUETOOTH_EVENT;
@@ -151,9 +187,6 @@ static int bluetoothRecvUp(char * buf, unsigned int bufLen) {
 }
 static int getMapKeyCodeNew(int code) {
 
-
-
-
 	const int mapKeyCode[12] = { 11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 28 };
 //	const int mapKeyCode[12] = { 9, 3, 2, 11, 4, 7, 48, 5, 8, 30, 6, 10 };
 	int retCode;
@@ -162,8 +195,6 @@ static int getMapKeyCodeNew(int code) {
 		if (mapKeyCode[retCode] == code)
 			return retCode;
 	}
-
-
 
 	return code;
 }
@@ -217,13 +248,12 @@ static int magneticUp(pGpioPinState pinState) {
 	return -1;
 }
 
-
-void  preventSeparateUpPthread(void *arg ){
-	if(arg == NULL)
-		return ;
+void preventSeparateUpPthread(void *arg) {
+	if (arg == NULL)
+		return;
 	GpioPinState pinState;
 	char upData[6] = { 0 };
-	memcpy(&pinState,arg,sizeof(GpioPinState));
+	memcpy(&pinState, arg, sizeof(GpioPinState));
 	LOGD("preventSeparateUpPthread :%d", pinState.state);
 	upData[0] = UI_PREVENTSEPARATE_EVENT;
 	upData[1] = 1 - pinState.state;
@@ -234,14 +264,15 @@ static int preventSeparateUp(pGpioPinState pinState) {
 
 	static struct timeval curr_tv;
 	static struct timeval last_tv;
-	static pTimerOps timerServer ;
+	static pTimerOps timerServer;
 	LOGD("preventSeparateUp :%d", pinState->state);
 	//防止按键误触发做的机制
-	if(timerServer != NULL)
-			destroyTimerTaskServer(&timerServer);
-	if(timerServer == NULL){
+	if (timerServer != NULL)
+		destroyTimerTaskServer(&timerServer);
+	if (timerServer == NULL) {
 		LOGD("start thread up !\n");
-		timerServer =  createTimerTaskServer(1000,0,1,1,preventSeparateUpPthread,pinState,sizeof(GpioPinState));
+		timerServer = createTimerTaskServer(1000, 0, 1, 1,
+				preventSeparateUpPthread, pinState, sizeof(GpioPinState));
 		timerServer->start(timerServer);
 		return 0;
 	}
@@ -360,6 +391,8 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 			strcpy(recvbuf, "rk_3368");
 		} else if (getUtilsOps()->getCpuVer() == RK3288) {
 			strcpy(recvbuf, "rk_3288");
+		} else if (getUtilsOps()->getCpuVer() == RK3128) {
+			strcpy(recvbuf, "rk_3128");
 		} else
 			return NULL;
 
@@ -439,6 +472,42 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 		return jarray;
 	}
 		break;
+
+	case E_GET_GLOBAL_TEMP:{
+		LOGD("E_GET_GLOBAL_TEMP!\n");
+		float f_globalTemp[1024];
+		char  up_c_globalTemp[sizeof(f_globalTemp)];
+		int ret;
+		ret = hardWareServer->getGlobalTemperature(hardWareServer,f_globalTemp,sizeof(f_globalTemp)/sizeof(f_globalTemp[0]));
+		if(ret < 0){
+			return NULL;
+		}
+		memcpy(up_c_globalTemp,(void *)f_globalTemp,sizeof(up_c_globalTemp));
+		jbyteArray jarray = (*env)->NewByteArray(env, sizeof(up_c_globalTemp));
+				(*env)->SetByteArrayRegion(env, jarray, 0, sizeof(up_c_globalTemp), (jbyte*) up_c_globalTemp);
+
+
+		return jarray;
+	}break;
+	case E_GET_SPECIAL_TEMP:{
+		float f_specialTemp[3];
+		char up_c_specialTemp[sizeof(f_specialTemp)];
+		int ret;
+		ret = hardWareServer->getSpecialTemperature(hardWareServer,&f_specialTemp[0],&f_specialTemp[1],&f_specialTemp[2] );
+		if(ret < 0){
+			return NULL;
+		}
+		memcpy(up_c_specialTemp,(void *)f_specialTemp,sizeof(up_c_specialTemp));
+		jbyteArray jarray = (*env)->NewByteArray(env, sizeof(up_c_specialTemp));
+						(*env)->SetByteArrayRegion(env, jarray, 0, sizeof(up_c_specialTemp), (jbyte*) up_c_specialTemp);
+
+		return jarray;
+
+	}break;
+	default:
+
+		break;
+
 	}
 	return NULL;
 }
@@ -520,6 +589,21 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 		}
 		break;
 	}
+	case E_SEND_HEARBEAT: {
+		LOGD("E_SEND_HEARBEAT:%s", local_Value);
+		char packAgeName[128] = { 0 };
+		char className[128] = { 0 };
+		if (local_Value != NULL) {
+			ret = getpackAgeNameAndclassName(packAgeName, className, load_data);
+		}
+		if (ret == 0) {
+			LOGD("%s:%s", packAgeName, className);
+			ret = hardWareServer->sendHearBeatToServer(hardWareServer,
+					packAgeName, className);
+		}
+		break;
+	}
+
 	case E_DEL_GUARD: {
 		hardWareServer->delGuardServer(hardWareServer);
 	}
@@ -563,6 +647,16 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 				load_data[1]);
 	}
 		break;
+
+	case E_SET_COMPENSATION_TEMP:{
+
+		float *f = (float*)load_data;
+
+		LOGD("E_SET_COMPENSATION_TEMP :%f!\n",*f);
+		ret  = hardWareServer->setTemperatureCompensation(hardWareServer,*f);
+	}
+	break;
+
 	default:
 		LOGW("cannot find Control Interface!");
 		break;

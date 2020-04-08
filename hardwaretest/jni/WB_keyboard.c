@@ -123,6 +123,7 @@ static void * readEventThreadFunc(void *arg) {
 			if (readn <= 0)
 				continue;
 			for (j = 0; j < readn / sizeof(struct input_event); j++) {
+				//只接收按键事件
 				if (keyEvent[j].type == EV_KEY) {
 					if (server->eventUpFunc) {
 						server->eventUpFunc(keyEvent[j].code,

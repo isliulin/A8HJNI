@@ -11,6 +11,7 @@ import com.welbell.hardwaretest.R;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings.System;
 import android.app.Activity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -26,7 +27,6 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		super.onCreate(savedInstanceState);
 		int ret;
 		// 获取版本号
-		
 //		TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 //        String simSerialNumber = telephonyManager.getSimOperatorName();
         
@@ -39,15 +39,15 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-
+  
 		setContentView(R.layout.activity_main);
-		Log.e("", " init************startsimSerialNumber:");
+		Log.e(TAG, " init start!");
 		ret = hardwareResource.init();
 		if (ret < 0) {
-			Log.e("", " fail to hardwareResource!!!!!!!!!!!!!ret =  "+ret);
+			Log.e("", " fail to hardwareResource!   ret =  "+ret);
 			return;
 		}
-		Log.e("", " init************end");
+		Log.e(TAG, " init end!");
 		// 执行shell脚本: 例 执行重启命令
 		// hardwareResource.executeRootShell("reboot");
 		// 获取身份证模块所接的串口号
@@ -69,32 +69,45 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		/*
 		 * 参数1：app 包名 参数2：主Activity全类名
 		 */
-		
+		/*
 		hardwareResource.addAPPtoDaemon("com.welbell.hardwaretest",
 				"com.welbell.hardwaretest.MainActivity");
-		
+		*/
 		hardwareResource.getCpuModel();
 
 		// 开启摄像头灯
-		hardwareResource.cameraLightControl(false);
+		hardwareResource.cameraLightControl(true);
 		// 开门 true:开 false:关
 
-		hardwareResource.doorLockControl(false);
+		hardwareResource.doorLockControl(true);
 		// 关闭键盘灯
 		hardwareResource.keyboardLightControl(true);
 		// 关闭红外摄像头灯
-		hardwareResource.ifcameraLightControl(false);
+		hardwareResource.ifcameraLightControl(true);
 		// 关闭屏幕
 		hardwareResource.screenBlacklightControl(true);
-		hardwareResource.controlRedLed(false); //开灯
+		hardwareResource.controlRedLed(true); //开灯
 		hardwareResource.controlGreenLed(true);
-		hardwareResource.controlBlueLed(false);
+		hardwareResource.controlBlueLed(true);
+		hardwareResource.getCpuModel();
+	
 		if (true == hardwareResource.getBuletoothState()) {
 			hardwareResource.setBluetoothName("HC01");
 			hardwareResource.sendBluetoothStr("hello word!");
-	
 		}
-		
+		float[] temp = null;
+		hardwareResource.setTempCompensation(0.99f);
+		//temp = hardwareResource.getSpecialTemp();
+		//Log.d(TAG,"====="+temp[0] +" "+ temp[1] +" "+temp[2] );
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		temp = hardwareResource.getGlobalTemp();
+		if(temp !=null)
+			Log.d(TAG,"====="+temp[0] +" "+ temp[1] +" "+temp[2] );
 		/*
 		//重启网络方案
 		hardwareResource.executeRootShell("echo 0 > /sys/devices/misc_power_en.23/usbhub");
@@ -139,18 +152,9 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 
 		hardwareResource.executeRootShell("date -s  20181126.114951");
 		hardwareResource.executeRootShell("date -s  20181126.114951");
-
-		
-		
-		
-		
-		
+	
 		Log.d("hardware","iccard_type:******************"+ hardwareResource.getIcCardState());
-		
-		
 
-		
-		
 		new Thread(new Runnable() {
 			boolean falg = false;
 			public void run() {
@@ -161,10 +165,14 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 					if(falg == true){
 						Log.d("rs485 ","send");
 					//	hardwareResource.rs485send(sendData);
-					//	hardwareResource.doorLockControl(falg);
+						hardwareResource.doorLockControl(falg);
+						
+						//每隔30分执行一次
+						hardwareResource.executeRootShell("sysctl vm.drop_caches=3");
 						hardwareResource.cameraLightControl(falg);
 						hardwareResource.keyboardLightControl(falg);
-					
+						//hardwareResource.sendHearBeatToDaemon("com.welbell.hardwaretest",
+						//		"com.welbell.hardwaretest.MainActivity");
 						try {
 							Thread.sleep(1*1000);
 						} catch (InterruptedException e) {
@@ -182,7 +190,7 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 //							
 //							Log.d("rs485","[ " + recvData[i]+"]");
 //						}
-					//	hardwareResource.doorLockControl(falg);
+						hardwareResource.doorLockControl(falg);
 						
 						hardwareResource.keyboardLightControl(falg);
 						try {
@@ -239,9 +247,26 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 				+ (value == 1 ? "down" : "up"));
 
 	}
+	
+	
+	
+	private int getChCountFromStr(String str,char ch){
+		int count = 0;
+		for(int i =0 ;i < str.length();i++){
+			if(str.charAt(i) == ch)
+			{
+				count ++;
+			}		
+		}
+
+		return count ;			
+	}
 
 	public void buletoothEvent(String data) {
 		Log.e("buletoothEvent", " data:" + data);
+		
+		
+
 
 	}
 

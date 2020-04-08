@@ -288,7 +288,6 @@ pBluetoothOps createBluetoothServer(void)
 	}
 
 	LOGD("start checkHCstate! ");
-
 	server->serialServer = createSerialServer(crateHwInterfaceServer()->getBluetoothUART(), 9600, 8, 1, 'n');
 	if(server->serialServer == NULL)
 	{

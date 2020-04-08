@@ -213,7 +213,7 @@ static int getDoorMagneticPin(void){
 	else if (cpuVer == A64)
 		return PE(17);
 	else if(cpuVer==RK3128)
-			return RK_P1(PA(2));
+		return RK_P1(PA(2));
 	return -1;
 }
 static int getSecurityPin(void){
@@ -307,6 +307,9 @@ static int getBlueLedPin(void){
 	}
 	return -1;
 }
+static char * getTemperatureDetectionUART(void){
+	return NULL;
+}
 
 
 static HwInterfaceOps ops = {
@@ -330,6 +333,7 @@ static HwInterfaceOps ops = {
 		.getBluetoothUART = getBluetoothUART,
 		.getRs485UART = getRs485UART,
 		.getRs485controlPin = getRs485controlPin,
+		.getTemperatureDetectionUART = getTemperatureDetectionUART,
 };
 
 pHwInterfaceOps crateHwInterfaceServer(void) {

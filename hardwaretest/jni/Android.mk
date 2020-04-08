@@ -12,7 +12,7 @@ LOCAL_SRC_FILES +=  cpuCard/cpu_card.c cpuCard/zlg600a.c
 LOCAL_SRC_FILES +=  icCard/fm1702nl.c
 LOCAL_SRC_FILES +=  hwInterface/hwInterfaceManage.c hwInterface/hwInterfaceConfig.c  hwInterface/gpioServer.c
 LOCAL_SRC_FILES +=  serial/serialServer.c
-LOCAL_SRC_FILES +=  taskManage/threadManage.c taskManage/timerTaskManage.c
+LOCAL_SRC_FILES +=  taskManage/threadManage.c taskManage/timerTaskManage.c WB_temperatureDetection.c
 LOCAL_SRC_FILES += 	WB_rs485.c
 LOCAL_SRC_FILES += A8DeviceControl.c JNI_OnLoad.c \
 				   WB_doorCard.c WB_pirSupport.c WB_hardwareSupport.c WB_keyboard.c
@@ -34,10 +34,10 @@ LOCAL_LDLIBS   := -llog
 #如果用到指纹识别请设置以下参数
 #LOCAL_CFLAGS += -DUSER_FINGER
 #如果底层需要处理IC卡模块逻辑
-LOCAL_CFLAGS += -DUSER_ICCARD
+#LOCAL_CFLAGS += -DUSER_ICCARD
 
 #如果底层需要处理蓝牙模块逻辑
-LOCAL_CFLAGS += -DUSER_BLUETOOTH
+#LOCAL_CFLAGS += -DUSER_BLUETOOTH
 
 #如果用到门铃请设置以下参数
 #LOCAL_CFLAGS += -DUSER_DOOR_BELL

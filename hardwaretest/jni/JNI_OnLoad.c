@@ -4,7 +4,7 @@
 
 
 static const char*  classPathName = "com/welbell/hardware/HardwareSupport";
-static const char * libVersion = "Ver1.0.3.7 For A8HNativeControl";
+static const char * libVersion = "Ver1.0.4.2 For A8HNativeControl!";
 /*
  * Register several native methods for one class.
  */
@@ -22,6 +22,7 @@ static int registerNativeMethods(JNIEnv* env, const char* className, JNINativeMe
 		LOGE("RegisterNatives failed for '%s'", className);
 		return JNI_FALSE;
 	}
+
 	return JNI_TRUE;
 }
 /*

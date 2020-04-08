@@ -11,6 +11,11 @@ JNIEXPORT jbyteArray JNICALL jni_a8GetKeyValue(JNIEnv * env, jobject obj,
 JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 	    jbyteArray ValueBuf, jint ValueLen);
 
+
+
+
+
+
 static JNINativeMethod methods[] =
 		{
 				{"a8HardwareControlInit", "()I", (void *) jni_a8HardwareControlInit},

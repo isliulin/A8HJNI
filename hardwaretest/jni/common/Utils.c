@@ -176,12 +176,24 @@ static void printHex(char *buf,int len)
 }
 static void printData(char *buf, int len) {
 	int i,j = 0;
-	char *buffer = malloc(len*7+1);
-	bzero(buffer,len*7+1);
+	char *buffer = malloc(len*10);
+	bzero(buffer,len*10);
 	for(i = 0; i<len;i++)
 	{
-		j += sprintf(&buffer[j],"0x%-2x ",buf[i]);
+		j += sprintf(&buffer[j],"[0x%-2x]",buf[i]);
 		
+	}
+	LOGD("%s",buffer);
+	free(buffer);
+}
+static void printFloat(float *buf, int len) {
+	int i,j = 0;
+	char *buffer = malloc(len*10);
+	bzero(buffer,len*10);
+	for(i = 0; i<len;i++)
+	{
+		j += sprintf(&buffer[j],"[%-2f]",buf[i]);
+
 	}
 	LOGD("%s",buffer);
 	free(buffer);
@@ -317,6 +329,7 @@ static UtilsOps ops = {
 		.YUYVToNV12 = YUYVToNV12,
 		.charToInt  = charToInt,
 		.printData = printData,
+		.printFloat = printFloat,
 		.printHex = printHex,
 		.GetWeiGendCardId = GetWeiGendCardId,
 		.getCpuVer = getCpuVer,

@@ -44,6 +44,8 @@ static int isCompleteness(unsigned char *pRecv, int recvLen)
 	int escFlag = 0;
 	if( pRecv[0] != END)
 		return -1;
+
+
 	if(recvLen > 1)
 	{
 		if(pRecv[1] != 0xaa)

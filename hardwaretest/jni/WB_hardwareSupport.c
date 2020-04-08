@@ -44,6 +44,8 @@ typedef struct WB_hardWareServer {
 	pBluetoothOps bluetoothServer;
 	pRs485Ops rs485Server;
 
+	pTemperatureDetectionOps temperatureDetectionServer;
+
 } WB_hardWareServer, *pWB_hardWareServer;
 
 static int controlDoor(struct WB_hardWareOps *, ControlCmd);
@@ -68,6 +70,8 @@ static int setKeyboardEventUpFunc(struct WB_hardWareOps * ops,
 		KeyEventUpFunc func);
 static int setGuardPackagenameAndMainclassname(struct WB_hardWareOps * ops,
 		const char *packName, const char * className);
+static int sendHearBeatToServer(struct WB_hardWareOps * ops,
+		const char *packName, const char * className);
 static int delGuardServer(struct WB_hardWareOps *ops);
 static int setBluetoothRecvFunc(struct WB_hardWareOps *ops,
 		T_bluetoothRecvFunc callback);
@@ -81,6 +85,43 @@ static int rs485Init(struct WB_hardWareOps *ops, int nBaudRate, int nDataBits,
 static int rs485SendMsg(struct WB_hardWareOps *ops, char *data, int len);
 static int rs485RecvMsg(struct WB_hardWareOps *ops, int timeout, char *data,
 		int len);
+
+/*功能:设置温度补偿系数
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		parameter:补偿系数 范围(0.93-1.0)
+		 *
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int setTemperatureCompensation(struct  WB_hardWareOps *ops,float parameter);
+
+		/*功能:获取所有像素点温度
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		data:数据指针
+		 * 		len:数据长度 <=1024
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int getGlobalTemperature(struct  WB_hardWareOps *ops, float *data,int len);
+		/*功能:获取特殊温度值
+		 *  参数:
+		 * 		centre:坐标中心温度
+		 * 		max:最大值
+		 * 		mini:最小值
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int getSpecialTemperature(struct  WB_hardWareOps *ops,float  *centre,float *max,float *mini);
+
+
+
+
+
+
+
+
 static WB_hardWareOps ops = { .controlDoor = controlDoor,
 		.controlIFCameraLight = controlIFCameraLight, .controlCameraLight =
 				controlCameraLight,
@@ -94,13 +135,19 @@ static WB_hardWareOps ops = { .controlDoor = controlDoor,
 				setMagneticUpFunc, .setPreventSeparateServerUpFunc =
 				setPreventSeparateServerUpFunc,
 		.setGuardPackagenameAndMainclassname =
-				setGuardPackagenameAndMainclassname, .delGuardServer =
+				setGuardPackagenameAndMainclassname,
+		.sendHearBeatToServer = sendHearBeatToServer,
+		.delGuardServer =
 				delGuardServer, .setBluetoothRecvFunc = setBluetoothRecvFunc,
 		.getBluetoothState = getBluetoothState, .setBluetoothName =
 				setBluetoothName, .sendBluetoothStr = sendBluetoothStr,
 		.setbluetoothReboot = setbluetoothReboot, .rs485Init = rs485Init,
 		.rs485SendMsg = rs485SendMsg, .rs485RecvMsg = rs485RecvMsg,
-		.controlRGB = controlRGB, };
+		.controlRGB = controlRGB,
+		.setTemperatureCompensation = setTemperatureCompensation,
+		.getGlobalTemperature = getGlobalTemperature,
+		.getSpecialTemperature = getSpecialTemperature,
+		};
 static int rs485Init(struct WB_hardWareOps *ops, int nBaudRate, int nDataBits,
 		int nStopBits, int nParity) {
 	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
@@ -169,6 +216,79 @@ static int rs485RecvMsg(struct WB_hardWareOps *ops, int timeout, char *data,
 	recvRet = hardWareServer->rs485Server->recvMsg(hardWareServer->rs485Server,
 			timeout, data, len);
 	return recvRet;
+	fail0: return -1;
+}
+/*功能:设置温度补偿系数
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		parameter:补偿系数 范围(0.93-1.0)
+		 *
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int setTemperatureCompensation(struct  WB_hardWareOps *ops,float parameter){
+	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
+	if (hardWareServer == NULL || hardWareServer->temperatureDetectionServer  == NULL) {
+		goto fail0;
+	}
+
+
+	return hardWareServer->temperatureDetectionServer->setTemperatureCompensation(hardWareServer->temperatureDetectionServer,parameter);
+
+
+	fail0:
+		return -1;
+}
+
+		/*功能:获取所有像素点温度
+		 *  参数:
+		 * 		ops:操作对象
+		 * 		data:数据指针
+		 * 		len:数据长度 <=1024
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int getGlobalTemperature(struct  WB_hardWareOps *ops, float *data,int len){
+	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
+	if (hardWareServer == NULL || hardWareServer->temperatureDetectionServer  == NULL) {
+		goto fail0;
+	}
+
+
+	return hardWareServer->temperatureDetectionServer->getGlobalTemperature(hardWareServer->temperatureDetectionServer,data,len);
+	fail0:
+		return -1;
+}
+		/*功能:获取特殊温度值
+		 *  参数:
+		 * 		centre:坐标中心温度
+		 * 		max:最大值
+		 * 		mini:最小值
+		 * 	返回值:
+		 * 		0:成功 -1:失败
+		 * */
+static int getSpecialTemperature(struct  WB_hardWareOps *ops,float  *centre,float *max,float *mini){
+
+	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
+	if (hardWareServer == NULL || hardWareServer->temperatureDetectionServer  == NULL) {
+		goto fail0;
+	}
+	LOGD("getSpecialTemperature!\n");
+	return hardWareServer->temperatureDetectionServer->getSpecialTemperature(hardWareServer->temperatureDetectionServer,centre,max,mini);
+	fail0:
+		return -1;
+
+}
+
+
+static int sendHearBeatToServer(struct WB_hardWareOps * ops,
+		const char *packName, const char * className) {
+	pWB_hardWareServer hardWareServer = (pWB_hardWareServer) ops;
+	if (hardWareServer == NULL || hardWareServer->guardThreadServer == NULL) {
+		goto fail0;
+	}
+	return hardWareServer->guardThreadServer->sendHearBeatToServer(
+			hardWareServer->guardThreadServer, packName, className, 6);
 	fail0: return -1;
 }
 static int setGuardPackagenameAndMainclassname(struct WB_hardWareOps * ops,
@@ -458,14 +578,14 @@ pWB_hardWareOps crateHardWareServer(void) {
 			hardWareServer->interfaceOps->getDoorLockPin());
 	if (hardWareServer->doorServer == NULL) {
 		LOGE("fail to malloc doorLockServer!");
-		goto fail1;
+		goto fail0;
 	}
 	hardWareServer->openDoorKeyServer = gpio_getServer(
 			hardWareServer->interfaceOps->getOpenDoorKeyPin());
 	if (hardWareServer->openDoorKeyServer == NULL) {
 		LOGE("fail to malloc openDoorKeyServer!");
 		if (getUtilsOps()->getCpuVer() != RK3368)
-			goto fail2;
+			goto fail0;
 	}
 	hardWareServer->IFCamerLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getIFCameraLightPin());
@@ -481,14 +601,14 @@ pWB_hardWareOps crateHardWareServer(void) {
 	if (hardWareServer->keyboardLightServer == NULL) {
 		LOGE("fail to malloc IFCamerLightServer!");
 		if (getUtilsOps()->getCpuVer() != RK3368)
-			goto fail3;
+			goto fail0;
 	}
 	hardWareServer->camerLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getCameraLightPin());
 	if (hardWareServer->camerLightServer == NULL) {
 		LOGE("fail to malloc camerLightServer!");
 		if (getUtilsOps()->getCpuVer() != RK3368)
-			goto fail4;
+			goto fail0;
 	}
 	hardWareServer->LCDLightServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLcdSwichPin());
@@ -496,18 +616,18 @@ pWB_hardWareOps crateHardWareServer(void) {
 		LOGE("fail to malloc LCDLightServer! cpu:[%d]",getUtilsOps()->getCpuVer());
 		if (getUtilsOps()->getCpuVer() != RK3368 && getUtilsOps()->getCpuVer() != RK3288 &&
 				getUtilsOps()->getCpuVer() != RK3128)
-			goto fail5;
+			goto fail0;
 	}
 	hardWareServer->optoSensorServer = gpio_getServer(
 			hardWareServer->interfaceOps->getLightSensorPin());
 	if (hardWareServer->optoSensorServer == NULL) {
 		LOGE("fail to malloc getLightSensorPin!");
 		if (getUtilsOps()->getCpuVer() != RK3368)
-			goto fail6;
+			goto fail0;
 	}
 	hardWareServer->keyBoardServer = createKeyBoardServer("dev/input/event");
 	if (hardWareServer->keyBoardServer == NULL) {
-		goto fail7;
+		goto fail0;
 	}
 
 
@@ -541,7 +661,7 @@ pWB_hardWareOps crateHardWareServer(void) {
 		hardWareServer->guardThreadServer = createGuardThreadServer();
 		if (hardWareServer->guardThreadServer == NULL) {
 			LOGE("fail to guardThreadServer!");
-			goto fail7;
+			goto fail0;
 		}
 	}
 #endif
@@ -552,17 +672,16 @@ pWB_hardWareOps crateHardWareServer(void) {
 	hardWareServer->blueLedServer = gpio_getServer(
 			hardWareServer->interfaceOps->getBlueLedPin());
 
+
+	hardWareServer->temperatureDetectionServer = createTemperatureDetectionServer(crateHwInterfaceServer()->getTemperatureDetectionUART());
+
+
+
 	hardWareServer->ops = ops;
 	return (pWB_hardWareOps) hardWareServer;
-
-	fail7: gpio_releaseServer(&hardWareServer->optoSensorServer);
-	fail6: gpio_releaseServer(&hardWareServer->LCDLightServer);
-	fail5: gpio_releaseServer(&hardWareServer->camerLightServer);
-	fail4: gpio_releaseServer(&hardWareServer->IFCamerLightServer);
-	fail3: gpio_releaseServer(&hardWareServer->openDoorKeyServer);
-	fail2: gpio_releaseServer(&hardWareServer->doorServer);
-	fail1: free(hardWareServer);
-	fail0: return NULL;
+	fail0:
+		destroyHardWareServer(&hardWareServer);
+	return NULL;
 }
 
 void destroyHardWareServer(pWB_hardWareOps *ops) {
@@ -612,7 +731,10 @@ void destroyHardWareServer(pWB_hardWareOps *ops) {
 #endif
 	if (hardWareServer->guardThreadServer)
 		destroyGuardThreadServer(&hardWareServer->guardThreadServer);
+	if(hardWareServer->temperatureDetectionServer){
 
+		destroyTemperatureDetectionServer(&hardWareServer->temperatureDetectionServer);
+	}
 	free(hardWareServer);
 	*ops = NULL;
 }

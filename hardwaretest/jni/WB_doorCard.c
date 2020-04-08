@@ -20,14 +20,15 @@ static const DoorCardops ops = {
 };
 static int getState(pDoorCardops ops)
 {
+
 	pDoorCardServer server = ops;
 	return server->state;
 }
-
 pDoorCardops createDoorCardServer(DoorCardRecvFunc callBackFunc) {
 	pDoorCardServer server = (pDoorCardServer)calloc(1,sizeof(DoorCardServer));
 	if(server == NULL)
 		return NULL;
+
 	bzero(server,sizeof(DoorCardServer));
 	DOOR_CARD_MODULE type ;
 

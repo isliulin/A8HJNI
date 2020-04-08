@@ -218,7 +218,6 @@ static void * SystemCallBack(pJavaMethodOps pthis,void *data,int len) {
 			(*(JavaMethodServer->jniEnv))->CallVoidMethod(JavaMethodServer->jniEnv,
 					JavaMethodServer->callBackObject,
 					JavaMethodServer->SystemCallBack_id,jarray);
-
 		} else {
 			LOGE("callBackObject is null or SystemCallBack_id is null");
 		}

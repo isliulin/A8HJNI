@@ -53,12 +53,10 @@ static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 static int _write(int fd, const unsigned char * lpBuff, int nLen);
 
 
-static const int BaudRate_LibValue[] = { B115200, B57600, B38400, B19200, B9600,
-		B4800, B2400, B1200, B300, B115200, B57600, B38400, B19200, B9600,
-		B4800, B2400, B1200, B300, };
-static const int BaudRate_Value[] = { 115200, 57600, 38400, 19200, 9600, 4800,
-		2400, 1200, 300, 115200, 57600, 38400, 19200, 9600, 4800, 2400, 1200,
-		300, };
+static const int BaudRate_LibValue[] = {B921600,B115200, B57600, B38400, B19200, B9600,
+		B4800, B2400, B1200, B300 };
+static const int BaudRate_Value[] =   {921600,115200, 57600, 38400, 19200, 9600, 4800,
+		2400, 1200, 300};
 
 static SerialOps serialOps = {
 		.setHandle = setSerialHandle,
@@ -252,9 +250,14 @@ static int setSerialHandle(struct SerialOps* base, SerialRecvFunc recvFunc,
 
 static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 		int nBuffSize, int nTimeout_ms) {
-	struct timeval tv;
+	struct timeval selcet_tv;
+	struct timeval startReadTimeout_tv;
+	struct timeval endReadTimeout_tv;
+	double startTime,endTime;
+
 	fd_set fds;
-	int totol, len = 0;
+	int totol, allReadLen = 0;
+	int singleReadLen = 0;
 	int ret;
 	pSerialServer serialServer = (pSerialServer) base;
 	if (serialServer == NULL)
@@ -267,9 +270,55 @@ static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 	}
 	FD_ZERO(&fds);
 	FD_SET( serialServer->serialDevFd, &fds);
-	tv.tv_sec = nTimeout_ms / 1000;
-	tv.tv_usec = ((nTimeout_ms) % 1000) * 1000;
+
+	int selectCount = nBuffSize*10;
 	//获取缓冲区数据长度
+	gettimeofday(&startReadTimeout_tv, NULL);
+	startTime = startReadTimeout_tv.tv_sec+(1.0*startReadTimeout_tv.tv_usec/(1000*1000));
+	while (selectCount-- >0){
+		singleReadLen = 0;
+		selcet_tv.tv_sec = 0;
+		selcet_tv.tv_usec = 100*1000;
+		do {
+			ret = select(serialServer->serialDevFd + 1, &fds, 0, 0, &selcet_tv);
+		} while (ret == -1 && errno == EINTR);
+
+		switch (ret) {
+		case 0:
+			LOGW("read timeout!");
+			break;
+		case -1:
+			LOGW("fail to select!");
+			break;
+		default: {
+
+			ioctl(serialServer->serialDevFd, FIONREAD, &totol);
+			totol = totol > nBuffSize ? nBuffSize : totol;
+			while (singleReadLen < totol) {
+				ret = read(serialServer->serialDevFd, lpBuff + allReadLen, totol - singleReadLen);
+				if (ret <= 0) {
+					LOGE("fail to read ");
+					break;
+				}
+				singleReadLen += ret;
+			}
+			allReadLen += singleReadLen;
+		}
+			break;
+		}
+		if(allReadLen >= nBuffSize){
+			return allReadLen;
+		}
+		gettimeofday(&endReadTimeout_tv, NULL);
+		endTime = endReadTimeout_tv.tv_sec+(1.0*endReadTimeout_tv.tv_usec/(1000*1000));
+		int timelagms = (endTime - startTime)*1000;
+		if( timelagms> nTimeout_ms  ){
+			return allReadLen;
+		}
+	}
+	return allReadLen;
+
+	/*
 	do {
 		ret = select(serialServer->serialDevFd + 1, &fds, 0, 0, &tv);
 	} while (ret == -1 && errno == EINTR);
@@ -295,6 +344,7 @@ static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 		break;
 	}
 	return len;
+	*/
 }
 static int _read(int fd, unsigned char * lpBuff, int nBuffSize) {
 	int total, len = 0;
@@ -476,19 +526,14 @@ void destroySerialServer(pSerialOps * server) {
 	}
 	if (serialServer->bufferOps != NULL)
 		destroyBufferServer(&serialServer->bufferOps);
-	LOGD("%s:%d",__func__,__LINE__);
 	if (serialServer->serialDevFd > 0)
 		close(serialServer->serialDevFd);
-	LOGD("%s:%d",__func__,__LINE__);
 	if (serialServer->stopRecvThreadFd > 0)
 		close(serialServer->stopRecvThreadFd);
-	LOGD("%s:%d",__func__,__LINE__);
 	if(serialServer->changeReadModeFd[0] > 0)
 		close(serialServer->changeReadModeFd[0]);
-	LOGD("%s:%d",__func__,__LINE__);
 	if(serialServer->changeReadModeFd[1] > 0)
 		close(serialServer->changeReadModeFd[1]);
-	LOGD("%s:%d",__func__,__LINE__);
 	free(serialServer);
 	*server = NULL;
 }
