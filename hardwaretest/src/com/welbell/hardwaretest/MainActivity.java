@@ -97,8 +97,8 @@ public class MainActivity<EthernetDevInfo> extends Activity implements HardWareU
 		}
 		float[] temp = null;
 		hardwareResource.setTempCompensation(0.99f);
-		//temp = hardwareResource.getSpecialTemp();
-		//Log.d(TAG,"====="+temp[0] +" "+ temp[1] +" "+temp[2] );
+		temp = hardwareResource.getSpecialTemp();
+		Log.d(TAG,"====="+temp[0] +" "+ temp[1] +" "+temp[2] );
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {

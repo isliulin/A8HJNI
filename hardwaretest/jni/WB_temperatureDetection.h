@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+#ifndef TemperatureDetection
+#define TemperatureDetection
 typedef struct TemperatureDetectionOps{
 	/*
 	 * 功能:设置波特率
@@ -46,6 +48,8 @@ typedef struct TemperatureDetectionOps{
 	 * */
 	int (*getSpecialTemperature)(struct TemperatureDetectionOps * ops,float  *centre,float *max,float *mini);
 }TemperatureDetectionOps,*pTemperatureDetectionOps;
+
+#endif
 /*功能:创建温度模块对象
  *参数:
  *	 uartPath:串口地址
@@ -79,8 +83,6 @@ void destroyTemperatureDetectionServer(pTemperatureDetectionOps *server);
  *	destroyTemperatureDetectionServer(&server);
  *
  * */
-
-
 
 #ifdef __cplusplus             //告诉编译器，这部分代码按C语言的格式进行编译，而不是C++的
 }

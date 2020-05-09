@@ -268,15 +268,20 @@ static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 	if (lpBuff == NULL || nBuffSize <= 0) {
 		return -1;
 	}
-	FD_ZERO(&fds);
-	FD_SET( serialServer->serialDevFd, &fds);
+
 
 	int selectCount = nBuffSize*10;
 	//获取缓冲区数据长度
+
+	LOGD("serialServer->serialDevFd:%d\n",serialServer->serialDevFd);
 	gettimeofday(&startReadTimeout_tv, NULL);
 	startTime = startReadTimeout_tv.tv_sec+(1.0*startReadTimeout_tv.tv_usec/(1000*1000));
+
+
 	while (selectCount-- >0){
 		singleReadLen = 0;
+		FD_ZERO(&fds);
+		FD_SET( serialServer->serialDevFd, &fds);
 		selcet_tv.tv_sec = 0;
 		selcet_tv.tv_usec = 100*1000;
 		do {
@@ -286,12 +291,12 @@ static int _readAndWait(struct SerialOps* base, unsigned char * lpBuff,
 		switch (ret) {
 		case 0:
 			LOGW("read timeout!");
+
 			break;
 		case -1:
 			LOGW("fail to select!");
 			break;
 		default: {
-
 			ioctl(serialServer->serialDevFd, FIONREAD, &totol);
 			totol = totol > nBuffSize ? nBuffSize : totol;
 			while (singleReadLen < totol) {
@@ -424,7 +429,6 @@ static int serialWrite(struct SerialOps* base, const unsigned char * lpBuff,
 pSerialOps createSerialServer(const char *devPath, int nBaudRate, int nDataBits,
 		int nStopBits, int nParity) {
 
-
 	pSerialServer serialServer = NULL;
 	int fd = -1;
 	int ret,result;
@@ -443,6 +447,7 @@ pSerialOps createSerialServer(const char *devPath, int nBaudRate, int nDataBits,
 	}
 	bzero(serialServer, sizeof(SerialServer));
 	serialServer->serialDevFd = fd;
+	LOGD("serialServer->serialDevFd :%d\n",serialServer->serialDevFd );
 	serialServer->ops = serialOps;
 	/*set Serial parameter */
 	ret = _setBaudRate(fd, nBaudRate);

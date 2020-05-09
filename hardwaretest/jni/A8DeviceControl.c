@@ -121,14 +121,6 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 	}
 #endif
 	fail2:
-	{
-		//先尝试重启设备
-		pNativeNetServerOps netClient = createNativeNetServer();
-		if (netClient != NULL) {
-			netClient->runScript(netClient, "reboot");
-
-		}
-	}
 	LOGD("fail to jni_a8HardwareControlInit!");
 	if (JavaMethodServer)
 		CallbackJavaMethodExit(&JavaMethodServer);
@@ -140,7 +132,7 @@ JNIEXPORT jint JNICALL jni_a8HardwareControlInit(JNIEnv * env, jobject obj) {
 }
 static void test_module(void){
 
-	pTemperatureDetectionOps server = createTemperatureDetectionServer("/dev/ttyS1");
+	pTemperatureDetectionOps server = createTemperatureDetectionServer("/dev/ttyS4");
 	if(server == NULL){
 		LOGE("fail to createTemperatureDetectionServer!\n");
 		goto fail0;
@@ -151,12 +143,7 @@ static void test_module(void){
 	float fdata[1024];
 	int ret;
 
-//	ret = server->setBaudRate(server,115200);
-//	if(ret != 0){
-//		LOGE("fail to setBaudRate!\n");
-//		goto fail0;
-//	}
-	ret  = server->setTemperatureCompensation(server,0.97);
+	ret  = server->setTemperatureCompensation(server,0.93009);
 	if(ret != 0){
 		LOGE("fail to setTemperatureCompensation!\n");
 		goto fail0;
@@ -168,11 +155,12 @@ static void test_module(void){
 	}
 	LOGD("-------------%f %f %f\n",centre,max,mini);
 	ret = server->getGlobalTemperature(server,fdata,1024);
-	if(ret == 0){
+	if(ret != 0){
 		LOGE("fail to getGlobalTemperature!\n");
 		goto fail0;
 	}
 
+	LOGD("---------%f %f %f %f\n",fdata[0],fdata[1],fdata[2],fdata[3]);
 	return ;
 	fail0:
 		return ;
@@ -651,7 +639,6 @@ JNIEXPORT jint JNICALL jni_a8SetKeyValue(JNIEnv *env, jobject obj, jint key,
 	case E_SET_COMPENSATION_TEMP:{
 
 		float *f = (float*)load_data;
-
 		LOGD("E_SET_COMPENSATION_TEMP :%f!\n",*f);
 		ret  = hardWareServer->setTemperatureCompensation(hardWareServer,*f);
 	}

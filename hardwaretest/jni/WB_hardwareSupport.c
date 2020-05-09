@@ -674,9 +674,6 @@ pWB_hardWareOps crateHardWareServer(void) {
 
 
 	hardWareServer->temperatureDetectionServer = createTemperatureDetectionServer(crateHwInterfaceServer()->getTemperatureDetectionUART());
-
-
-
 	hardWareServer->ops = ops;
 	return (pWB_hardWareOps) hardWareServer;
 	fail0:

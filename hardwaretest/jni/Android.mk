@@ -13,11 +13,12 @@ LOCAL_SRC_FILES +=  icCard/fm1702nl.c
 LOCAL_SRC_FILES +=  hwInterface/hwInterfaceManage.c hwInterface/hwInterfaceConfig.c  hwInterface/gpioServer.c
 LOCAL_SRC_FILES +=  serial/serialServer.c
 LOCAL_SRC_FILES +=  taskManage/threadManage.c taskManage/timerTaskManage.c WB_temperatureDetection.c
+LOCAL_SRC_FILES +=	temperature/tean_temperatureDetection.c
+LOCAL_SRC_FILES +=	temperature/mlfm24_temperatureDetection.c
 LOCAL_SRC_FILES += 	WB_rs485.c
-LOCAL_SRC_FILES += A8DeviceControl.c JNI_OnLoad.c \
-				   WB_doorCard.c WB_pirSupport.c WB_hardwareSupport.c WB_keyboard.c
-LOCAL_SRC_FILES += WB_virtualHardwareSupport.c WB_guardThread.c WB_bluetooth.c
-
+LOCAL_SRC_FILES += 	A8DeviceControl.c JNI_OnLoad.c \
+				  	WB_doorCard.c WB_pirSupport.c WB_hardwareSupport.c WB_keyboard.c
+LOCAL_SRC_FILES +=  WB_virtualHardwareSupport.c WB_guardThread.c WB_bluetooth.c
 
 LOCAL_CFLAGS += -O3 -DNDEBUG -fstrict-aliasing
 #LOCAL_MULTILIB := both					
